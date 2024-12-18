@@ -1,0 +1,56 @@
+pip install virtualenv
+python -m venv venv
+.\venv\Scripts\activate
+deactivate
+
+python.exe -m pip install --upgrade pip
+
+pip install django
+
+pip freeze
+pip freeze > requirements.txt
+pip install -r requirements.txt
+
+django-admin startproject app .
+
+python3 manage.py runserver
+
+python3 manage.py startapp nome_app
+
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py showmigrations
+
+python3 manage.py createsuperuser
+
+python manage.py makemigrations financeiro
+python manage.py migrate financeiro --database=financeiro
+
+
+
+Aula 23
+
+Linux:
+sudo apt update
+python3 -m venv venv
+
+source venv/bin/activate
+
+pip install --upgrade pip
+
+pip list
+pip freeze > requirements.txt
+pip install -r requirements.txt
+
+python3 manage.py makemigrations
+python3 manage.py migrate
+python3 manage.py showmigrations
+
+git config --global user.name "arecomarcelo"
+git config --global user.email "marcelo.areco@hotmail.com"
+
+
+
+Como copiar o conteúdo de root@ip-172-31-92-201:/var/www/controle_estoque/templates/static para root@ip-172-31-92-201:/var/www/controle_estoque/static
+
