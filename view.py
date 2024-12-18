@@ -241,7 +241,6 @@ import streamlit as st
 from service import DataService
 from st_aggrid import AgGrid, GridOptionsBuilder
 import pandas as pd
-import time
 from io import BytesIO
 import locale
 
@@ -363,7 +362,7 @@ def create_grid_options(df):
     gb.configure_column(
         "ValorCusto",
         type=["numericColumn", "numberColumnFilter"],
-        valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})"
+        valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFraction Digits: 2, maximumFractionDigits: 2})"
     )
     gb.configure_column(
         "ValorVenda",
