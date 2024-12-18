@@ -165,7 +165,8 @@ def main():
 
     # Carregar dados de uma tabela com cache
     table_name = '"Produtos"'
-    campos = '"CodigoInterno", "Nome", "Descricao", "NomeGrupo", "Estoque", "EstoqueGalpao", "ValorCusto", "ValorVenda", "Localizacao"'
+    # campos = '"CodigoInterno", "Nome", "Descricao", "NomeGrupo", "EstoqueGalpao" as Estoque, "ValorCusto", "ValorVenda", "Localizacao"'
+    campos = '"CodigoInterno" as "Código Gestão","CodigoExpedicao" as "Código Expedição", "Nome", "Descricao" as "Descrição",  "NomeGrupo" as "Grupo", "EstoqueGalpao" as "Estoque", "ValorCusto", "ValorVenda", "Localizacao" as "Localização"'
     df = load_data(data_service, table_name, campos)
 
     # Garantir que as colunas de valor sejam numéricas
