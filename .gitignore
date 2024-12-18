@@ -1,0 +1,51 @@
+# Sistema operacional
+*.DS_Store
+*.swp
+Thumbs.db
+desktop.ini
+
+# Arquivos Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.env
+.env.*
+
+# Diretórios de virtualenv
+venv/
+env/
+.venv/
+.env/
+
+# Arquivos de configuração do IDE/editor
+.vscode/
+.idea/
+*.code-workspace
+
+# Arquivos gerados por Django
+db.sqlite3
+media/
+staticfiles/
+*.log
+
+# Arquivos de compilação
+*.egg
+*.egg-info/
+dist/
+build/
+*.so
+
+# Configurações de Deploy
+*.key
+*.crt
+*.pem
+
+# Arquivos do Git
+.git/
+.gitignore~
+*.orig
+*.rej
+
+# Arquivos de depuração
+debug.log
