@@ -123,7 +123,7 @@ def create_grid_options(df):
     gb.configure_column(
         "ValorCusto",
         type=["numericColumn", "numberColumnFilter"],
-        valueFormatter="'R$ ' + x.to LocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})"
+        valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFraction Digits: 2, maximumFractionDigits: 2})"
     )
     gb.configure_column(
         "ValorVenda",
@@ -164,20 +164,6 @@ def main():
         initial_sidebar_state="collapsed"
     )
     
-    # CSS para ocultar o botão Manage App, rodapé e cabeçalho
-    hide_st_style = """
-    <style>
-    #MainMenu {visibility: hidden;} 
-    footer {visibility: hidden;} 
-    header {visibility: hidden;} 
-    .stDeployButton {visibility: hidden;}  /* Oculta o botão Deploy */
-    [data-testid="stStatusWidget"] {visibility: hidden;}  /* Oculta os botões de status */
-    </style>
-    """
-    
-    # Aplicar o CSS
-    st.markdown(hide_st_style, unsafe_allow_html=True)
-
     # 1. Título
     st.title("Relatório de Estoque")
     
@@ -235,7 +221,7 @@ def main():
         with totals_container:
             if st.session_state.totals:
                 display_totals(st.session_state.totals)
-        st.markdown("---")
+                st.markdown("---")
         
         # Botão de download (usando dados filtrados)
         with col2:
