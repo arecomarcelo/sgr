@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /media/areco/Backup/Oficial/Linux/Projetos/sgr/venv
+set -gx VIRTUAL_ENV /media/areco/Backup/Linux/sgr/venv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
