@@ -1,4 +1,4 @@
-#!/media/areco/Backup/Linux/sgr/venv/bin/python3
+#!/media/areco/Backup/Oficial/Linux/Projetos/sgr/venv/bin/python3
 
 ##############################################################################
 #

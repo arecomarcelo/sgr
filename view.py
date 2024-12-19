@@ -75,24 +75,39 @@ def calculate_totals(data):
         'total_venda': float(valor_venda.sum())
     }
 
-def display_totals(totals):
-    col1, col2, col3 = st.columns(3)
+def display_totals(totals, df):
+    # Criando um container para os totalizadores e botão
+    container = st.container()
     
-    with col1:
-        st.metric(
-            label="Total Produtos",
-            value=format_number(totals['total_produtos'])
-        )
-    with col2:
-        st.metric(
-            label="Total Custo",
-            value=format_currency(totals['total_custo'])
-        )
-    with col3:
-        st.metric(
-            label="Total Venda",
-            value=format_currency(totals['total_venda'])
-        )
+    with container:
+        # Dividindo em 5 colunas: 3 para totalizadores, 1 vazia para espaço, 1 para o botão
+        col1, col2, col3, col_space, col_button = st.columns([2,2,2,3,1])
+        
+        with col1:
+            st.metric(
+                label="Total Produtos",
+                value=format_number(totals['total_produtos'])
+            )
+        with col2:
+            st.metric(
+                label="Total Custo",
+                value=format_currency(totals['total_custo'])
+            )
+        with col3:
+            st.metric(
+                label="Total Venda",
+                value=format_currency(totals['total_venda'])
+            )
+        with col_button:
+            st.write("")  # Espaço para alinhar verticalmente com as métricas
+            if st.download_button(
+                label="📥 Download Excel",
+                data=download_excel(df),
+                file_name="relatorio_estoque.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True  # Faz o botão usar a largura total da coluna
+            ):
+                st.success("Download iniciado!")
 
 def create_grid_options(df):
     gb = GridOptionsBuilder.from_dataframe(df)
@@ -103,7 +118,6 @@ def create_grid_options(df):
         suppressRowClickSelection=True,
         enableExcelExport=True,
         enableCsvExport=True,
-        quickFilterText='',
         onFirstDataRendered='onFirstDataRendered',
         onFilterChanged='onFilterChanged'
     )
@@ -123,7 +137,7 @@ def create_grid_options(df):
     gb.configure_column(
         "ValorCusto",
         type=["numericColumn", "numberColumnFilter"],
-        valueFormatter="'R$ ' + x.to LocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})"
+        valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})"
     )
     gb.configure_column(
         "ValorVenda",
@@ -142,20 +156,6 @@ def create_grid_options(df):
     gb.configure_column("ValorVenda", aggFunc="sum", header_name="Total Venda")
     
     return gb.build()
-
-def apply_global_filter(df, filter_text):
-    if not filter_text:
-        return df
-    
-    # Converter o texto do filtro para minúsculo para busca case-insensitive
-    filter_text = filter_text.lower()
-    
-    # Aplicar filtro em todas as colunas
-    mask = df.astype(str).apply(lambda x: x.str.lower()).apply(
-        lambda x: x.str.contains(filter_text, na=False)
-    ).any(axis=1)
-    
-    return df[mask]
 
 def main():
     st.set_page_config(
@@ -206,15 +206,6 @@ def main():
         # Container para os totalizadores
         totals_container = st.container()
         
-        # Adicionar filtro global e botão de download
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            global_filter = st.text_input("🔍 Filtro Global", "")
-        
-        # Aplicar filtro global se necessário
-        if global_filter:
-            df = apply_global_filter(df, global_filter)
-        
         # 3. Grid
         grid_options = create_grid_options(df)
         grid_response = AgGrid(
@@ -234,18 +225,8 @@ def main():
         # Exibir totalizadores no container do topo
         with totals_container:
             if st.session_state.totals:
-                display_totals(st.session_state.totals)
+                display_totals(st.session_state.totals, grid_response['data'])
         st.markdown("---")
-        
-        # Botão de download (usando dados filtrados)
-        with col2:
-            if st.download_button(
-                label="📥 Download Excel",
-                data=download_excel(grid_response['data']),
-                file_name="relatorio_estoque.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            ):
-                st.success("Download iniciado!")
             
     except Exception as e:
         st.error(f"Erro ao carregar os dados: {str(e)}")
