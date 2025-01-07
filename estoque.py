@@ -6,29 +6,29 @@ import pandas as pd
 from io import BytesIO
 import locale
 
-# Configurar a página antes de qualquer elemento ser carregado
-st.set_page_config(
-    page_title="SGR",
-    layout="wide",
-    # initial_sidebar_state="collapsed"
-)
+# # Configurar a página antes de qualquer elemento ser carregado
+# st.set_page_config(
+#     page_title="SGR",
+#     layout="wide",
+#     # initial_sidebar_state="collapsed"
+# )
 
-# CSS para ajustar a largura da tela de login
-estoque_style = """
-<style>
-[data-testid="stAppViewContainer"] {
-    max-width: 1800px; /* Ajuste a largura desejada */
-    margin: auto; /* Centraliza o conteúdo */
-    padding: 20px; /* Espaço interno */
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Efeito de sombra */
-    border-radius: 10px; /* Bordas arredondadas */
-    background-color: #f9f9f9; /* Cor de fundo */
-}
-</style>
-"""
+# # CSS para ajustar a largura da tela de login
+# estoque_style = """
+# <style>
+# [data-testid="stAppViewContainer"] {
+#     max-width: 1800px; /* Ajuste a largura desejada */
+#     margin: auto; /* Centraliza o conteúdo */
+#     padding: 20px; /* Espaço interno */
+#     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Efeito de sombra */
+#     border-radius: 10px; /* Bordas arredondadas */
+#     background-color: #f9f9f9; /* Cor de fundo */
+# }
+# </style>
+# """
 
-# Aplicar o CSS
-st.markdown(estoque_style, unsafe_allow_html=True)
+# # Aplicar o CSS
+# st.markdown(estoque_style, unsafe_allow_html=True)
 
 # Tentar configurar a localidade
 try:
