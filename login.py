@@ -4,22 +4,22 @@ import streamlit as st
 def login_screen(user_service):
   
     
-    # CSS para ajustar a largura da tela de login
-    login_style = """
-    <style>
-    [data-testid="stAppViewContainer"] {
-        max-width: 1000px; /* Ajuste a largura desejada */
-        margin: auto; /* Centraliza o conteúdo */
-        padding: 20px; /* Espaço interno */
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Efeito de sombra */
-        border-radius: 10px; /* Bordas arredondadas */
-        background-color: #f9f9f9; /* Cor de fundo */
-    }
-    </style>
-    """
+    # # CSS para ajustar a largura da tela de login
+    # login_style = """
+    # <style>
+    # [data-testid="stAppViewContainer"] {
+    #     max-width: 500px; /* Ajuste a largura desejada */
+    #     margin: auto; /* Centraliza o conteúdo */
+    #     padding: 20px; /* Espaço interno */
+    #     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Efeito de sombra */
+    #     border-radius: 10px; /* Bordas arredondadas */
+    #     background-color: #f9f9f9; /* Cor de fundo */
+    # }
+    # </style>
+    # """
 
-    # Aplicar o CSS
-    st.markdown(login_style, unsafe_allow_html=True)
+    # # Aplicar o CSS
+    # st.markdown(login_style, unsafe_allow_html=True)
 
     # Conteúdo da tela de login
     # st.subheader("Sistema de Gerenciamento de Relatórios")
