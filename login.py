@@ -19,7 +19,6 @@ def login_screen(user_service):
         padding: 20px; /* Espaço interno */
         box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Efeito de sombra */
         border-radius: 10px; /* Bordas arredondadas */
-        background-color: #f9f9f9; /* Cor de fundo */
     }
     </style>
     """
