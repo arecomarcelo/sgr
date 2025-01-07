@@ -1,6 +1,5 @@
-# service.py
 from django.contrib.auth.hashers import check_password
-from repository import UserRepository, DatabaseRepository
+from repository import UserRepository, DatabaseRepository, ExtratoRepository
 
 class DataService:
     def __init__(self):
@@ -14,11 +13,17 @@ class DataService:
         }
         # Inicializar o repositório com as configurações do banco de dados
         self.repository = DatabaseRepository(self.DB_CONFIG)
+        self.extrato_service = ExtratoService(self)  # Instanciando ExtratoService
 
     def get_data(self, table_name, campos):
         # Passar campos como uma lista diretamente
         return self.repository.fetch_data(table_name, campos)
 
+    def get_extratos_filtrados(self, data_inicial, data_final, empresas=None, centros_custo=None):
+        """
+        Obtém extratos filtrados com base nas datas e outros parâmetros.
+        """
+        return self.extrato_service.get_extratos_filtrados(data_inicial, data_final, empresas, centros_custo)
 
 class UserService:
     def __init__(self, data_service):
@@ -32,3 +37,13 @@ class UserService:
             permissions = self.user_repository.get_user_permissions(user[0])  # user[0] é o ID do usuário
             return True, permissions
         return False, []
+
+class ExtratoService:
+    def __init__(self, data_service):
+        self.extrato_repository = ExtratoRepository(data_service.DB_CONFIG)
+
+    def get_extratos_filtrados(self, data_inicial, data_final, empresas=None, centros_custo=None):
+        """
+        Obtém extratos filtrados com base nas datas e outros parâmetros.
+        """
+        return self.extrato_repository.get_extratos_filtrados(data_inicial, data_final, empresas, centros_custo)

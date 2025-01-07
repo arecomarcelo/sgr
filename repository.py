@@ -1,4 +1,3 @@
-# repository.py
 import pandas as pd
 import psycopg2
 from psycopg2 import sql
@@ -45,7 +44,6 @@ class UserRepository:
             cursor.close()
             conn.close()
 
-
 class DatabaseRepository:
     def __init__(self, db_config):
         self.db_config = db_config
@@ -70,3 +68,50 @@ class DatabaseRepository:
             return pd.read_sql(query, self.engine)
         except Exception as e:
             raise Exception(f"Erro ao buscar dados da tabela {table_name}: {e}")
+
+class ExtratoRepository:
+    def __init__(self, db_config):
+        self.db_config = db_config
+
+    def connect(self):
+        try:
+            conn = psycopg2.connect(**self.db_config)
+            return conn
+        except Exception as e:
+            raise Exception(f"Erro ao conectar ao banco de dados: {e}")
+
+    def get_extratos_filtrados(self, data_inicial, data_final, empresas=None, centros_custo=None):
+        conn = self.connect()
+        try:
+            cursor = conn.cursor()
+            query = sql.SQL("""
+                SELECT b.descricao AS Banco, e.agencia, e.conta_corrente, e."data", 
+                       e.documento, e.historico_descricao AS Descricao, e.valor, 
+                       e.debito_credito AS "D/C", em.nome AS Empresa, 
+                       cc.descricao AS CentroCusto
+                FROM "Extratos" e 
+                INNER JOIN "Bancos" b ON b.id = e.banco_id 
+                LEFT JOIN "Empresas" em ON em.id = e.empresa_id
+                LEFT JOIN "CentroCustos" cc ON cc.id = e.centrocusto_id
+                WHERE e."data" BETWEEN %s AND %s
+            """)
+
+            params = [data_inicial, data_final]
+            if empresas:
+                query += sql.SQL(" AND em.nome IN %s")
+                params.append(tuple(empresas))
+            if centros_custo:
+                query += sql.SQL(" AND cc.descricao IN %s")
+                params.append(tuple(centros_custo))
+
+            cursor.execute(query, params)
+            extratos = cursor.fetchall()
+
+            # Obter os nomes das colunas
+            colunas = [desc[0] for desc in cursor.description]
+
+            # Retornar um DataFrame
+            return pd.DataFrame(extratos, columns=colunas)
+        finally:
+            cursor.close()
+            conn.close()

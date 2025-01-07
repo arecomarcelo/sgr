@@ -6,6 +6,8 @@ from service import UserService, DataService
 from modules import menu
 from login import login_screen
 from estoque import main as estoque_main
+from extratos import main as extratos_main
+
 
 # Configurar Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
@@ -34,7 +36,7 @@ def main():
         elif st.session_state.current_module == "Cobrança":
             st.title("Módulo de Cobrança")
         elif st.session_state.current_module == "Financeiro":
-            st.title("Módulo Financeiro")
+            extratos_main()
 
 if __name__ == "__main__":
     main()
