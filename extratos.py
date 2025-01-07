@@ -23,7 +23,7 @@ class ExtratosReport:
         try:
             locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
         except locale.Error:
-            st.warning("A localidade 'pt_BR.UTF-8' não está disponível. Usando a localidade padrão.")
+            # st.warning("A localidade 'pt_BR.UTF-8' não está disponível. Usando a localidade padrão.")
             locale.setlocale(locale.LC_ALL, 'C')
 
     def configure_page(self):
