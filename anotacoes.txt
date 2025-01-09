@@ -32,3 +32,4 @@ git config --global user.email "marcelo.areco@hotmail.com"
 
 streamlit run app.py
 
+

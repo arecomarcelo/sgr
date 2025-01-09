@@ -13,6 +13,11 @@ def login_screen(user_service):
     # CSS para ajustar a largura da tela de login
     login_style = """
     <style>
+    #MainMenu {visibility: hidden;} 
+    footer {visibility: hidden;} 
+    header {visibility: hidden;} 
+    .stDeployButton {visibility: hidden;}
+    [data-testid="stStatusWidget"] {visibility: hidden;}        
     [data-testid="stAppViewContainer"] {
         max-width: 500px; /* Ajuste a largura desejada */
         margin: auto; /* Centraliza o conteúdo */

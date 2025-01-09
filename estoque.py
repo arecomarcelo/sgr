@@ -5,6 +5,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 import pandas as pd
 from io import BytesIO
 import locale
+from style_utils import apply_default_style
 
 # Tentar configurar a localidade
 try:
@@ -159,19 +160,22 @@ def create_grid_options(df):
     return gb.build()
 
 def main():
-    # CSS para ocultar o botão Manage App, rodapé e cabeçalho
-    hide_st_style = """
-    <style>
-    #MainMenu {visibility: hidden;} 
-    footer {visibility: hidden;} 
-    header {visibility: hidden;} 
-    .stDeployButton {visibility: hidden;}  /* Oculta o botão Deploy */
-    [data-testid="stStatusWidget"] {visibility: hidden;}  /* Oculta os botões de status */
-    </style>
-    """
+    # # CSS para ocultar o botão Manage App, rodapé e cabeçalho
+    # hide_st_style = """
+    # <style>
+    # #MainMenu {visibility: hidden;} 
+    # footer {visibility: hidden;} 
+    # header {visibility: hidden;} 
+    # .stDeployButton {visibility: hidden;}  /* Oculta o botão Deploy */
+    # [data-testid="stStatusWidget"] {visibility: hidden;}  /* Oculta os botões de status */
+    # </style>
+    # """
     
-    # Aplicar o CSS
-    st.markdown(hide_st_style, unsafe_allow_html=True)
+    # # Aplicar o CSS
+    # st.markdown(hide_st_style, unsafe_allow_html=True)
+
+    # Aplica o estilo padrão
+    apply_default_style()    
 
     # 1. Título
     st.title("Relatório de Estoque")

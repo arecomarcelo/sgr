@@ -17,7 +17,9 @@ django.setup()
 data_service = DataService()
 user_service = UserService(data_service)
 
-def main():        
+def main():  
+    
+          
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
     if 'current_module' not in st.session_state:

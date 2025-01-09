@@ -7,6 +7,7 @@ import locale
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import openpyxl
+from style_utils import apply_default_style
 
 class ExtratosReport:
     """
