@@ -1,7 +1,10 @@
 # modules.py
 import streamlit as st
+from style_utils import apply_default_style
 
 def menu():
+    # Aplica o estilo padrão
+    apply_default_style()     
     st.sidebar.title("Menu Principal")
     
     # Definindo os módulos e suas permissões necessárias
