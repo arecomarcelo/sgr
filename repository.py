@@ -83,6 +83,9 @@ class ExtratoRepository:
     def get_extratos_filtrados(self, data_inicial, data_final, empresas=None, centros_custo=None):
         conn = self.connect()
         try:
+            # data_inicial += ' 00:00:00'
+            # data_final += ' 23:59:59'
+
             cursor = conn.cursor()
             query = sql.SQL("""
                 SELECT b.descricao AS Banco, e.agencia, e.conta_corrente, e."data", 
@@ -115,3 +118,41 @@ class ExtratoRepository:
         finally:
             cursor.close()
             conn.close()
+
+class BoletoRepository:
+    def __init__(self, db_config):
+        self.db_config = db_config
+
+    def connect(self):
+        try:
+            conn = psycopg2.connect(**self.db_config)
+            return conn
+        except Exception as e:
+            raise Exception(f"Erro ao conectar ao banco de dados: {e}")
+
+    def get_boletos_filtrados(self, data_inicial, data_final):
+        conn = self.connect()
+        try:
+            data_inicial += ' 00:00:00'
+            data_final += ' 23:59:59'
+            
+            cursor = conn.cursor()
+            query = sql.SQL("""
+                select "Nome", "Boleto", "Vencimento", "DataHoraEnvio" as Envio, "Status" 
+                from "Boletos"
+                WHERE "DataHoraEnvio" BETWEEN %s AND %s                            
+            """)
+            
+            params = [data_inicial, data_final]
+
+            cursor.execute(query, params)
+            extratos = cursor.fetchall()
+
+            # Obter os nomes das colunas
+            colunas = [desc[0] for desc in cursor.description]
+
+            # Retornar um DataFrame
+            return pd.DataFrame(extratos, columns=colunas)
+        finally:
+            cursor.close()
+            conn.close()            

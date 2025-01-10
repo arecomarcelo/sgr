@@ -1,5 +1,5 @@
 from django.contrib.auth.hashers import check_password
-from repository import UserRepository, DatabaseRepository, ExtratoRepository
+from repository import UserRepository, DatabaseRepository, ExtratoRepository, BoletoRepository
 
 class DataService:
     def __init__(self):
@@ -14,6 +14,7 @@ class DataService:
         # Inicializar o repositório com as configurações do banco de dados
         self.repository = DatabaseRepository(self.DB_CONFIG)
         self.extrato_service = ExtratoService(self)  # Instanciando ExtratoService
+        self.boletos_service = BoletoService(self)  # Instanciando BoletosService
 
     def get_data(self, table_name, campos):
         # Passar campos como uma lista diretamente
@@ -24,6 +25,12 @@ class DataService:
         Obtém extratos filtrados com base nas datas e outros parâmetros.
         """
         return self.extrato_service.get_extratos_filtrados(data_inicial, data_final, empresas, centros_custo)
+    
+    def get_boletos_filtrados(self, data_inicial, data_final):
+        """
+        Obtém boletos filtrados com base nas datas.
+        """
+        return self.boletos_service.get_boletos_filtrados(data_inicial, data_final)
 
 class UserService:
     def __init__(self, data_service):
@@ -47,3 +54,13 @@ class ExtratoService:
         Obtém extratos filtrados com base nas datas e outros parâmetros.
         """
         return self.extrato_repository.get_extratos_filtrados(data_inicial, data_final, empresas, centros_custo)
+
+class BoletoService:
+    def __init__(self, data_service):
+        self.boleto_repository = BoletoRepository(data_service.DB_CONFIG)
+
+    def get_boletos_filtrados(self, data_inicial, data_final):
+        """
+        Obtém Boletos filtrados com base nas datas.
+        """
+        return self.boleto_repository.get_boletos_filtrados(data_inicial, data_final)

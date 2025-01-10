@@ -7,6 +7,7 @@ from modules import menu
 from login import login_screen
 from estoque import main as estoque_main
 from extratos import main as extratos_main
+from boletos import main as boletos_main 
 
 
 # Configurar Django
@@ -36,7 +37,7 @@ def main():
         if st.session_state.current_module == "Estoque":
             estoque_main()
         elif st.session_state.current_module == "Cobrança":
-            st.title("Módulo de Cobrança")
+            boletos_main()
         elif st.session_state.current_module == "Financeiro":
             extratos_main()
 
