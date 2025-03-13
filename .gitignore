@@ -10,8 +10,7 @@ desktop.ini
 *.pyd
 __pycache__
 __pycache__/
-*.env
-.env.*
+
 
 # Diretórios de virtualenv
 venv/
