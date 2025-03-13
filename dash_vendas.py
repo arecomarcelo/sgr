@@ -171,7 +171,8 @@ class DataService:
         Returns:
             str: Valor formatado
         """
-        return locale.currency(valor, grouping=True)
+        # return locale.currency(valor, grouping=True)
+        return f"R${valor:,.2f}".replace('.', '#').replace(',', '.').replace('#', ',')#Areco aqui
     
     def prepare_data_pizza_vendedores(self, df, mes_atual=True):
         """
