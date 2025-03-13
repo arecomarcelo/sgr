@@ -1,4 +1,4 @@
-#!/media/areco/Backup/Oficial/Linux/Projetos/sgr/venv/bin/python3
+#!/home/areco/Oficial/Projetos/sgr/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
