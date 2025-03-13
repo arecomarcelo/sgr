@@ -11,8 +11,7 @@ from dotenv import load_dotenv
 import locale
 
 # Configuração do locale para formatação de valores monetários
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
+# locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 # Configuração da página
 st.set_page_config(
@@ -236,6 +235,14 @@ class DashboardView:
             data_service (DataService): Serviço de dados
         """
         self.data_service = data_service
+        self.configure_locale()
+
+    def configure_locale(self):
+        """Configura localização para formato brasileiro"""
+        try:
+            locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+        except locale.Error:
+            locale.setlocale(locale.LC_ALL, 'C')        
     
     def render_filters(self, df):
         """
