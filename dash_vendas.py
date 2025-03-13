@@ -69,14 +69,20 @@ def apply_custom_css():
 apply_custom_css()
 
 # Carregando variáveis de ambiente
-load_dotenv()
+# load_dotenv()
 
 # Configuração do banco de dados
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME")
+# DB_USER = os.getenv("DB_USER")
+# DB_PASSWORD = os.getenv("DB_PASSWORD")
+# DB_HOST = os.getenv("DB_HOST", "localhost")
+# DB_PORT = os.getenv("DB_PORT", "5432")
+# DB_NAME = os.getenv("DB_NAME")
+
+DB_USER='postgres'
+DB_PASSWORD='Zyxelpar100448'
+DB_HOST='195.200.1.244'
+DB_PORT=5432
+DB_NAME='sga'
 
 # Classe para manipulação de dados
 class DataService:
