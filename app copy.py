@@ -341,134 +341,80 @@ class DashboardView:
         
         return df_filtered
     
-    # def render_metrics(self, df, df_pagamentos):
-    #     """
-    #     Renderiza as métricas principais do dashboard
+    def render_metrics(self, df, df_pagamentos):
+        """
+        Renderiza as métricas principais do dashboard
         
-    #     Args:
-    #         df (pandas.DataFrame): DataFrame com os dados de vendas
-    #         df_pagamentos (pandas.DataFrame): DataFrame com os dados de pagamentos
-    #     """
-    #     # Aplicar CSS novamente antes de renderizar as métricas
-    #     apply_custom_css()
+        Args:
+            df (pandas.DataFrame): DataFrame com os dados de vendas
+            df_pagamentos (pandas.DataFrame): DataFrame com os dados de pagamentos
+        """
+        # Aplicar CSS novamente antes de renderizar as métricas
+        apply_custom_css()
         
-    #     st.markdown("<h2 class='main-header'>Métricas de Vendas</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 class='main-header'>Métricas de Vendas</h2>", unsafe_allow_html=True)
         
-    #     col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4 = st.columns(4)
         
-    #     with col1:
-    #         # Total de vendas (quantidade)
-    #         total_qtd = len(df)
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{locale.format_string("%d", total_qtd, grouping=True)}</div>
-    #                 <div class="metric-label">Total de Vendas (Quantidade)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-        
-    #     with col2:
-    #         # Entradas
-    #         entradas = df_pagamentos[df_pagamentos['DataVencimento'] <= datetime.now()]['Valor'].sum()
-    #         entradas_formatado = self.data_service.formatar_valor(entradas)
-            
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{entradas_formatado}</div>
-    #                 <div class="metric-label">Total de Entrada (Valor)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-        
-    #     with col3:
-    #         # Parcelado
-    #         parcelado = df_pagamentos[df_pagamentos['DataVencimento'] > datetime.now()]['Valor'].sum()
-    #         parcelado_formatado = self.data_service.formatar_valor(parcelado)
-            
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{parcelado_formatado}</div>
-    #                 <div class="metric-label">Total Parcelado (Valor)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-        
-    #     with col4:
-    #         # Total de vendas (valor)
-    #         # total_valor = df['ValorTotal'].sum()
-    #         total_valor = entradas + parcelado
-    #         valor_formatado = self.data_service.formatar_valor(total_valor)
-            
-            
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{valor_formatado}</div>
-    #                 <div class="metric-label">Total de Vendas (Valor)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-
-    def render_metrics(self, df_filtered, df_pagamentos):
-            """
-            Renderiza as métricas principais do dashboard com base nos filtros aplicados
-            
-            Args:
-                df_filtered (pandas.DataFrame): DataFrame filtrado com os dados de vendas
-                df_pagamentos (pandas.DataFrame): DataFrame com os dados de pagamentos
-            """
-            st.markdown("<h2 class='main-header'>Métricas de Vendas</h2>", unsafe_allow_html=True)
-            
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                total_qtd = len(df_filtered)
-                st.markdown(f"""
+        with col1:
+            # Total de vendas (quantidade)
+            total_qtd = len(df)
+            st.markdown(
+                f"""
                 <div class="metric-card">
-                    <div class="metric-value">{total_qtd}</div>
+                    <div class="metric-value">{locale.format_string("%d", total_qtd, grouping=True)}</div>
                     <div class="metric-label">Total de Vendas (Quantidade)</div>
                 </div>
-                """, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True
+            )
+        
+        with col2:
+            # Entradas
+            entradas = df_pagamentos[df_pagamentos['DataVencimento'] <= datetime.now()]['Valor'].sum()
+            entradas_formatado = self.data_service.formatar_valor(entradas)
             
-            # Filtrando pagamentos com base nos IDs de vendas filtradas
-            df_pagamentos_filtrados = df_pagamentos[df_pagamentos['Venda_ID'].isin(df_filtered['ID_Gestao'])]
-            
-            with col2:
-                entradas = df_pagamentos_filtrados[df_pagamentos_filtrados['DataVencimento'] <= datetime.now()]['Valor'].sum()
-                entrada_formatado = self.data_service.formatar_valor(entradas)
-                st.markdown(f"""
+            st.markdown(
+                f"""
                 <div class="metric-card">
-                    <div class="metric-value">{entrada_formatado}</div>
+                    <div class="metric-value">{entradas_formatado}</div>
                     <div class="metric-label">Total de Entrada (Valor)</div>
                 </div>
-                """, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True
+            )
+        
+        with col3:
+            # Parcelado
+            parcelado = df_pagamentos[df_pagamentos['DataVencimento'] > datetime.now()]['Valor'].sum()
+            parcelado_formatado = self.data_service.formatar_valor(parcelado)
             
-            with col3:
-                parcelado = df_pagamentos_filtrados[df_pagamentos_filtrados['DataVencimento'] > datetime.now()]['Valor'].sum()
-                parcelado_formatado = self.data_service.formatar_valor(parcelado)
-                st.markdown(f"""
+            st.markdown(
+                f"""
                 <div class="metric-card">
                     <div class="metric-value">{parcelado_formatado}</div>
                     <div class="metric-label">Total Parcelado (Valor)</div>
                 </div>
-                """, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True
+            )
+        
+        with col4:
+            # Total de vendas (valor)
+            # total_valor = df['ValorTotal'].sum()
+            total_valor = entradas + parcelado
+            valor_formatado = self.data_service.formatar_valor(total_valor)
             
-            with col4:
-                total_valor = entradas + parcelado
-                total_valor_formatado = self.data_service.formatar_valor(total_valor)
-                st.markdown(f"""
+            
+            st.markdown(
+                f"""
                 <div class="metric-card">
-                    <div class="metric-value">{total_valor_formatado}</div>
+                    <div class="metric-value">{valor_formatado}</div>
                     <div class="metric-label">Total de Vendas (Valor)</div>
                 </div>
-                """, unsafe_allow_html=True)    
+                """,
+                unsafe_allow_html=True
+            )
 
     def render_charts(self, df):
         """
@@ -797,17 +743,6 @@ def main():
     # Criar string de conexão e iniciar dashboard
     connection_string = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     iniciar_dashboard(connection_string)    
-
-
-    # # Inicializar serviço de dados e carregar dados
-    # data_service = DataService(connection_string)
-    # df_vendas = data_service.get_vendas_data()
-    # df_pagamentos = data_service.get_pagamentos_data()
-    
-    # # Inicializar visualização
-    # dashboard_view = DashboardView()
-    # df_filtered = dashboard_view.apply_filters(df_vendas)
-    # dashboard_view.render_metrics(df_filtered, df_pagamentos)    
 
 if __name__ == "__main__":
     main()
