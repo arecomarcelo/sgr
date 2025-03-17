@@ -62,6 +62,24 @@ def apply_custom_css():
         th {
             text-align: center;
         }
+        /* Estilo para os cards de atualização */
+        .atualizacao-card {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 0.5rem;  /* Reduzindo o padding */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .atualizacao-value {
+            font-size: 1.2rem;  /* Reduzindo o tamanho da fonte */
+            font-weight: 700;
+            color: #1E88E5;
+        }
+        .atualizacao-label {
+            font-size: 0.8rem;  /* Reduzindo o tamanho da fonte */
+            color: #6c757d;
+            margin-top: 0.2rem;  /* Reduzindo o espaçamento */
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -252,6 +270,21 @@ class DataService:
         
         return vendas_por_vendedor
 
+    def get_atualizacao_data(self):
+        """
+        Obtém os dados de atualização da tabela VendaAtualizacao
+        
+        Returns:
+            pandas.DataFrame: DataFrame com os dados de atualização
+        """
+        try:
+            query = "SELECT * FROM \"VendaAtualizacao\" LIMIT 1"
+            df = pd.read_sql_query(text(query), self.engine)
+            return df
+        except Exception as e:
+            st.error(f"Erro ao obter dados de atualização: {e}")
+            return pd.DataFrame()
+
 # Classe para visualização de dados
 class DashboardView:
     def __init__(self, data_service):
@@ -286,7 +319,6 @@ class DashboardView:
         # Aplicar CSS novamente antes de renderizar os filtros
         apply_custom_css()
         
-        st.markdown("<div class='filter-section'>", unsafe_allow_html=True)
         st.subheader("Filtros")
         
         col1, col2 = st.columns(2)
@@ -683,6 +715,132 @@ class DashboardView:
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
+    # def render_atualizacao_info(self):
+    #     """
+    #     Renderiza o painel de informações de atualização
+    #     """
+    #     # Obter dados de atualização
+    #     df_atualizacao = self.data_service.get_atualizacao_data()
+        
+    #     if df_atualizacao.empty:
+    #         st.warning("Não há dados de atualização disponíveis.")
+    #         return
+        
+    #     # Extrair os valores da última atualização
+    #     data = df_atualizacao.iloc[0]['Data']
+    #     hora = df_atualizacao.iloc[0]['Hora']
+    #     periodo = df_atualizacao.iloc[0]['Periodo']
+    #     inseridos = df_atualizacao.iloc[0]['Inseridos']
+    #     atualizados = df_atualizacao.iloc[0]['Atualizados']
+        
+    #     # Renderizar os cards
+    #     st.markdown("<h2 class='main-header'>Informações de Atualização</h2>", unsafe_allow_html=True)
+        
+    #     col1, col2, col3, col4, col5 = st.columns(5)
+        
+    #     with col1:
+    #         st.markdown(f"""
+    #         <div class="metric-card">
+    #             <div class="metric-value">{data}</div>
+    #             <div class="metric-label">Data</div>
+    #         </div>
+    #         """, unsafe_allow_html=True)
+        
+    #     with col2:
+    #         st.markdown(f"""
+    #         <div class="metric-card">
+    #             <div class="metric-value">{hora}</div>
+    #             <div class="metric-label">Hora</div>
+    #         </div>
+    #         """, unsafe_allow_html=True)
+        
+    #     with col3:
+    #         st.markdown(f"""
+    #         <div class="metric-card">
+    #             <div class="metric-value">{periodo}</div>
+    #             <div class="metric-label">Período</div>
+    #         </div>
+    #         """, unsafe_allow_html=True)
+        
+    #     with col4:
+    #         st.markdown(f"""
+    #         <div class="metric-card">
+    #             <div class="metric-value">{inseridos}</div>
+    #             <div class="metric-label">Inseridos</div>
+    #         </div>
+    #         """, unsafe_allow_html=True)
+        
+    #     with col5:
+    #         st.markdown(f"""
+    #         <div class="metric-card">
+    #             <div class="metric-value">{atualizados}</div>
+    #             <div class="metric-label">Atualizados</div>
+    #         </div>
+    #         """, unsafe_allow_html=True)
+
+    def render_atualizacao_info(self):
+        """
+        Renderiza o painel de informações de atualização
+        """
+        # Obter dados de atualização
+        df_atualizacao = self.data_service.get_atualizacao_data()
+        
+        if df_atualizacao.empty:
+            st.warning("Não há dados de atualização disponíveis.")
+            return
+        
+        # Extrair os valores da última atualização
+        data = df_atualizacao.iloc[0]['Data']
+        hora = df_atualizacao.iloc[0]['Hora']
+        periodo = df_atualizacao.iloc[0]['Periodo']
+        inseridos = df_atualizacao.iloc[0]['Inseridos']
+        atualizados = df_atualizacao.iloc[0]['Atualizados']
+        
+        # Renderizar os cards
+        st.markdown("<h2 class='main-header'>Informações de Atualização</h2>", unsafe_allow_html=True)
+        
+        col1, col2, col3, col4, col5 = st.columns(5)
+        
+        with col1:
+            st.markdown(f"""
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{data}</div>
+                <div class="atualizacao-label">Data</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{hora}</div>
+                <div class="atualizacao-label">Hora</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{periodo}</div>
+                <div class="atualizacao-label">Período</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown(f"""
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{inseridos}</div>
+                <div class="atualizacao-label">Inseridos</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col5:
+            st.markdown(f"""
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{atualizados}</div>
+                <div class="atualizacao-label">Atualizados</div>
+            </div>
+            """, unsafe_allow_html=True)    
+
 def iniciar_dashboard(connection_string):
     """
     Inicializa e renderiza o dashboard
@@ -692,7 +850,7 @@ def iniciar_dashboard(connection_string):
     """
     # Título do dashboard
     st.markdown("<h1 class='main-header'>Dashboard de Análise de Vendas</h1>", unsafe_allow_html=True)
-    
+
     # Inicializar serviço de dados
     data_service = DataService(connection_string)
     
@@ -723,6 +881,9 @@ def iniciar_dashboard(connection_string):
     
     # Inicializar visualização
     dashboard_view = DashboardView(data_service)
+    
+    # Renderizar painel de atualização
+    dashboard_view.render_atualizacao_info()
     
     # Renderizar filtros
     data_inicio, data_fim, vendedor, situacao = dashboard_view.render_filters(df_vendas)
