@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, text
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import locale
+import io  # Importando a biblioteca io para manipulação de buffers
 
 # Configuração da página
 st.set_page_config(
@@ -24,7 +25,7 @@ def apply_custom_css():
         .main-header {
             font-size: 2.5rem;
             font-weight: 700;
-            color: #1E88E5;
+            color: #FFFFFF;
             text-align: center;
             margin-bottom: 1.5rem;
         }
@@ -57,6 +58,9 @@ def apply_custom_css():
             padding: 1rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             margin-bottom: 1.5rem;
+        }
+        th {
+            text-align: center;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -289,12 +293,14 @@ class DashboardView:
         
         with col1:
             # Filtro de data inicial usando widget padrão
-            data_min = df['Data'].min().date() if not df.empty else datetime.now().date() - timedelta(days=365)
+            hoje = datetime.now()
+            primeiro_dia_mes = datetime(hoje.year, hoje.month, 1)
+            data_min = primeiro_dia_mes.date()
             data_inicio = st.date_input("Data Inicial:", value=data_min, min_value=data_min, max_value=datetime.now().date(), format="DD/MM/YYYY")
         
         with col2:
             # Filtro de data final usando widget padrão
-            data_max = df['Data'].max().date() if not df.empty else datetime.now().date()
+            data_max = (datetime.now() - timedelta(days=1)).date()
             data_fim = st.date_input("Data Final:", value=data_max, min_value=data_min, max_value=data_max, format="DD/MM/YYYY")
         
         col3, col4 = st.columns(2)
@@ -341,81 +347,6 @@ class DashboardView:
         
         return df_filtered
     
-    # def render_metrics(self, df, df_pagamentos):
-    #     """
-    #     Renderiza as métricas principais do dashboard
-        
-    #     Args:
-    #         df (pandas.DataFrame): DataFrame com os dados de vendas
-    #         df_pagamentos (pandas.DataFrame): DataFrame com os dados de pagamentos
-    #     """
-    #     # Aplicar CSS novamente antes de renderizar as métricas
-    #     apply_custom_css()
-        
-    #     st.markdown("<h2 class='main-header'>Métricas de Vendas</h2>", unsafe_allow_html=True)
-        
-    #     col1, col2, col3, col4 = st.columns(4)
-        
-    #     with col1:
-    #         # Total de vendas (quantidade)
-    #         total_qtd = len(df)
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{locale.format_string("%d", total_qtd, grouping=True)}</div>
-    #                 <div class="metric-label">Total de Vendas (Quantidade)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-        
-    #     with col2:
-    #         # Entradas
-    #         entradas = df_pagamentos[df_pagamentos['DataVencimento'] <= datetime.now()]['Valor'].sum()
-    #         entradas_formatado = self.data_service.formatar_valor(entradas)
-            
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{entradas_formatado}</div>
-    #                 <div class="metric-label">Total de Entrada (Valor)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-        
-    #     with col3:
-    #         # Parcelado
-    #         parcelado = df_pagamentos[df_pagamentos['DataVencimento'] > datetime.now()]['Valor'].sum()
-    #         parcelado_formatado = self.data_service.formatar_valor(parcelado)
-            
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{parcelado_formatado}</div>
-    #                 <div class="metric-label">Total Parcelado (Valor)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-        
-    #     with col4:
-    #         # Total de vendas (valor)
-    #         # total_valor = df['ValorTotal'].sum()
-    #         total_valor = entradas + parcelado
-    #         valor_formatado = self.data_service.formatar_valor(total_valor)
-            
-            
-    #         st.markdown(
-    #             f"""
-    #             <div class="metric-card">
-    #                 <div class="metric-value">{valor_formatado}</div>
-    #                 <div class="metric-label">Total de Vendas (Valor)</div>
-    #             </div>
-    #             """,
-    #             unsafe_allow_html=True
-    #         )
-
     def render_metrics(self, df_filtered, df_pagamentos):
             """
             Renderiza as métricas principais do dashboard com base nos filtros aplicados
@@ -639,6 +570,42 @@ class DashboardView:
         st.plotly_chart(fig, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
     
+    def render_grid(self, df):
+        """
+        Renderiza um grid com os campos: ClienteNome, VendedorNome, ValorProdutos, DescontoValor e ValorTotal
+        
+        Args:
+            df (pandas.DataFrame): DataFrame com os dados de vendas
+        """
+        with st.expander("Dados da Venda"):
+            # Selecionar apenas as colunas necessárias
+            df_grid = df[['ClienteNome', 'VendedorNome', 'ValorProdutos', 'DescontoValor', 'ValorTotal']]
+            
+            # Renomear as colunas para os cabeçalhos desejados
+            df_grid.columns = ['Cliente', 'Vendedor', 'Valor Venda', 'Desconto', 'Valor Total']
+            
+            # Formatando valores para moeda brasileira
+            df_grid['Valor Venda'] = df_grid['Valor Venda'].apply(lambda x: self.data_service.formatar_valor(x))
+            df_grid['Desconto'] = df_grid['Desconto'].apply(lambda x: self.data_service.formatar_valor(x))
+            df_grid['Valor Total'] = df_grid['Valor Total'].apply(lambda x: self.data_service.formatar_valor(x))
+            
+            # Renderizar o grid usando st.dataframe para manter o mesmo estilo da sessão "Detalhes Adicionais"
+            st.dataframe(df_grid, height=300)
+            
+            # Botão para download dos dados em Excel
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                df_grid.to_excel(writer, index=False, sheet_name='Dados_Venda')
+                writer.close()  # Usando close() em vez de save()
+                buffer.seek(0)
+            
+            st.download_button(
+                label="📥 Download dos Dados (Excel)",
+                data=buffer,
+                file_name=f"dados_venda_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+    
     def render_additional_info(self, df):
         """
         Renderiza informações adicionais úteis para análise
@@ -656,13 +623,18 @@ class DashboardView:
             with tab1:
                 st.dataframe(df, height=300)
                 
-                # Opção para download dos dados
-                csv = df.to_csv(index=False)
+                # Botão para download dos dados em Excel
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                    df.to_excel(writer, index=False, sheet_name='Dados_Completos')
+                    writer.close()  # Usando close() em vez de save()
+                    buffer.seek(0)
+                
                 st.download_button(
-                    label="Download dos Dados (CSV)",
-                    data=csv,
-                    file_name=f"vendas_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
+                    label="📥 Download dos Dados (Excel)",
+                    data=buffer,
+                    file_name=f"dados_completos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.ms-excel"
                 )
             
             with tab2:
@@ -764,6 +736,9 @@ def iniciar_dashboard(connection_string):
     # Renderizar gráficos (agora com método unificado que inclui ambos os gráficos)
     dashboard_view.render_charts(df_filtrado)
     
+    # Renderizar grid
+    dashboard_view.render_grid(df_filtrado)
+    
     # Renderizar informações adicionais
     dashboard_view.render_additional_info(df_filtrado)
 
@@ -797,17 +772,6 @@ def main():
     # Criar string de conexão e iniciar dashboard
     connection_string = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     iniciar_dashboard(connection_string)    
-
-
-    # # Inicializar serviço de dados e carregar dados
-    # data_service = DataService(connection_string)
-    # df_vendas = data_service.get_vendas_data()
-    # df_pagamentos = data_service.get_pagamentos_data()
-    
-    # # Inicializar visualização
-    # dashboard_view = DashboardView()
-    # df_filtered = dashboard_view.apply_filters(df_vendas)
-    # dashboard_view.render_metrics(df_filtered, df_pagamentos)    
 
 if __name__ == "__main__":
     main()
