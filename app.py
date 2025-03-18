@@ -134,13 +134,13 @@ class DataService:
             df = pd.read_sql_query(text(query), self.engine)
             
             # Convertendo colunas de valores para float
-            valor_columns = ['ValorTotal', 'DescontoValor', 'ValorProdutos', 'ValorCusto']
+            valor_columns = ['ValorTotal', 'ValorDesconto', 'ValorProdutos', 'ValorCusto']
             for col in valor_columns:
                 df = df[df[col].str.strip() != ''] # Remove linhas com strings vazias
                 df[col] = df[col].str.replace(',', '.').astype(float) # Converte para float
                 
             # Convertendo colunas de data para datetime
-            date_columns = ['Data', 'PrevisaoEntrega', 'DataPrimeiraParcela']
+            date_columns = ['Data']
             for col in date_columns:
                 df[col] = pd.to_datetime(df[col], errors='coerce')
             
@@ -604,14 +604,14 @@ class DashboardView:
     
     def render_grid(self, df):
         """
-        Renderiza um grid com os campos: ClienteNome, VendedorNome, ValorProdutos, DescontoValor e ValorTotal
+        Renderiza um grid com os campos: ClienteNome, VendedorNome, ValorProdutos, ValorDesconto e ValorTotal
         
         Args:
             df (pandas.DataFrame): DataFrame com os dados de vendas
         """
         with st.expander("Dados da Venda"):
             # Selecionar apenas as colunas necessárias
-            df_grid = df[['ClienteNome', 'VendedorNome', 'ValorProdutos', 'DescontoValor', 'ValorTotal']]
+            df_grid = df[['ClienteNome', 'VendedorNome', 'ValorProdutos', 'ValorDesconto', 'ValorTotal']]
             
             # Renomear as colunas para os cabeçalhos desejados
             df_grid.columns = ['Cliente', 'Vendedor', 'Valor Venda', 'Desconto', 'Valor Total']
@@ -671,7 +671,7 @@ class DashboardView:
             
             with tab2:
                 if not df.empty:
-                    col1, col2, col3 = st.columns(3)
+                    col1, col2 = st.columns(2)
                     
                     with col1:
                         # Ticket médio
@@ -684,11 +684,11 @@ class DashboardView:
                             margem_total = ((df['ValorTotal'].sum() - df['ValorCusto'].sum()) / df['ValorTotal'].sum()) * 100
                             st.metric("Margem Média", f"{margem_total:.2f}%")
                     
-                    with col3:
-                        # Desconto médio
-                        df = df[df['DescontoPorcentagem'].str.strip() != ''] # Remove linhas com strings vazias
-                        desconto_medio = df['DescontoPorcentagem'].astype(float).mean()  
-                        st.metric("Desconto Médio", f"{desconto_medio:.2f}%")
+                    # with col3:
+                    #     # Desconto médio
+                    #     df = df[df['DescontoPorcentagem'].str.strip() != ''] # Remove linhas com strings vazias
+                    #     desconto_medio = df['DescontoPorcentagem'].astype(float).mean()  
+                    #     st.metric("Desconto Médio", f"{desconto_medio:.2f}%")
             
             with tab3:
                 if not df.empty:
