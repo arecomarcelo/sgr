@@ -216,7 +216,7 @@ def main(key=None):
                     theme='alpine',
                     allow_unsafe_jscode=True,
                     reload_data=True,
-                    key=f'grid_{key}'  # Adicionando a chave única
+                    key=f'grid_{key}'  # Chave única para o grid
                 )
         
         # Atualizar totalizadores

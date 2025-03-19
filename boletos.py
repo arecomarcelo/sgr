@@ -334,7 +334,7 @@ class BoletosReport:
                         theme='alpine',
                         allow_unsafe_jscode=True,
                         reload_data=True,
-                        key=f'grid_{key}'  # Adicionando a chave única
+                        key=f'grid_{key}'  # Chave única para o grid
                     )
             
             totals = self.calculate_totals(grid_response['data'])
