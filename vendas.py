@@ -848,7 +848,7 @@ def iniciar_dashboard(connection_string):
     dashboard_view.render_additional_info(df_filtrado)
 
 # Função principal
-def main():
+def main(key=None):
     # Verificar se as variáveis de ambiente estão definidas
     if not all([DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME]):
         st.error("""

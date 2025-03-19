@@ -302,46 +302,7 @@ class BoletosReport:
             st.error(f"Erro ao gerar arquivo Excel: {str(e)}")
             return None
 
-    # def run(self):
-    #     """Método principal que executa o relatório"""
-    #     st.title("Relatório de Boletos Enviados")
-        
-    #     try:
-    #         filtros = self.render_filters()
-    #         df = self.load_data(
-    #             data_inicial=filtros['data_inicial'],
-    #             data_final=filtros['data_final']
-    #         )
-            
-    #         if df.empty:
-    #             st.warning("Não foram encontrados dados para os filtros selecionados.")
-    #             return
-            
-    #         totals_container = st.container()
-    #         grid_options = self.create_grid_options(df)
-    #         grid_response = AgGrid(
-    #             df,
-    #             gridOptions=grid_options,
-    #             height=800,
-    #             fit_columns_on_grid_load=True,
-    #             theme='alpine',
-    #             allow_unsafe_jscode=True,
-    #             reload_data=True,
-    #             key='grid'
-    #         )
-            
-    #         totals = self.calculate_totals(grid_response['data'])
-            
-    #         with totals_container:
-    #             self.render_totals(totals, grid_response['data'])
-                
-    #         st.markdown("---")
-                
-    #     except Exception as e:
-    #         st.error(f"Erro ao carregar os dados: {str(e)}")
-    #         st.exception(e)
-
-    def run(self, key=None):
+    def run(self):
         """Método principal que executa o relatório"""
         st.title("Relatório de Boletos Enviados")
         
@@ -366,7 +327,7 @@ class BoletosReport:
                 theme='alpine',
                 allow_unsafe_jscode=True,
                 reload_data=True,
-                key=f'grid_{key}'  # Adicionando a chave única
+                key='grid'
             )
             
             totals = self.calculate_totals(grid_response['data'])
@@ -379,11 +340,11 @@ class BoletosReport:
         except Exception as e:
             st.error(f"Erro ao carregar os dados: {str(e)}")
             st.exception(e)
-        
-def main(key=None):
+
+def main():
     """Função principal da aplicação"""
     report = BoletosReport()
-    report.run(key=key)
+    report.run()
 
 if __name__ == "__main__":
     main()

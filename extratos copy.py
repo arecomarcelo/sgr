@@ -285,7 +285,7 @@ class ExtratosReport:
             st.error(f"Erro ao gerar arquivo Excel: {str(e)}")
             return None
 
-    def run(self, key=None):
+    def run(self):
         """Método principal que executa o relatório"""
         st.title("Relatório de Extratos Bancários")
         
@@ -316,7 +316,7 @@ class ExtratosReport:
                 theme='alpine',
                 allow_unsafe_jscode=True,
                 reload_data=True,
-                key=f'grid_{key}'  # Adicionando a chave única
+                key='grid'
             )
             
             # Calcular e exibir totalizadores
@@ -331,9 +331,9 @@ class ExtratosReport:
             st.error(f"Erro ao carregar os dados: {str(e)}")
             st.exception(e)
 
-def main(key=None):
+def main():
     report = ExtratosReport()
-    report.run(key=key)
+    report.run()
 
 if __name__ == "__main__":
     main()
