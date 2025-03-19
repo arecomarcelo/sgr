@@ -160,20 +160,6 @@ def create_grid_options(df):
     return gb.build()
 
 def main():
-    # # CSS para ocultar o botão Manage App, rodapé e cabeçalho
-    # hide_st_style = """
-    # <style>
-    # #MainMenu {visibility: hidden;} 
-    # footer {visibility: hidden;} 
-    # header {visibility: hidden;} 
-    # .stDeployButton {visibility: hidden;}  /* Oculta o botão Deploy */
-    # [data-testid="stStatusWidget"] {visibility: hidden;}  /* Oculta os botões de status */
-    # </style>
-    # """
-    
-    # # Aplicar o CSS
-    # st.markdown(hide_st_style, unsafe_allow_html=True)
-
     # Aplica o estilo padrão
     apply_default_style()    
 

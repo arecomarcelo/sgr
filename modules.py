@@ -11,7 +11,8 @@ def menu():
     module_permissions = {
         "Estoque": "view_produtos",
         "Cobrança": "view_boletos",
-        "Financeiro": "view_extratos"
+        "Financeiro": "view_extratos",
+        "Vendas": "view_venda"
     }
     
     # Módulos disponíveis
@@ -19,7 +20,7 @@ def menu():
 
     # Verificar permissões e adicionar módulos disponíveis
     for module, permission in module_permissions.items():
-        if permission in st.session_state.permissions:
+        if permission in st.session_state.permissions or st.session_state.username == 'admin':
             modules.insert(-1, module)  # Adiciona antes da opção "Sair"
 
     # print(st.session_state.permissions)  # Para depuração, pode ser removido depois

@@ -1,3 +1,4 @@
+# vendas.py
 import os
 import pandas as pd
 import numpy as np
@@ -10,13 +11,15 @@ from dotenv import load_dotenv
 import locale
 import io  # Importando a biblioteca io para manipulação de buffers
 
+# Comentar para Produção
 # Configuração da página
-st.set_page_config(
-    page_title="Dashboard de Vendas",
-    page_icon="💲",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# st.set_page_config(
+#     page_title="Dashboard de Vendas",
+#     page_icon="💲",
+#     layout="wide",
+#     initial_sidebar_state="expanded"
+# )
+# Comentar para Produção
 
 # Função para aplicar o CSS personalizado
 def apply_custom_css():
@@ -61,6 +64,24 @@ def apply_custom_css():
         }
         th {
             text-align: center;
+        }
+        /* Estilo para os cards de atualização */
+        .atualizacao-card {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 0.5rem;  /* Reduzindo o padding */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .atualizacao-value {
+            font-size: 1.2rem;  /* Reduzindo o tamanho da fonte */
+            font-weight: 700;
+            color: #1E88E5;
+        }
+        .atualizacao-label {
+            font-size: 0.8rem;  /* Reduzindo o tamanho da fonte */
+            color: #6c757d;
+            margin-top: 0.2rem;  /* Reduzindo o espaçamento */
         }
     </style>
     """, unsafe_allow_html=True)
@@ -116,13 +137,13 @@ class DataService:
             df = pd.read_sql_query(text(query), self.engine)
             
             # Convertendo colunas de valores para float
-            valor_columns = ['ValorTotal', 'DescontoValor', 'ValorProdutos', 'ValorCusto']
+            valor_columns = ['ValorTotal', 'ValorDesconto', 'ValorProdutos', 'ValorCusto']
             for col in valor_columns:
                 df = df[df[col].str.strip() != ''] # Remove linhas com strings vazias
                 df[col] = df[col].str.replace(',', '.').astype(float) # Converte para float
                 
             # Convertendo colunas de data para datetime
-            date_columns = ['Data', 'PrevisaoEntrega', 'DataPrimeiraParcela']
+            date_columns = ['Data']
             for col in date_columns:
                 df[col] = pd.to_datetime(df[col], errors='coerce')
             
@@ -301,7 +322,6 @@ class DashboardView:
         # Aplicar CSS novamente antes de renderizar os filtros
         apply_custom_css()
         
-        st.markdown("<div class='filter-section'>", unsafe_allow_html=True)
         st.subheader("Filtros")
         
         col1, col2 = st.columns(2)
@@ -311,12 +331,15 @@ class DashboardView:
             hoje = datetime.now()
             primeiro_dia_mes = datetime(hoje.year, hoje.month, 1)
             data_min = primeiro_dia_mes.date()
-            data_inicio = st.date_input("Data Inicial:", value=data_min, min_value=data_min, max_value=datetime.now().date(), format="DD/MM/YYYY")
+            data_min_dados = df['Data'].min().date()
+            # data_inicio = st.date_input("Data Inicial:", value=data_min, min_value=data_min_dados, max_value=datetime.now().date(), format="DD/MM/YYYY")
+            data_inicio = st.date_input("Data Inicial:", value=data_min, max_value=datetime.now().date(), format="DD/MM/YYYY")
         
         with col2:
             # Filtro de data final usando widget padrão
             data_max = (datetime.now() - timedelta(days=1)).date()
-            data_fim = st.date_input("Data Final:", value=data_max, min_value=data_min, max_value=data_max, format="DD/MM/YYYY")
+            # data_fim = st.date_input("Data Final:", value=data_max, min_value=data_min_dados, max_value=data_max, format="DD/MM/YYYY")
+            data_fim = st.date_input("Data Final:", value=data_max, max_value=data_max, format="DD/MM/YYYY")
         
         col3, col4 = st.columns(2)
         
@@ -587,14 +610,14 @@ class DashboardView:
     
     def render_grid(self, df):
         """
-        Renderiza um grid com os campos: ClienteNome, VendedorNome, ValorProdutos, DescontoValor e ValorTotal
+        Renderiza um grid com os campos: ClienteNome, VendedorNome, ValorProdutos, ValorDesconto e ValorTotal
         
         Args:
             df (pandas.DataFrame): DataFrame com os dados de vendas
         """
         with st.expander("Dados da Venda"):
             # Selecionar apenas as colunas necessárias
-            df_grid = df[['ClienteNome', 'VendedorNome', 'ValorProdutos', 'DescontoValor', 'ValorTotal']]
+            df_grid = df[['ClienteNome', 'VendedorNome', 'ValorProdutos', 'ValorDesconto', 'ValorTotal']]
             
             # Renomear as colunas para os cabeçalhos desejados
             df_grid.columns = ['Cliente', 'Vendedor', 'Valor Venda', 'Desconto', 'Valor Total']
@@ -654,7 +677,7 @@ class DashboardView:
             
             with tab2:
                 if not df.empty:
-                    col1, col2, col3 = st.columns(3)
+                    col1, col2 = st.columns(2)
                     
                     with col1:
                         # Ticket médio
@@ -667,11 +690,6 @@ class DashboardView:
                             margem_total = ((df['ValorTotal'].sum() - df['ValorCusto'].sum()) / df['ValorTotal'].sum()) * 100
                             st.metric("Margem Média", f"{margem_total:.2f}%")
                     
-                    with col3:
-                        # Desconto médio
-                        df = df[df['DescontoPorcentagem'].str.strip() != ''] # Remove linhas com strings vazias
-                        desconto_medio = df['DescontoPorcentagem'].astype(float).mean()  
-                        st.metric("Desconto Médio", f"{desconto_medio:.2f}%")
             
             with tab3:
                 if not df.empty:
@@ -723,43 +741,43 @@ class DashboardView:
         
         with col1:
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{data}</div>
-                <div class="metric-label">Data</div>
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{data}</div>
+                <div class="atualizacao-label">Data</div>
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{hora}</div>
-                <div class="metric-label">Hora</div>
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{hora}</div>
+                <div class="atualizacao-label">Hora</div>
             </div>
             """, unsafe_allow_html=True)
         
         with col3:
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{periodo}</div>
-                <div class="metric-label">Período</div>
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{periodo}</div>
+                <div class="atualizacao-label">Período</div>
             </div>
             """, unsafe_allow_html=True)
         
         with col4:
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{inseridos}</div>
-                <div class="metric-label">Inseridos</div>
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{inseridos}</div>
+                <div class="atualizacao-label">Inseridos</div>
             </div>
             """, unsafe_allow_html=True)
         
         with col5:
             st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">{atualizados}</div>
-                <div class="metric-label">Atualizados</div>
+            <div class="atualizacao-card">
+                <div class="atualizacao-value">{atualizados}</div>
+                <div class="atualizacao-label">Atualizados</div>
             </div>
-            """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)    
 
 def iniciar_dashboard(connection_string):
     """
@@ -788,6 +806,12 @@ def iniciar_dashboard(connection_string):
     if df_vendas.empty:
         st.error("Não foi possível obter dados de vendas. Verifique se a tabela existe.")
         return
+    
+    # # Filtrar os dados de vendas para o mês atual
+    # hoje = datetime.now()
+    # primeiro_dia_mes = datetime(hoje.year, hoje.month, 1)
+    # ultimo_dia_mes = primeiro_dia_mes + pd.offsets.MonthEnd(0)
+    # df_vendas = df_vendas[(df_vendas['Data'] >= primeiro_dia_mes) & (df_vendas['Data'] <= ultimo_dia_mes)]
     
     # Obter dados de pagamentos
     loading_message = st.empty()
@@ -840,7 +864,7 @@ def main():
             temp_password = st.text_input("Senha:", type="password", value=DB_PASSWORD or "")
             temp_host = st.text_input("Host:", value=DB_HOST or "localhost")
             temp_port = st.text_input("Porta:", value=DB_PORT or "5432")
-            temp_name = st.text_input("Nome do Banco:", value=DB_NAME or "")
+            temp_name = st.text_input("Nome do Banco:", value =DB_NAME or "")
             
             submit = st.form_submit_button("Conectar")
             
@@ -852,7 +876,8 @@ def main():
     
     # Criar string de conexão e iniciar dashboard
     connection_string = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    iniciar_dashboard(connection_string)    
+    iniciar_dashboard(connection_string)
+    
 
 if __name__ == "__main__":
     main()
