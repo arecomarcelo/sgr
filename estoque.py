@@ -201,18 +201,23 @@ def main(key=None):
         # Container para os totalizadores
         totals_container = st.container()
         
-        # 3. Grid
-        grid_options = create_grid_options(df)
-        grid_response = AgGrid(
-            df,
-            gridOptions=grid_options,
-            height=800,
-            fit_columns_on_grid_load=True,
-            theme='alpine',
-            allow_unsafe_jscode=True,
-            reload_data=True,
-            key=f'grid_{key}'  # Adicionando a chave única
-        )
+        # Usar st.empty() como placeholder para o grid
+        grid_placeholder = st.empty()
+        
+        with st.spinner('Carregando grid...'):
+            # Renderizar o grid dentro do placeholder
+            with grid_placeholder:
+                grid_options = create_grid_options(df)
+                grid_response = AgGrid(
+                    df,
+                    gridOptions=grid_options,
+                    height=800,
+                    fit_columns_on_grid_load=True,
+                    theme='alpine',
+                    allow_unsafe_jscode=True,
+                    reload_data=True,
+                    key=f'grid_{key}'  # Adicionando a chave única
+                )
         
         # Atualizar totalizadores
         st.session_state.totals = calculate_totals(grid_response['data'])
@@ -226,6 +231,6 @@ def main(key=None):
     except Exception as e:
         st.error(f"Erro ao carregar os dados: {str(e)}")
         st.exception(e)
-
+        
 if __name__ == "__main__":
     main()

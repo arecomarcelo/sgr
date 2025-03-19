@@ -306,18 +306,23 @@ class ExtratosReport:
             # Container para totalizadores
             totals_container = st.container()
             
-            # Configurar e exibir grid
-            grid_options = self.create_grid_options(df)
-            grid_response = AgGrid(
-                df,
-                gridOptions=grid_options,
-                height=800,
-                fit_columns_on_grid_load=True,
-                theme='alpine',
-                allow_unsafe_jscode=True,
-                reload_data=True,
-                key=f'grid_{key}'  # Adicionando a chave única
-            )
+            # Usar st.empty() como placeholder para o grid
+            grid_placeholder = st.empty()
+            
+            with st.spinner('Carregando grid...'):
+                # Renderizar o grid dentro do placeholder
+                with grid_placeholder:
+                    grid_options = self.create_grid_options(df)
+                    grid_response = AgGrid(
+                        df,
+                        gridOptions=grid_options,
+                        height=800,
+                        fit_columns_on_grid_load=True,
+                        theme='alpine',
+                        allow_unsafe_jscode=True,
+                        reload_data=True,
+                        key=f'grid_{key}'  # Adicionando a chave única
+                    )
             
             # Calcular e exibir totalizadores
             totals = self.calculate_totals(grid_response['data'])
