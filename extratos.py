@@ -359,6 +359,10 @@ class ExtratosReport:
                 st.warning("Não foram encontrados dados para os filtros selecionados.")
                 return
             
+            # Ordena os dados por data
+            if 'data' in df.columns:
+                df = df.sort_values(by='data', ascending=False)  # Ordena por data (do mais recente para o mais antigo)
+            
             # Container para totalizadores
             totals_container = st.container()
             
