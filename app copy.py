@@ -22,7 +22,7 @@ from login import login_screen
 from estoque import main as estoque_main
 from extratos import main as extratos_main
 from boletos import main as boletos_main
-# from vendas import main  as vendas_main
+from vendas import main  as vendas_main
 
 # Instanciar DataService e UserService
 data_service = AppDataService()  # Renomeado para evitar conflito com o DataService de vendas
@@ -49,13 +49,13 @@ def main():
         
         # Redirecionar para o módulo selecionado
         if st.session_state.current_module == "Estoque":
-            estoque_main()
+            estoque_main(key="estoque")
         elif st.session_state.current_module == "Cobrança":
-            boletos_main()
+            boletos_main(key="boletos")
         elif st.session_state.current_module == "Financeiro":
-            extratos_main()
-        # elif st.session_state.current_module == "Vendas":
-        #     vendas_main()  # Chamada da função main do arquivo vendas.py
+            extratos_main(key="extratos")
+        elif st.session_state.current_module == "Vendas":
+            vendas_main(key="vendas")  # Chamada da função main do arquivo vendas.py
 
 if __name__ == "__main__":
     main()

@@ -285,56 +285,6 @@ class ExtratosReport:
             st.error(f"Erro ao gerar arquivo Excel: {str(e)}")
             return None
 
-    # def run(self, key=None):
-    #     """Método principal que executa o relatório"""
-    #     st.title("Relatório de Extratos Bancários")
-        
-    #     try:
-    #         # Renderizar filtros
-    #         filtros = self.render_filters()
-            
-    #         # Carregar dados com filtros
-    #         df = self.load_data(
-    #             data_inicial=filtros['data_inicial'],
-    #             data_final=filtros['data_final']
-    #         )
-            
-    #         if df.empty:
-    #             st.warning("Não foram encontrados dados para os filtros selecionados.")
-    #             return
-            
-    #         # Container para totalizadores
-    #         totals_container = st.container()
-            
-    #         # Usar st.empty() como placeholder para o grid
-    #         grid_placeholder = st.empty()
-            
-    #         with st.spinner('Carregando grid...'):
-    #             # Renderizar o grid dentro do placeholder
-    #             with grid_placeholder:
-    #                 grid_options = self.create_grid_options(df)
-    #                 grid_response = AgGrid(
-    #                     df,
-    #                     gridOptions=grid_options,
-    #                     height=800,
-    #                     fit_columns_on_grid_load=True,
-    #                     theme='alpine',
-    #                     allow_unsafe_jscode=True,
-    #                     reload_data=True,
-    #                     key=f'grid_{key}'  # Chave única para o grid
-    #                 )
-            
-    #         # Calcular e exibir totalizadores
-    #         totals = self.calculate_totals(grid_response['data'])
-            
-    #         with totals_container:
-    #             self.render_totals(totals, grid_response['data'])
-                
-    #         st.markdown("---")
-                
-    #     except Exception as e:
-    #         st.error(f"Erro ao carregar os dados: {str(e)}")
-    #         st.exception(e)
 
     def run(self, key=None):
         """Método principal que executa o relatório"""
