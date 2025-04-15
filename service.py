@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import check_password
-from repository import UserRepository, DatabaseRepository, ExtratoRepository, BoletoRepository
+from repository import UserRepository, DatabaseRepository, ExtratoRepository, BoletoRepository, ClienteRepository
+import pandas as pd
 
 class DataService:
     def __init__(self):
@@ -31,6 +32,11 @@ class DataService:
         Obtém boletos filtrados com base nas datas.
         """
         return self.boletos_service.get_boletos_filtrados(data_inicial, data_final)
+    
+    def get_clientes(self) -> pd.DataFrame:
+        """Obtém todos os clientes"""
+        repo = ClienteRepository(self.DB_CONFIG)
+        return repo.get_clientes()    
 
 class UserService:
     def __init__(self, data_service):
@@ -64,3 +70,13 @@ class BoletoService:
         Obtém Boletos filtrados com base nas datas.
         """
         return self.boleto_repository.get_boletos_filtrados(data_inicial, data_final)
+    
+class ClienteService:
+    def __init__(self, data_service):
+        self.cliente_repository = ClienteRepository(data_service.DB_CONFIG)
+
+    def get_clientes(self):
+        """
+        Obtém todos os clientes.
+        """
+        return self.cliente_repository.get_clientes()

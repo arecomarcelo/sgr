@@ -2,8 +2,6 @@ import pandas as pd
 import psycopg2
 from psycopg2 import sql
 from sqlalchemy import create_engine
-from typing import List, Tuple, Optional, Dict, Any
-
 
 class UserRepository:
     def __init__(self, db_config):
@@ -157,35 +155,4 @@ class BoletoRepository:
             return pd.DataFrame(extratos, columns=colunas)
         finally:
             cursor.close()
-            conn.close()     
-
-class ClienteRepository:
-    def __init__(self, db_config: Dict[str, Any]) -> None:
-        self.db_config = db_config
-
-    def connect(self) -> psycopg2.extensions.connection:
-        """Establish database connection"""
-        try:
-            conn = psycopg2.connect(**self.db_config)
-            return conn
-        except Exception as e:
-            raise Exception(f"Erro ao conectar ao banco de dados: {e}")
-
-    def get_clientes(self) -> pd.DataFrame:
-        """Get all client data"""
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    SELECT "TipoPessoa", 
-                           COALESCE(NULLIF("RazaoSocial", ''), '-') AS "RazaoSocial", 
-                           "Nome", "CNPJ", "CPF", "Telefone", "Celular", "Email"
-                    FROM "Clientes"
-                    ORDER BY "RazaoSocial"
-                """)
-                clientes = cursor.fetchall()
-                colunas = [desc[0] for desc in cursor.description]
-                return pd.DataFrame(clientes, columns=colunas)
-        finally:
-            conn.close()
-               
+            conn.close()            

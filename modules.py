@@ -12,7 +12,8 @@ def menu():
         "Estoque": "view_produtos",
         "Cobrança": "view_boletos",
         "Financeiro": "view_extratos",
-        "Vendas": "view_venda"
+        "Vendas": "view_venda",
+        "Relatório de Clientes": "view_clientes"
     }
     
     # Módulos disponíveis
