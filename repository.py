@@ -141,7 +141,7 @@ class BoletoRepository:
             cursor = conn.cursor()
             query = sql.SQL("""
                 select "Nome", "Boleto", "Vencimento", "DataHoraEnvio" as Envio, "Status" 
-                from "Boletos"
+                from "BoletosEnviados"
                 WHERE "DataHoraEnvio" BETWEEN %s AND %s                            
             """)
             
@@ -179,7 +179,7 @@ class ClienteRepository:
                 cursor.execute("""
                     SELECT "TipoPessoa", 
                            COALESCE(NULLIF("RazaoSocial", ''), '-') AS "RazaoSocial", 
-                           "Nome", "CNPJ", "CPF", "Telefone", "Celular", "Email"
+                           "Nome", "CNPJ", "CPF", "Email"
                     FROM "Clientes"
                     ORDER BY "RazaoSocial"
                 """)

@@ -89,8 +89,8 @@ class ClientesReport:
             "Nome": {"headerName": "Nome", "width": 280},
             "CNPJ": {"headerName": "CNPJ", "width": 200},
             "CPF": {"headerName": "CPF", "width": 120},
-            "Telefone": {"headerName": "Telefone", "width": 120},
-            "Celular": {"headerName": "Celular", "width": 120},
+            # "Telefone": {"headerName": "Telefone", "width": 120},
+            # "Celular": {"headerName": "Celular", "width": 120},
             "Email": {"headerName": "E-mail", "width": 200}
         }
         
@@ -113,18 +113,18 @@ class ClientesReport:
             return f'{value[:2]}.{value[2:5]}.{value[5:8]}/{value[8:12]}-{value[12:]}'
         return value
 
-    def format_phone(self, value: str) -> str:
-        """Formata telefone para exibição"""
-        if pd.isna(value) or value in ['-', '']:
-            return '-'
+    # def format_phone(self, value: str) -> str:
+    #     """Formata telefone para exibição"""
+    #     if pd.isna(value) or value in ['-', '']:
+    #         return '-'
         
-        value = str(value).strip().replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
+    #     value = str(value).strip().replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
         
-        if len(value) == 10:  # Telefone fixo
-            return f'({value[:2]}) {value[2:6]}-{value[6:]}'
-        elif len(value) == 11:  # Celular
-            return f'({value[:2]}) {value[2:7]}-{value[7:]}'
-        return value
+    #     if len(value) == 10:  # Telefone fixo
+    #         return f'({value[:2]}) {value[2:6]}-{value[6:]}'
+    #     elif len(value) == 11:  # Celular
+    #         return f'({value[:2]}) {value[2:7]}-{value[7:]}'
+    #     return value
 
     def generate_excel(self, df: pd.DataFrame) -> Optional[bytes]:
         """
@@ -151,10 +151,10 @@ class ClientesReport:
                 df_formatted['CNPJ'] = df_formatted['CNPJ'].apply(self.format_cnpj_cpf)
             if 'CPF' in df_formatted.columns:
                 df_formatted['CPF'] = df_formatted['CPF'].apply(self.format_cnpj_cpf)
-            if 'Telefone' in df_formatted.columns:
-                df_formatted['Telefone'] = df_formatted['Telefone'].apply(self.format_phone)
-            if 'Celular' in df_formatted.columns:
-                df_formatted['Celular'] = df_formatted['Celular'].apply(self.format_phone)
+            # if 'Telefone' in df_formatted.columns:
+            #     df_formatted['Telefone'] = df_formatted['Telefone'].apply(self.format_phone)
+            # if 'Celular' in df_formatted.columns:
+            #     df_formatted['Celular'] = df_formatted['Celular'].apply(self.format_phone)
             
             # Escrever cabeçalhos
             for col_idx, column in enumerate(df_formatted.columns, start=1):
@@ -200,10 +200,10 @@ class ClientesReport:
                 df_display['CNPJ'] = df_display['CNPJ'].apply(self.format_cnpj_cpf)
             if 'CPF' in df_display.columns:
                 df_display['CPF'] = df_display['CPF'].apply(self.format_cnpj_cpf)
-            if 'Telefone' in df_display.columns:
-                df_display['Telefone'] = df_display['Telefone'].apply(self.format_phone)
-            if 'Celular' in df_display.columns:
-                df_display['Celular'] = df_display['Celular'].apply(self.format_phone)
+            # if 'Telefone' in df_display.columns:
+            #     df_display['Telefone'] = df_display['Telefone'].apply(self.format_phone)
+            # if 'Celular' in df_display.columns:
+            #     df_display['Celular'] = df_display['Celular'].apply(self.format_phone)
             
             # Configura as opções do grid
             grid_options = self.create_grid_options(df_display)
