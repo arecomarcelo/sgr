@@ -17,6 +17,11 @@
 
 - Ajuste **Dashboard Vendas**
 
+### **16:54 - Commit 102**
+
+- Corrigindo **Incompatibilidade Blue e Black**
+- **Blue** Removido
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
