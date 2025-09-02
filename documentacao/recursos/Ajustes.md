@@ -22,6 +22,10 @@
 - Corrigindo **Incompatibilidade Blue e Black**
 - **Blue** Removido
 
+### **16:59 - Commit 103**
+
+- Corrigindo **Carregamento de Fotos Vendedores**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

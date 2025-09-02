@@ -538,12 +538,8 @@ def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
     """Renderiza um card individual do vendedor"""
     with col:
         # Buscar foto do vendedor
-        foto_path_jpg = (
-            f"/media/areco/Backup/Oficial/Projetos/sgr/fotos/{vendedor['foto']}.jpg"
-        )
-        foto_path_png = (
-            f"/media/areco/Backup/Oficial/Projetos/sgr/fotos/{vendedor['foto']}.png"
-        )
+        foto_path_jpg = f"fotos/{vendedor['foto']}.jpg"
+        foto_path_png = f"fotos/{vendedor['foto']}.png"
 
         # Usar JPG se existir, senão PNG
         foto_path = foto_path_jpg if os.path.exists(foto_path_jpg) else foto_path_png
