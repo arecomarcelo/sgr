@@ -1,0 +1,39 @@
+[project]
+name = "sga"
+version = "1.0.0"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+extend-exclude = '''
+/(
+    migrations
+    | venv
+    | \.venv
+    | \.git
+    | __pycache__
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["app", "apps", "core", "domain", "infrastructure", "presentation"]
+known_django = ["django"]
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+strict = false
+disable_error_code = ["union-attr", "var-annotated", "import"]
+exclude = [
+    "migrations/.*",
+    "venv/.*",
+    "__pycache__/.*",
+    "utils/.*"
+]
+# Removido plugin que está causando erro - será configurado separadamente se necessário
+
+[tool.django-stubs]
+django_settings_module = "app.settings"

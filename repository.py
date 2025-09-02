@@ -1,8 +1,9 @@
+from typing import Any, Dict, List, Optional, Tuple
+
 import pandas as pd
 import psycopg2
 from psycopg2 import sql
 from sqlalchemy import create_engine
-from typing import List, Tuple, Optional, Dict, Any
 
 
 class UserRepository:
@@ -32,19 +33,24 @@ class UserRepository:
         conn = self.connect()
         try:
             cursor = conn.cursor()
-            query = sql.SQL("""
+            query = sql.SQL(
+                """
                 SELECT permission.codename 
                 FROM auth_user_groups AS ug
                 JOIN auth_group_permissions AS gp ON ug.group_id = gp.group_id
                 JOIN auth_permission AS permission ON gp.permission_id = permission.id
                 WHERE ug.user_id = %s
-            """)
+            """
+            )
             cursor.execute(query, (user_id,))
             permissions = cursor.fetchall()
-            return [perm[0] for perm in permissions]  # Retornar apenas os nomes das permissões
+            return [
+                perm[0] for perm in permissions
+            ]  # Retornar apenas os nomes das permissões
         finally:
             cursor.close()
             conn.close()
+
 
 class DatabaseRepository:
     def __init__(self, db_config):
@@ -65,11 +71,14 @@ class DatabaseRepository:
     def fetch_data(self, table_name, campos):
         try:
             # Formatar os campos para a consulta SQL
-            campos_formatados = ', '.join([f'"{campo}"' for campo in campos])  # Usar aspas duplas
+            campos_formatados = ", ".join(
+                [f'"{campo}"' for campo in campos]
+            )  # Usar aspas duplas
             query = f'SELECT {campos_formatados} FROM "{table_name}";'
             return pd.read_sql(query, self.engine)
         except Exception as e:
             raise Exception(f"Erro ao buscar dados da tabela {table_name}: {e}")
+
 
 class ExtratoRepository:
     def __init__(self, db_config):
@@ -82,14 +91,17 @@ class ExtratoRepository:
         except Exception as e:
             raise Exception(f"Erro ao conectar ao banco de dados: {e}")
 
-    def get_extratos_filtrados(self, data_inicial, data_final, empresas=None, centros_custo=None):
+    def get_extratos_filtrados(
+        self, data_inicial, data_final, empresas=None, centros_custo=None
+    ):
         conn = self.connect()
         try:
             # data_inicial += ' 00:00:00'
             # data_final += ' 23:59:59'
 
             cursor = conn.cursor()
-            query = sql.SQL("""
+            query = sql.SQL(
+                """
                 SELECT b.descricao AS Banco, e.agencia, e.conta_corrente, e."data", 
                        e.documento, e.historico_descricao AS Descricao, e.valor, 
                        e.debito_credito AS "D/C", em.nome AS Empresa, 
@@ -99,7 +111,8 @@ class ExtratoRepository:
                 LEFT JOIN "Empresas" em ON em.id = e.empresa_id
                 LEFT JOIN "CentroCustos" cc ON cc.id = e.centrocusto_id
                 WHERE e."data" BETWEEN %s AND %s
-            """)
+            """
+            )
 
             params = [data_inicial, data_final]
             if empresas:
@@ -121,6 +134,7 @@ class ExtratoRepository:
             cursor.close()
             conn.close()
 
+
 class BoletoRepository:
     def __init__(self, db_config):
         self.db_config = db_config
@@ -135,16 +149,18 @@ class BoletoRepository:
     def get_boletos_filtrados(self, data_inicial, data_final):
         conn = self.connect()
         try:
-            data_inicial += ' 00:00:00'
-            data_final += ' 23:59:59'
-            
+            data_inicial += " 00:00:00"
+            data_final += " 23:59:59"
+
             cursor = conn.cursor()
-            query = sql.SQL("""
+            query = sql.SQL(
+                """
                 select "Nome", "Boleto", "Vencimento", "DataHoraEnvio" as Envio, "Status" 
                 from "BoletosEnviados"
                 WHERE "DataHoraEnvio" BETWEEN %s AND %s                            
-            """)
-            
+            """
+            )
+
             params = [data_inicial, data_final]
 
             cursor.execute(query, params)
@@ -157,7 +173,8 @@ class BoletoRepository:
             return pd.DataFrame(extratos, columns=colunas)
         finally:
             cursor.close()
-            conn.close()     
+            conn.close()
+
 
 class ClienteRepository:
     def __init__(self, db_config: Dict[str, Any]) -> None:
@@ -176,16 +193,17 @@ class ClienteRepository:
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT "TipoPessoa", 
                            COALESCE(NULLIF("RazaoSocial", ''), '-') AS "RazaoSocial", 
                            "Nome", "CNPJ", "CPF", "Email"
                     FROM "Clientes"
                     ORDER BY "RazaoSocial"
-                """)
+                """
+                )
                 clientes = cursor.fetchall()
                 colunas = [desc[0] for desc in cursor.description]
                 return pd.DataFrame(clientes, columns=colunas)
         finally:
             conn.close()
-               
