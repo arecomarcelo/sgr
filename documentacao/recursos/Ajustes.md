@@ -45,12 +45,16 @@
 - Corrigindo **Incompatibilidade Blue e Black**
 - **Blue** Removido
 
-### **hh:mm - Commit 105**
+### **11:50 - Commit 105**
 
 - Implementações:
     - Novo **Login**
     - Novo **Menu**
         - Redefinido os **Textos**
+
+### **14:06 - Commit 106**
+
+- Implementado **Manual Relatório de Vendas**
 
 **dd/mm/aaaa**
 

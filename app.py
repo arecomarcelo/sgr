@@ -107,6 +107,92 @@ if "keep_alive_started" not in st.session_state:
     st.session_state["keep_alive_started"] = True
 
 
+def _show_manual_dialog():
+    """
+    Exibe o manual em uma janela de diálogo
+    """
+    try:
+        # Ler o conteúdo do manual
+        manual_path = "documentacao/Manual_Relatorio_Vendas.md"
+        
+        with open(manual_path, "r", encoding="utf-8") as file:
+            markdown_content = file.read()
+        
+        # Usar st.expander para simular uma janela separada
+        with st.expander("📖 Manual do Relatório de Vendas", expanded=True):
+            # Converter markdown para HTML com melhor formatação
+            html_content = _convert_markdown_to_html(markdown_content)
+            st.markdown(html_content, unsafe_allow_html=True)
+            
+            # Adicionar botão para fechar
+            if st.button("❌ Fechar Manual"):
+                st.rerun()
+                
+    except FileNotFoundError:
+        st.error("❌ Manual não encontrado. Verifique se o arquivo existe.")
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar o manual: {str(e)}")
+
+
+def _convert_markdown_to_html(markdown_content):
+    """
+    Converte markdown para HTML com melhor formatação para Streamlit
+    """
+    # Importar biblioteca markdown se disponível, senão usar formatação básica
+    try:
+        import markdown
+        html = markdown.markdown(markdown_content, extensions=['tables', 'fenced_code'])
+        return f"""
+        <div style="
+            font-family: 'Roboto', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        ">
+            {html}
+        </div>
+        """
+    except ImportError:
+        # Se não tiver markdown, usar formatação básica
+        return _basic_markdown_to_html(markdown_content)
+
+
+def _basic_markdown_to_html(content):
+    """
+    Conversão básica de markdown para HTML
+    """
+    # Substituições básicas para formatação
+    content = content.replace('\n# ', '\n<h1>')
+    content = content.replace('\n## ', '\n<h2>')
+    content = content.replace('\n### ', '\n<h3>')
+    content = content.replace('\n#### ', '\n<h4>')
+    content = content.replace('\n', '<br>')
+    content = content.replace('**', '<strong>').replace('**', '</strong>')
+    content = content.replace('*', '<em>').replace('*', '</em>')
+    content = content.replace('`', '<code>').replace('`', '</code>')
+    
+    return f"""
+    <div style="
+        font-family: 'Roboto', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+    ">
+        {content}
+    </div>
+    """
+
+
 def vendas_dashboard():
     """
     Dashboard de vendas integrado
@@ -120,6 +206,20 @@ def vendas_dashboard():
             "<h1 style='text-align: center; color: #1E88E5;'>📊 SGR - Dashboard de Vendas</h1>",
             unsafe_allow_html=True,
         )
+        
+        # Botão Ler Manual centralizado abaixo do título
+        col1, col2, col3 = st.columns([2, 1, 2])
+        with col2:
+            if st.button("📖 Ler Manual", type="secondary", use_container_width=True):
+                # Importar e executar o servidor do manual
+                try:
+                    from manual_server import open_manual_in_browser
+                    open_manual_in_browser()
+                    st.success("✅ Manual aberto no navegador!")
+                except Exception as e:
+                    st.error(f"❌ Erro ao abrir manual: {str(e)}")
+                    st.info("💡 Verifique se seu navegador permite pop-ups ou acesse manualmente: http://localhost:8888/manual")
+        
         st.markdown("---")
 
         # Renderizar seções

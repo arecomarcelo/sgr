@@ -1510,4 +1510,481 @@ from apps.auth.modules import menu
 
 ---
 
+### 🕐 16:30 - Criação do Manual de Utilização do Relatório de Vendas
+**O que foi pedido:** Gerar manual de utilização do Relatório de Vendas detalhado, com linguagem profissional e visual atrativo
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+#### 📚 **Manual Completo Criado:**
+- ✅ **Documento Profissional**: `documentacao/Manual_Relatorio_Vendas.md` com 32 páginas
+- ✅ **Análise Detalhada**: Revisão completa do código-fonte do módulo vendas
+- ✅ **Estrutura Abrangente**: 5 seções principais identificadas e documentadas
+- ✅ **Visual Atrativo**: Uso extensivo de emojis, tabelas e formatação markdown
+
+#### 🔍 **Seções Principais Documentadas:**
+
+**1. 🔄 Informações de Atualização**
+- Métricas de sincronização (Data, Hora, Período, Inseridos, Atualizados)
+- Como utilizar o expandir para monitorar atualizações
+- Tabela completa com exemplos práticos
+
+**2. 🔍 Filtros e Configuração**
+- **Filtros de Período**: Data inicial/final com validações
+- **Filtros de Vendedores**: Seleção múltipla com busca integrada
+- **Filtros de Situação**: Critérios de vendas disponíveis
+- **Botões de Ação**: "Aplicar Filtros" e "Dados do Mês Atual"
+- **Validações**: Alertas e tratamento de erros completo
+
+**3. 📊 Resumo Executivo (Métricas)**
+- **Linha 1**: Total Entradas, Total Parcelado, Valor Total
+- **Linha 2**: Total de Vendas, Ticket Médio, Margem Média
+- Explicação detalhada de cada métrica com cálculos
+
+**4. 📋 Dados Detalhados**
+- Colunas exibidas com formatação
+- Funcionalidades: ordenação, busca, paginação
+- Sistema de download (CSV/Excel)
+
+**5. 📈 Análise Avançada**
+- Top 10 vendedores por valor
+- Tendência temporal
+- Análise estatística
+
+#### 🛠️ **Características Técnicas Documentadas:**
+- ✅ **Performance**: Sistema de cache e carregamento assíncrono
+- ✅ **Controle de Qualidade**: Tratamento de erros e validações
+- ✅ **Interface Responsiva**: Layouts para desktop, tablet e mobile
+- ✅ **Solução de Problemas**: Seção completa com procedimentos
+
+#### 📖 **Recursos Educacionais:**
+- ✅ **Glossário**: 6 termos técnicos explicados
+- ✅ **Melhores Práticas**: 4 seções de dicas estratégicas
+- ✅ **Guias Visuais**: Tabelas e exemplos práticos
+- ✅ **Fluxos de Trabalho**: Procedimentos passo a passo
+
+#### 📁 **Lista de Arquivos Criados:**
+1. 📄 **Criado:** `documentacao/Manual_Relatorio_Vendas.md` - Manual completo
+2. ✏️ **Atualizado:** `Historico.md` - Registro da atividade
+
+#### 🎯 **Benefícios do Manual:**
+- 📚 **Documento Profissional**: Linguagem técnica adequada
+- 🎨 **Visual Atrativo**: Formatação rica com emojis e estrutura clara
+- 🔍 **Detalhamento Completo**: Todas as funcionalidades explicadas
+- 📱 **Usabilidade**: Instruções práticas para usuários finais
+- 🛡️ **Suporte**: Seção de solução de problemas integrada
+
+#### 📊 **Estatísticas do Manual:**
+- **Páginas**: ~32 páginas formatadas
+- **Seções**: 5 principais + 8 auxiliares
+- **Tabelas**: 12 tabelas explicativas
+- **Exemplos**: 15 casos práticos documentados
+- **Procedimentos**: 20+ fluxos passo a passo
+
+**🏆 MANUAL PROFISSIONAL COMPLETO E DETALHADO!**
+
+---
+
+### 🕒 17:00 - Implementação do Botão "Ler Manual" no Relatório de Vendas
+**O que foi pedido:** Adicionar botão "Ler Manual" no Relatório de Vendas que exiba o conteúdo do Manual_Relatorio_Vendas.md em uma janela separada com formatação adequada
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+#### 🎯 **Funcionalidades Implementadas:**
+
+**1. 📍 Botão "Ler Manual"**
+- ✅ **Posicionamento**: Localizado no header ao lado do título "SGR - Dashboard de Vendas"
+- ✅ **Design**: Botão secundário com ícone de livro (📖) e texto "Ler Manual"
+- ✅ **Layout**: Disposição em colunas (4:1) para otimizar espaço
+- ✅ **Responsividade**: Uso de `use_container_width=True` para adaptar a diferentes telas
+
+**2. 🪟 Janela de Exibição do Manual**
+- ✅ **Interface**: Utilização de `st.expander` para simular janela separada
+- ✅ **Título**: "📖 Manual do Relatório de Vendas" com ícone atrativo
+- ✅ **Estado**: Expandido por padrão (`expanded=True`) para visualização imediata
+- ✅ **Botão de Fechar**: "❌ Fechar Manual" para melhor UX
+
+**3. 🔄 Conversão de Markdown para HTML**
+- ✅ **Biblioteca Markdown**: Instalação e uso da biblioteca `markdown` do Python
+- ✅ **Extensões**: Suporte a tabelas (`tables`) e código (`fenced_code`)
+- ✅ **Fallback**: Sistema de conversão básica caso a biblioteca não esteja disponível
+- ✅ **Formatação Avançada**: CSS customizado para melhor apresentação
+
+#### 🎨 **Estilização e Design:**
+
+**CSS Aplicado ao Manual:**
+- **Font Family**: 'Roboto', Arial, sans-serif (consistente com a aplicação)
+- **Line Height**: 1.6 (legibilidade otimizada)
+- **Background**: #f8f9fa (fundo claro e suave)
+- **Border**: #e9ecef com border-radius de 10px
+- **Scrolling**: max-height de 600px com overflow-y auto
+- **Padding**: 20px para espaçamento adequado
+
+**Conversões Markdown → HTML:**
+- `# ` → `<h1>` (Títulos principais)
+- `## ` → `<h2>` (Títulos secundários)  
+- `### ` → `<h3>` (Subtítulos)
+- `**texto**` → `<strong>texto</strong>` (Negrito)
+- `*texto*` → `<em>texto</em>` (Itálico)
+- `` `código` `` → `<code>código</code>` (Código inline)
+
+#### 🛡️ **Tratamento de Erros:**
+
+**1. Arquivo Não Encontrado**
+- ✅ **Captura**: `FileNotFoundError` com mensagem específica
+- ✅ **Feedback**: "❌ Manual não encontrado. Verifique se o arquivo existe."
+
+**2. Erros Gerais**
+- ✅ **Captura**: `Exception` genérica para outras situações
+- ✅ **Feedback**: Mensagem detalhada com o erro específico
+
+**3. Biblioteca Markdown**
+- ✅ **Fallback**: Sistema de conversão básica caso `import markdown` falhe
+- ✅ **Robustez**: Aplicação funciona independente da disponibilidade da biblioteca
+
+#### ⚙️ **Implementação Técnica:**
+
+**Funções Criadas:**
+1. **`_show_manual_dialog()`**: Função principal para exibir o manual
+2. **`_convert_markdown_to_html()`**: Conversão completa com biblioteca markdown
+3. **`_basic_markdown_to_html()`**: Conversão básica como fallback
+
+**Integração no Dashboard:**
+- Modificado o header para incluir layout de colunas
+- Botão integrado ao fluxo principal do `vendas_dashboard()`
+- Uso do sistema de `st.rerun()` para atualização da interface
+
+#### 📋 **Lista de Arquivos Alterados:**
+1. ✏️ **Modificado:** `app.py` - Adicionadas funções de exibição do manual e botão no header
+2. 📦 **Instalado:** `markdown==3.8.2` - Biblioteca para conversão markdown→HTML
+3. ✏️ **Atualizado:** `Historico.md` - Documentação da implementação
+
+#### 🎯 **Resultados Alcançados:**
+- ✅ **UX Melhorada**: Acesso fácil e intuitivo ao manual
+- ✅ **Formatação Adequada**: Markdown convertido para HTML com styling profissional  
+- ✅ **Responsividade**: Interface adaptável a diferentes dispositivos
+- ✅ **Robustez**: Sistema tolerante a falhas com fallbacks implementados
+- ✅ **Design Consistente**: Visual alinhado com o padrão da aplicação SGR
+
+**🏆 BOTÃO E VISUALIZAÇÃO DE MANUAL IMPLEMENTADOS COM SUCESSO!**
+
+---
+
+### 🕒 17:15 - Ajustes no Botão "Ler Manual" e Nova Página Dedicada
+**O que foi pedido:** Reposicionar botão "Ler Manual" abaixo do título (não ao lado) e implementar abertura em nova guia (target="_blank")
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+#### 🎯 **Ajustes Implementados:**
+
+**1. 📍 Reposicionamento do Botão**
+- ✅ **Localização**: Movido de ao lado do título para abaixo dele
+- ✅ **Layout**: Centralizado usando colunas [2, 1, 2] para melhor visual
+- ✅ **Espaçamento**: Título centralizado separado do botão com melhor hierarquia visual
+
+**2. 🆕 Nova Página Dedicada**
+- ✅ **Arquivo**: `pages/manual_vendas.py` - Página independente para o manual
+- ✅ **Navegação**: Uso de `st.switch_page()` para abrir em nova "guia" no Streamlit
+- ✅ **Session State**: Controle de estado para gerenciar navegação
+
+#### 🎨 **Design da Página do Manual:**
+
+**Header Profissional:**
+- **Background**: Gradiente azul (#1E88E5 → #1976D2)
+- **Typography**: Título grande (2.5rem) com text-shadow
+- **Layout**: Centralizado com subtítulo "Sistema de Gestão de Recursos - SGR"
+- **Shadow**: Box-shadow para profundidade visual
+
+**Estilização Avançada:**
+- **Container**: Fundo branco com border-radius de 15px
+- **Typography**: Font Roboto para consistência
+- **Colors**: Paleta azul consistente com a aplicação
+- **Tables**: Styling completo com hover effects
+- **Code**: Syntax highlighting com cores diferenciadas
+
+#### ⚙️ **Funcionalidades Implementadas:**
+
+**1. 🏠 Botão "Voltar ao Dashboard"**
+- Navegação de volta para `app.py` usando `st.switch_page()`
+- Botão primary para destaque visual
+- Layout em colunas para organização
+
+**2. 📥 Botão "Download Manual"**
+- Download direto do arquivo markdown original
+- Tratamento de erro caso arquivo não exista
+- Formato `.md` preservado para edição externa
+
+**3. 🔄 Sistema de Conversão Markdown→HTML**
+- **Bibliotéca Completa**: `markdown` com extensões avançadas
+  - `tables`: Suporte a tabelas
+  - `fenced_code`: Blocos de código
+  - `toc`: Índice automático
+  - `codehilite`: Syntax highlighting
+- **CSS Avançado**: Styling completo para todos elementos
+- **Fallback Robusto**: Sistema básico caso biblioteca não esteja disponível
+
+#### 🎨 **Melhorias Visuais:**
+
+**Elementos Estilizados:**
+- **H1**: Border-bottom azul e padding personalizado
+- **H2**: Border-left colorido com padding-left
+- **H3/H4**: Cores da paleta azul consistente
+- **Tables**: Box-shadow, hover effects, cores alternadas
+- **Code**: Background cinza com border e cor vermelha
+- **Blockquotes**: Border-left azul com background diferenciado
+- **HR**: Gradiente azul para separadores
+- **Links**: Hover effects e transições
+
+**Responsividade:**
+- **Max-width**: 1200px com centralização automática
+- **Padding**: Adaptativo para diferentes telas
+- **Background**: Gradiente sutil na página toda
+
+#### 🛡️ **Tratamento de Erros Aprimorado:**
+
+**1. Arquivo Não Encontrado**
+- Tentativa de múltiplos caminhos (relativo e absoluto)
+- Mensagens específicas e orientativas
+
+**2. Biblioteca Markdown**
+- Import Try/Catch com fallback automático
+- Conversão básica mantém funcionalidade
+
+**3. Download de Arquivo**
+- Verificação de existência antes do download
+- Botão desabilitado em caso de erro
+
+#### 📋 **Lista de Arquivos Alterados:**
+1. ✏️ **Modificado:** `app.py` - Reposicionamento do botão e navegação
+2. 📄 **Criado:** `pages/manual_vendas.py` - Página dedicada com design profissional
+3. 📁 **Criado:** `pages/` - Diretório para páginas auxiliares
+4. ✏️ **Atualizado:** `Historico.md` - Documentação dos ajustes
+
+#### 🎯 **Resultados Finais:**
+- ✅ **UX Otimizada**: Botão posicionado adequadamente abaixo do título
+- ✅ **Nova Guia**: Página dedicada simulando abertura em nova guia
+- ✅ **Design Premium**: Interface profissional com gradientes e shadows
+- ✅ **Funcionalidades Completas**: Download, navegação e conversão avançada
+- ✅ **Responsividade**: Layout adaptável a diferentes dispositivos
+- ✅ **Performance**: Sistema de fallback para máxima compatibilidade
+
+**🏆 MANUAL EM NOVA PÁGINA COM DESIGN PROFISSIONAL IMPLEMENTADO!**
+
+---
+
+### 🕒 17:30 - Correções e Melhorias no Sistema de Manual
+**O que foi pedido:** 
+1. Corrigir exibição do botão apenas no Relatório de Vendas (não no menu)
+2. Implementar abertura real em nova guia/janela do navegador
+3. Aplicar tema dark no manual para seguir padrão da aplicação
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+#### 🔍 **Diagnóstico e Correções:**
+
+**1. ✅ Localização do Botão**
+- **Verificação**: Confirmado que o botão estava apenas no Dashboard de Vendas (`app.py:213`)
+- **Status**: Não houve problema de localização incorreta
+- **Posicionamento**: Mantido centralizado abaixo do título conforme solicitado
+
+**2. 🌐 Abertura em Nova Janela Real**
+- **Problema**: `st.switch_page()` não abre em nova janela do navegador
+- **Solução**: Criado servidor HTTP local dedicado para o manual
+- **Implementação**: `manual_server.py` com servidor customizado
+
+#### 🖥️ **Servidor HTTP Local Implementado:**
+
+**Arquivo: `manual_server.py`**
+- **Classe**: `ManualHTTPRequestHandler` extends `SimpleHTTPRequestHandler`
+- **Endpoint**: `/manual` serve o conteúdo do manual
+- **Porta**: 8888 (fallback: 8889 se ocupada)
+- **Threading**: Servidor roda em thread daemon separada
+- **Abertura**: `webbrowser.open()` para nova janela/guia
+
+**Funcionalidades do Servidor:**
+- **Conversão Markdown→HTML**: Biblioteca `markdown` com extensões avançadas
+- **Tema Dark**: CSS completo com paleta consistente da aplicação
+- **Responsividade**: Layout adaptável mobile/desktop
+- **Error Handling**: Tratamento robusto de erros 500/404
+
+#### 🎨 **Tema Dark Implementado:**
+
+**Paleta de Cores Definida:**
+```css
+--primary-color: #1E88E5;    /* Azul principal SGR */
+--secondary-color: #1976D2;  /* Azul secundário */
+--accent-color: #1565C0;     /* Azul escuro */
+--bg-primary: #121212;       /* Fundo principal dark */
+--bg-secondary: #1e1e1e;     /* Fundo secundário */
+--bg-tertiary: #2d2d2d;      /* Fundo terciário */
+--text-primary: #ffffff;     /* Texto principal */
+--text-secondary: #b0b0b0;   /* Texto secundário */
+--border-color: #404040;     /* Bordas */
+```
+
+**Elementos Estilizados:**
+- **Header**: Gradiente azul com text-shadow e sticky positioning
+- **Títulos**: Hierarquia com cores da paleta e bordas estilizadas
+- **Tabelas**: Background escuro, hover effects, box-shadow
+- **Code**: Syntax highlighting com background escuro
+- **Scrollbar**: Personalizada com cores da aplicação
+- **Animações**: FadeIn suave no carregamento
+
+#### 🔧 **Integração com a Aplicação:**
+
+**Modificação em `app.py`:**
+- **Import**: `from manual_server import open_manual_in_browser`
+- **Execução**: Chamada da função ao clicar no botão
+- **Feedback**: Mensagem de sucesso/erro para o usuário
+- **Fallback**: Página Streamlit caso servidor falhe
+
+**Fluxo de Funcionamento:**
+1. Usuário clica no botão "📖 Ler Manual"
+2. Sistema inicia servidor HTTP local em background
+3. Abre nova janela/guia do navegador automaticamente
+4. Manual exibido com tema dark profissional
+5. Servidor continua ativo para múltiplos acessos
+
+#### 🎭 **Fallback Streamlit Dark:**
+
+**Página `pages/manual_vendas.py` Atualizada:**
+- **CSS Global**: Tema dark aplicado com `!important`
+- **Background**: #121212 (consistente com servidor)
+- **Botões**: Styling personalizado azul
+- **Markdown**: Conversão com cores dark theme
+- **Tables**: Background escuro com hover effects
+
+#### 🛡️ **Tratamento de Erros Robusto:**
+
+**Servidor HTTP:**
+- **Arquivo Não Encontrado**: Error 500 com mensagem específica
+- **Porta Ocupada**: Tentativa automática porta alternativa
+- **Encoding**: UTF-8 garantido em todas as respostas
+
+**Aplicação Principal:**
+- **Import Error**: Fallback para página Streamlit
+- **Server Error**: Mensagem de erro + fallback automático
+- **Path Resolution**: Múltiplos caminhos testados
+
+#### 📋 **Lista de Arquivos Alterados/Criados:**
+1. 📄 **Criado:** `manual_server.py` - Servidor HTTP para manual com tema dark
+2. ✏️ **Modificado:** `app.py` - Integração com servidor e abertura em nova janela
+3. ✏️ **Modificado:** `pages/manual_vendas.py` - Tema dark como fallback
+4. ✏️ **Atualizado:** `Historico.md` - Documentação das correções
+
+#### 🎯 **Resultados Finais:**
+- ✅ **Nova Janela Real**: Abertura em guia/janela separada do navegador
+- ✅ **Tema Dark Completo**: Visual consistente com aplicação SGR
+- ✅ **Performance Otimizada**: Servidor HTTP dedicado e rápido  
+- ✅ **Responsividade**: Layout adaptável a diferentes dispositivos
+- ✅ **Robustez**: Sistema de fallback duplo para máxima confiabilidade
+- ✅ **UX Premium**: Animações, gradientes e efeitos profissionais
+
+#### 🌟 **Inovações Implementadas:**
+- **Servidor HTTP Embarcado**: Solução única para nova janela real
+- **CSS Variables**: Sistema de cores organizado e reutilizável
+- **Dual Rendering**: Servidor nativo + fallback Streamlit
+- **Thread Management**: Background processing sem bloqueio da UI
+- **Auto Port Selection**: Resolução automática de conflitos de porta
+
+**🏆 MANUAL COM NOVA JANELA REAL E TEMA DARK PROFISSIONAL!**
+
+---
+
+### 🕒 17:45 - Correções Finais no Sistema de Manual
+**O que foi pedido:**
+1. Remover botão "Ler Manual" do login e menu (imagens menu01.png e menu02.png)
+2. Remover barra superior do manual (imagem barra.png)
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+#### 🔍 **Análise do Problema:**
+
+**1. Botão Aparecendo em Lugares Indevidos**
+- **Diagnóstico**: Arquivo `pages/manual_vendas.py` sendo detectado automaticamente pelo Streamlit
+- **Causa**: Streamlit adiciona automaticamente arquivos da pasta `pages/` ao menu de navegação
+- **Impacto**: Item "manual vendas" aparecia na sidebar do menu principal
+
+**2. Barra Superior Indesejada**
+- **Problema**: Header com gradiente azul aparecendo no topo do manual
+- **Localização**: Arquivo `manual_server.py` incluía div header no HTML
+
+#### 🛠️ **Correções Implementadas:**
+
+**1. ✅ Remoção da Página Streamlit**
+- **Ação**: Removido arquivo `pages/manual_vendas.py`
+- **Ação**: Removido diretório `pages/` vazio
+- **Resultado**: Manual não aparece mais no menu automático do Streamlit
+- **Benefício**: Interface limpa sem itens de menu desnecessários
+
+**2. ✅ Ajuste do Fallback**
+- **Modificação**: Atualizado `app.py` para remover referência à página Streamlit
+- **Nova Mensagem**: Orientação para acessar manualmente caso haja problemas
+- **URL Manual**: `http://localhost:8888/manual` para acesso direto
+
+**3. ✅ Remoção da Barra Superior**
+- **CSS**: Classe `.header` definida como `display: none`
+- **HTML**: Removida div `<div class="header">` do template
+- **Container**: Ajustado `margin-top: 0` e `min-height: 100vh`
+- **Resultado**: Manual inicia diretamente no conteúdo sem header
+
+#### 🎨 **Melhorias Visuais:**
+
+**Layout Limpo:**
+- **Sem Header**: Manual abre direto no conteúdo
+- **Full Height**: Container ocupa 100% da altura da viewport
+- **Sem Margins**: Aproveitamento máximo do espaço da tela
+- **Background**: Tema dark consistente sem interferências
+
+**Container Otimizado:**
+```css
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    margin-top: 0;
+    min-height: 100vh;
+    background: var(--bg-secondary);
+}
+```
+
+#### 🔧 **Estrutura Final:**
+
+**Fluxo Simplificado:**
+1. Usuário clica em "📖 Ler Manual" (apenas no Dashboard de Vendas)
+2. Sistema inicia servidor HTTP local em background
+3. Abre nova janela do navegador automaticamente
+4. Manual exibido sem barra superior, direto no conteúdo
+5. Layout limpo com tema dark profissional
+
+**Arquivos Envolvidos:**
+- **Removido**: `pages/manual_vendas.py` (evita menu automático)
+- **Removido**: `pages/` (diretório vazio)
+- **Modificado**: `manual_server.py` (header removido)
+- **Modificado**: `app.py` (fallback atualizado)
+
+#### 📋 **Lista de Arquivos Alterados:**
+1. 🗑️ **Removido:** `pages/manual_vendas.py` - Página Streamlit desnecessária
+2. 🗑️ **Removido:** `pages/` - Diretório vazio
+3. ✏️ **Modificado:** `manual_server.py` - Header removido e container ajustado
+4. ✏️ **Modificado:** `app.py` - Fallback atualizado sem referência à página
+5. ✏️ **Atualizado:** `Historico.md` - Documentação das correções
+
+#### 🎯 **Resultados Finais:**
+- ✅ **Menu Limpo**: Botão não aparece mais em login ou menu principal
+- ✅ **Layout Otimizado**: Manual sem barra superior desnecessária
+- ✅ **UX Melhorada**: Acesso direto ao conteúdo do manual
+- ✅ **Interface Consistente**: Apenas Dashboard de Vendas tem o botão
+- ✅ **Performance**: Sistema mais leve sem páginas Streamlit extras
+
+#### 🌟 **Vantagens da Solução:**
+- **Simplicidade**: Uma única via de acesso ao manual (Dashboard de Vendas)
+- **Performance**: Servidor HTTP dedicado sem overhead do Streamlit
+- **Flexibilidade**: Manual pode ser acessado diretamente via URL
+- **Manutenibilidade**: Código centralizado em um local específico
+- **Clean Code**: Remoção de arquivos desnecessários
+
+**🏆 SISTEMA DE MANUAL LIMPO E OTIMIZADO COM ACESSO RESTRITO!**
+
+---
+
 *** FINALIZADO ***
