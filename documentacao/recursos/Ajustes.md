@@ -26,6 +26,20 @@
 
 - Corrigindo **Carregamento de Fotos Vendedores**
 
+**03/09/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **09:57 - Commit 103**
+
+- **Relatório de Vendas**
+    - Ajustado **Filtros**
+        - Período
+        - Vendedor
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

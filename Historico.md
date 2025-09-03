@@ -1,5 +1,72 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 03/09/2025
+
+### 🕐 09:15 - Correção dos Filtros do Relatório de Vendas
+**O que foi pedido:** Verificar e corrigir os critérios de seleção do Relatório de Vendas
+
+### 🕐 09:40 - Correção da Diferença nas Vendas do Cássio Gadagnoto  
+**O que foi pedido:** Investigar por que as vendas do Cássio (2.350.968,88) apareciam como 1.863.104,58
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🔍 1. Diagnóstico dos Problemas:**
+- ❌ **Lógica de período incorreta:** Sistema usava apenas setembro (2 vendas) em vez de agosto (80 vendas)
+- ❌ **Perda de dados:** 9 vendas do Cássio eram filtradas por terem campo `ValorDesconto` vazio
+- ❌ **Resultado:** Apenas 11 de 20 vendas eram processadas (R$ 1.863.104,58 em vez de R$ 2.350.968,88)
+
+**🛠️ 2. Soluções Implementadas:**
+
+**A) Correção da Lógica de Período:**
+- ✅ **Comportamento Correto Implementado:**
+  - 📅 **Dados Iniciais:** SEMPRE mês atual (01/09 a 03/09) - 2 vendas
+  - 🔍 **Filtros Personalizados:** Usa período selecionado pelo usuário
+  - ✅ **Teste Cássio:** Filtro 01/08-31/08 exibe corretamente suas 20 vendas
+
+**B) Correção do Processamento de Dados:**
+- ✅ **Antes:** Filtrava todas as linhas com qualquer campo vazio
+- ✅ **Depois:** Apenas `ValorTotal` obrigatório; outros campos vazios = 0
+- ✅ **Resultado:** Preserva vendas legítimas com descontos em branco
+
+**✅ 3. Resultados dos Testes:**
+- ✅ **Dados Iniciais (Setembro):** 2 vendas, R$ 375.924,66
+- ✅ **Filtro Personalizado (Agosto):** 80 vendas, R$ 10.209.422,10  
+- ✅ **Cássio com filtro 01/08-31/08:** 20 vendas, R$ 2.350.968,88 ✅
+- ✅ **Comportamento:** Exatamente como solicitado pelo usuário!
+
+**📁 Lista de Arquivos Alterados:**
+- `/domain/services/vendas_service.py` (lógica de período + processamento de dados)
+
+---
+
+**🔍 1. Diagnóstico dos Problemas:**
+- ✅ Vendas do Diney (144987.29) não apareciam no filtro 01/08/2025 a 31/08/2025
+- ✅ Victor e Wanderson Diniz apareciam sem filtros mas desapareciam com filtros 
+- ❌ Critérios obrigatórios não eram aplicados consistentemente
+
+**🛠️ 2. Solução Implementada:**
+- ✅ **Critérios Obrigatórios SEMPRE Aplicados:** Independente do filtro, sempre aplicar:
+  - 📅 Período Selecionado
+  - 👥 `VendedorNome IN (SELECT "Nome" FROM "Vendedores")`
+  - 📊 `SituacaoNome = 'Em andamento'`
+- ✅ **Query Base Corrigida:** Filtros obrigatórios integrados na query principal
+- ✅ **Filtros Específicos:** Mantidos como opcionais/adicionais aos obrigatórios
+
+**🔧 3. Alterações Técnicas:**
+- ✅ **repositories_vendas.py:** Query base sempre inclui critérios obrigatórios
+- ✅ **vendas_service.py:** Removido parâmetro `apenas_vendedores_ativos` desnecessário
+
+**✅ 4. Resultados dos Testes:**
+- ✅ **Diney (01/08 a 31/08):** Agora exibe corretamente 3 vendas totalizando R$ 144.987,29
+- ❌ **Victor e Wanderson (29/08):** Corretamente filtrados por não estarem na tabela Vendedores
+- ✅ **Comportamento Consistente:** Critérios sempre aplicados independente da interface
+
+**📁 Lista de Arquivos Alterados:**
+- `/infrastructure/database/repositories_vendas.py`
+- `/domain/services/vendas_service.py`
+
+---
+
 ## 📅 02/09/2025
 
 ### 🕐 13:35 - Correção e Teste das Fotos dos Vendedores

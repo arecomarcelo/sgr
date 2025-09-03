@@ -44,32 +44,14 @@ class VendasService:
         try:
             hoje = datetime.now()
 
-            # Se hoje é dia 1, usar mês anterior completo
-            if hoje.day == 1:
-                # Mês anterior completo
-                if hoje.month == 1:
-                    # Janeiro -> Dezembro do ano anterior
-                    data_inicial = datetime(hoje.year - 1, 12, 1).date()
-                    # Último dia de dezembro
-                    data_final = datetime(hoje.year - 1, 12, 31).date()
-                else:
-                    # Primeiro dia do mês anterior
-                    data_inicial = datetime(hoje.year, hoje.month - 1, 1).date()
-                    # Último dia do mês anterior
-                    import calendar
+            # SEMPRE usar mês atual: dia 1 até dia atual
+            data_inicial = datetime(hoje.year, hoje.month, 1).date()
+            data_final = hoje.date()
 
-                    ultimo_dia = calendar.monthrange(hoje.year, hoje.month - 1)[1]
-                    data_final = datetime(hoje.year, hoje.month - 1, ultimo_dia).date()
-            else:
-                # Mês atual: dia 1 até dia atual
-                data_inicial = datetime(hoje.year, hoje.month, 1).date()
-                data_final = hoje.date()
-
+            # Os critérios obrigatórios são aplicados automaticamente no repositório
             df = self.venda_repository.get_vendas_filtradas(
                 data_inicial=data_inicial,
                 data_final=data_final,
-                situacao="Em andamento",
-                apenas_vendedores_ativos=True,
             )
 
             return self._processar_dados_vendas(df)
@@ -374,8 +356,15 @@ class VendasService:
             if col in df.columns:
                 # Garantir que seja string antes de processar
                 df[col] = df[col].astype(str)
-                # Remover linhas com strings vazias
-                df = df[df[col].str.strip() != ""]
+                # Tratar valores vazios - apenas para ValorTotal que é obrigatório
+                if col == "ValorTotal":
+                    # Remover linhas com ValorTotal vazio (obrigatório)
+                    df = df[df[col].str.strip() != ""]
+                else:
+                    # Para outros campos, substituir vazios por "0"
+                    df[col] = df[col].apply(
+                        lambda x: "0" if not x or str(x).strip() == "" else str(x)
+                    )
                 # Converter vírgula para ponto e para float
                 df[col] = df[col].str.replace(",", ".").astype(float)
 

@@ -34,30 +34,32 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
     ) -> pd.DataFrame:
         """Obtém vendas com filtros aplicados usando SQL bruto"""
         try:
-            # Query base
+            # Query base com critérios obrigatórios aplicados SEMPRE
             query = """
                 SELECT * FROM "Vendas"
                 WHERE "Data"::DATE BETWEEN %s AND %s
+                AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+                AND "SituacaoNome" = 'Em andamento'
             """
             params = [data_inicial, data_final]
 
-            # Filtro de vendedores ativos (critério rígido)
-            if apenas_vendedores_ativos:
-                query += ' AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores") AND "SituacaoNome" = \'Em andamento\''
-
-            # Filtro de vendedores específicos
+            # Filtro de vendedores específicos (adicional aos critérios obrigatórios)
             if vendedores:
                 placeholders = ",".join(["%s"] * len(vendedores))
                 query += f' AND "VendedorNome" IN ({placeholders})'
                 params.extend(vendedores)
 
-            # Filtro de situação única
+            # Filtro de situação única (sobrescreve o critério obrigatório se especificado)
             if situacao:
+                # Remove o filtro obrigatório de situação e aplica o específico
+                query = query.replace('AND "SituacaoNome" = \'Em andamento\'', '')
                 query += ' AND "SituacaoNome" = %s'
                 params.append(situacao)
 
-            # Filtro de situações múltiplas
+            # Filtro de situações múltiplas (sobrescreve o critério obrigatório se especificado)
             if situacoes:
+                # Remove o filtro obrigatório de situação e aplica os específicos
+                query = query.replace('AND "SituacaoNome" = \'Em andamento\'', '')
                 placeholders = ",".join(["%s"] * len(situacoes))
                 query += f' AND "SituacaoNome" IN ({placeholders})'
                 params.extend(situacoes)
