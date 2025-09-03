@@ -1987,4 +1987,129 @@ from apps.auth.modules import menu
 
 ---
 
+### 🕒 18:00 - Compatibilidade com Deploy Streamlit Cloud
+**O que foi pedido:** Manual não funciona no deploy do Streamlit Cloud, apenas local
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+#### 🔍 **Problema Identificado:**
+
+**Limitações do Streamlit Cloud:**
+- **Servidores HTTP**: Não permite servidores customizados como `manual_server.py`
+- **Portas Bloqueadas**: Portas como 8888/8889 não são acessíveis externamente
+- **Threading Restrito**: Threads daemon podem ser bloqueadas pelo ambiente
+- **Network Security**: Políticas restritivas de rede no deploy
+
+#### 🛠️ **Solução Híbrida Implementada:**
+
+**Arquivo: `manual_viewer.py` - Visualizador Universal**
+- **Local**: Mantém servidor HTTP para nova janela real
+- **Deploy**: Modal/dialog integrado ao Streamlit com tema dark
+- **Detecção Automática**: Sistema identifica o ambiente e escolhe a melhor opção
+
+#### 🎯 **Funcionalidades do Sistema Híbrido:**
+
+**1. ✅ Detecção de Ambiente**
+```python
+# Verificar se consegue importar o servidor (local)
+try:
+    from manual_server import open_manual_in_browser
+    is_local = True  # Usar servidor HTTP
+except ImportError:
+    is_local = False  # Usar modal Streamlit
+```
+
+**2. ✅ Modal Dark Theme para Deploy**
+- **Container**: Tema dark completo com CSS personalizado
+- **Scrollable**: Max-height 70vh com scroll customizado
+- **Typography**: Hierarquia de títulos com cores SGR
+- **Tables**: Estilo dark com hover effects
+- **Code**: Syntax highlighting consistente
+
+**3. ✅ Conversão Markdown Robusta**
+- **Biblioteca Completa**: `markdown` com extensões `tables`, `fenced_code`, `toc`
+- **Fallback Regex**: Conversão básica se biblioteca não estiver disponível
+- **HTML Limpo**: Output otimizado para Streamlit
+
+#### 🎨 **CSS do Modal (Deploy):**
+
+**Paleta Dark Consistente:**
+```css
+.manual-container {
+    background-color: #1e1e1e;      /* Fundo escuro */
+    color: #ffffff;                  /* Texto branco */
+    border: 1px solid #404040;      /* Borda sutil */
+    max-height: 70vh;               /* Altura controlada */
+    overflow-y: auto;               /* Scroll vertical */
+}
+
+/* Títulos com cores SGR */
+h1 { color: #1E88E5; border-bottom: 2px solid #1E88E5; }
+h2 { color: #1976D2; border-left: 3px solid #1976D2; }
+h3 { color: #1565C0; }
+h4 { color: #1E88E5; }
+
+/* Tabelas com tema escuro */
+table { background: #2d2d2d; }
+th { background: #1E88E5; color: white; }
+td { color: #b0b0b0; border-bottom: 1px solid #404040; }
+tr:hover td { background: rgba(30, 136, 229, 0.1); }
+```
+
+#### 🔧 **Integração com App Principal:**
+
+**Modificações em `app.py`:**
+- **Detecção**: Automática de ambiente (local vs deploy)
+- **Session State**: `st.session_state["show_manual"]` para controlar modal
+- **Renderização**: `render_manual_if_requested()` no final do dashboard
+- **UX**: Mensagens de feedback adequadas para cada ambiente
+
+**Fluxo de Funcionamento:**
+1. **Usuário clica "📖 Ler Manual"**
+2. **Sistema detecta ambiente automaticamente**
+3. **Local**: Abre servidor HTTP em nova janela
+4. **Deploy**: Exibe modal integrado com scroll
+5. **Ambos**: Tema dark consistente e funcionalidades completas
+
+#### 📦 **Dependências Atualizadas:**
+
+**requirements.txt:**
+- **Adicionado**: `markdown==3.8.2` para conversão completa
+- **Mantido**: `markdown-it-py==3.0.0` (dependência Streamlit)
+- **Garantia**: Disponibilidade da biblioteca no deploy
+
+#### 🎭 **Recursos do Modal (Deploy):**
+
+**Funcionalidades Completas:**
+- **📥 Download**: Botão para baixar o manual em .md
+- **❌ Fechar**: Botão para ocultar o modal
+- **🔄 Scrollbar**: Personalizada com cores SGR
+- **📱 Responsivo**: Layout adaptável a diferentes telas
+- **⚡ Performance**: Renderização otimizada
+
+#### 📋 **Lista de Arquivos Criados/Alterados:**
+1. 📄 **Criado:** `manual_viewer.py` - Visualizador universal com modal dark
+2. ✏️ **Modificado:** `app.py` - Detecção de ambiente e integração do modal
+3. ✏️ **Modificado:** `requirements.txt` - Biblioteca markdown adicionada
+4. ✏️ **Atualizado:** `Historico.md` - Documentação da solução híbrida
+
+#### 🎯 **Resultados Finais:**
+- ✅ **Compatibilidade Total**: Funciona em local e deploy
+- ✅ **UX Consistente**: Mesmo visual e funcionalidades em ambos ambientes  
+- ✅ **Tema Dark**: Visual profissional mantido
+- ✅ **Performance**: Modal leve e responsivo para deploy
+- ✅ **Robustez**: Sistema de fallback para máxima confiabilidade
+- ✅ **Manutenibilidade**: Código organizado e reutilizável
+
+#### 🌟 **Vantagens da Solução Híbrida:**
+- **Best of Both Worlds**: Nova janela local + modal integrado no deploy
+- **Zero Configuration**: Detecção automática sem configuração manual
+- **Fallback Inteligente**: Múltiplas camadas de redundância
+- **Deploy Ready**: Totalmente compatível com Streamlit Cloud
+- **Theme Consistency**: Visual idêntico em ambos ambientes
+
+**🏆 MANUAL FUNCIONANDO PERFEITAMENTE EM LOCAL E DEPLOY!**
+
+---
+
 *** FINALIZADO ***

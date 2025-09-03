@@ -210,15 +210,29 @@ def vendas_dashboard():
         # Botão Ler Manual centralizado abaixo do título
         col1, col2, col3 = st.columns([2, 1, 2])
         with col2:
+            # Tentar servidor local primeiro, fallback para modal
             if st.button("📖 Ler Manual", type="secondary", use_container_width=True):
-                # Importar e executar o servidor do manual
+                # Verificar se está em ambiente local ou deploy
+                # Se conseguir importar o servidor, está local
+                is_local = False
                 try:
                     from manual_server import open_manual_in_browser
-                    open_manual_in_browser()
-                    st.success("✅ Manual aberto no navegador!")
-                except Exception as e:
-                    st.error(f"❌ Erro ao abrir manual: {str(e)}")
-                    st.info("💡 Verifique se seu navegador permite pop-ups ou acesse manualmente: http://localhost:8888/manual")
+                    is_local = True
+                except ImportError:
+                    is_local = False
+                
+                if is_local:
+                    # Ambiente local - usar servidor HTTP
+                    try:
+                        open_manual_in_browser()
+                        st.success("✅ Manual aberto no navegador!")
+                    except Exception as e:
+                        st.session_state["show_manual"] = True
+                        st.rerun()
+                else:
+                    # Ambiente de deploy - usar modal
+                    st.session_state["show_manual"] = True
+                    st.rerun()
         
         st.markdown("---")
 
@@ -228,6 +242,10 @@ def vendas_dashboard():
         _render_download_section()
         _render_charts()
         _render_data_grid()
+        
+        # Renderizar manual se solicitado
+        from manual_viewer import render_manual_if_requested
+        render_manual_if_requested()
 
     except SGRException as e:
         logger.error(f"SGR Error: {str(e)}")

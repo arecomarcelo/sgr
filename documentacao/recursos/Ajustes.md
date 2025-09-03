@@ -56,6 +56,10 @@
 
 - Implementado **Manual Relatório de Vendas**
 
+### **14:14 - Commit 107**
+
+- Corrigindo Erro de Abertura **Manual Relatório de Vendas** no **Streamlit**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
