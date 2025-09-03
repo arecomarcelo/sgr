@@ -6,20 +6,84 @@ def login_screen(user_service):
     """
     Tela de login do aplicativo
     """
-    # CSS para ajustar a largura da tela de login
+    # CSS para login moderno conforme imagem
     login_style = """
     <style>
     #MainMenu {visibility: hidden;} 
     footer {visibility: hidden;} 
     header {visibility: hidden;} 
     .stDeployButton {visibility: hidden;}
-    [data-testid="stStatusWidget"] {visibility: hidden;}        
+    [data-testid="stStatusWidget"] {visibility: hidden;}
+    
+    /* Container principal */
+    .stApp {
+        background: #2c2c2c;
+    }
+    
     [data-testid="stAppViewContainer"] {
-        max-width: 500px; /* Ajuste a largura desejada */
-        margin: auto; /* Centraliza o conteúdo */
-        padding: 20px; /* Espaço interno */
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Efeito de sombra */
-        border-radius: 10px; /* Bordas arredondadas */
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+        background: #2c2c2c;
+    }
+    
+    /* Estilo do cabeçalho Login */
+    .login-header {
+        background: #1976D2;
+        color: white;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+    
+    /* Container do formulário */
+    .login-container {
+        background: #3c3c3c;
+        padding: 30px;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Labels */
+    .stTextInput > label {
+        color: #e0e0e0 !important;
+        font-weight: 500 !important;
+        margin-bottom: 8px !important;
+    }
+    
+    /* Inputs */
+    .stTextInput > div > div > input {
+        background-color: #4a4a4a !important;
+        color: white !important;
+        border: 1px solid #555 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+    }
+    
+    .stTextInput > div > div > input::placeholder {
+        color: #aaa !important;
+    }
+    
+    /* Botão Entrar */
+    .stButton > button {
+        background: #1976D2 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 12px 0 !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        width: 100% !important;
+        margin-top: 20px !important;
+    }
+    
+    .stButton > button:hover {
+        background: #1565C0 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4) !important;
     }
     </style>
     """
@@ -27,16 +91,24 @@ def login_screen(user_service):
     # Aplicar o CSS
     st.markdown(login_style, unsafe_allow_html=True)
 
-    # Conteúdo da tela de login
-    st.subheader("Login")
+    # Header do login
+    st.markdown("""
+    <div class="login-header">
+        Login
+    </div>
+    <div class="login-container">
+    """, unsafe_allow_html=True)
 
     # Usar form para capturar Enter
     with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("Usuário", key="login_username")
-        password = st.text_input("Senha", type="password", key="login_password")
+        username = st.text_input("Usuário", placeholder="Digite seu usuário", key="login_username")
+        password = st.text_input("Senha", type="password", placeholder="Digite sua senha", key="login_password")
 
         # Submit button - será ativado ao pressionar Enter
-        login_submitted = st.form_submit_button("Entrar", use_container_width=True)
+        login_submitted = st.form_submit_button("🔐 Entrar", use_container_width=True)
+
+    # Fechar container
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # Processar login fora do form para evitar problemas de estado
     if login_submitted:

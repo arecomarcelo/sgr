@@ -45,6 +45,13 @@
 - Corrigindo **Incompatibilidade Blue e Black**
 - **Blue** Removido
 
+### **hh:mm - Commit 105**
+
+- Implementações:
+    - Novo **Login**
+    - Novo **Menu**
+        - Redefinido os **Textos**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
