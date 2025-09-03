@@ -40,6 +40,11 @@
         - Período
         - Vendedor
 
+### **10:04 - Commit 104**
+
+- Corrigindo **Incompatibilidade Blue e Black**
+- **Blue** Removido
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

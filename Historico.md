@@ -2,6 +2,43 @@
 
 ## 📅 03/09/2025
 
+### 🕐 10:05 - Correção do Deploy no Streamlit
+**O que foi pedido:** Corrigir erro de deploy no Streamlit devido a conflitos de dependências
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🚨 1. Problema Identificado:**
+- ❌ **Erro de Deploy:** `Cannot install blue==0.9.1 and black==23.12.1`
+- ❌ **Conflito:** `blue==0.9.1` depende de `black==22.1.0`
+- ❌ **Resultado:** Deploy falhando no Streamlit Cloud
+
+**🛠️ 2. Solução Implementada:**
+- ✅ **Remoção de Dependências de Desenvolvimento:** Ferramentas não necessárias em produção
+- ✅ **Pacotes Removidos:**
+  - `blue==0.9.1` (formatador de código)
+  - `black==23.12.1` (formatador de código)
+  - `autopep8==1.6.0` (formatador automático)
+  - `flake8==4.0.1` (linter)
+  - `mypy==1.17.1` (type checker)
+  - `mypy_extensions==1.1.0`
+  - `django-stubs==5.2.2` (type stubs)
+  - `django-stubs-ext==5.2.2`
+  - `types-PyYAML==6.0.12.20250822`
+  - `pycodestyle==2.8.0`
+  - `pyflakes==2.4.0`
+  - `mccabe==0.6.1`
+
+**✅ 3. Resultados:**
+- ✅ **Requirements Otimizado:** 67 dependências (antes: 79)
+- ✅ **Conflitos Resolvidos:** Sem mais conflitos entre pacotes
+- ✅ **Deploy Liberado:** Pronto para deploy no Streamlit Cloud
+- ✅ **Produção Limpa:** Apenas dependências necessárias para execução
+
+**📁 Lista de Arquivos Alterados:**
+- `requirements.txt` (otimizado para produção)
+
+---
+
 ### 🕐 09:15 - Correção dos Filtros do Relatório de Vendas
 **O que foi pedido:** Verificar e corrigir os critérios de seleção do Relatório de Vendas
 
