@@ -60,6 +60,10 @@
 
 - Corrigindo Erro de Abertura **Manual Relatório de Vendas** no **Streamlit**
 
+### **14:24 - Commit 108**
+
+- Corrigindo Erro de Abertura **Manual Relatório de Vendas** no **Streamlit**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

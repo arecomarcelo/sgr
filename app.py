@@ -198,6 +198,11 @@ def vendas_dashboard():
     Dashboard de vendas integrado
     """
     try:
+        # Verificar se está no modo manual
+        if st.session_state.get("view_mode") == "manual":
+            _render_manual_fullscreen()
+            return
+        
         # Aplicar tema
         apply_theme()
 
@@ -210,29 +215,10 @@ def vendas_dashboard():
         # Botão Ler Manual centralizado abaixo do título
         col1, col2, col3 = st.columns([2, 1, 2])
         with col2:
-            # Tentar servidor local primeiro, fallback para modal
+            # Botão do manual - navegar para tela cheia
             if st.button("📖 Ler Manual", type="secondary", use_container_width=True):
-                # Verificar se está em ambiente local ou deploy
-                # Se conseguir importar o servidor, está local
-                is_local = False
-                try:
-                    from manual_server import open_manual_in_browser
-                    is_local = True
-                except ImportError:
-                    is_local = False
-                
-                if is_local:
-                    # Ambiente local - usar servidor HTTP
-                    try:
-                        open_manual_in_browser()
-                        st.success("✅ Manual aberto no navegador!")
-                    except Exception as e:
-                        st.session_state["show_manual"] = True
-                        st.rerun()
-                else:
-                    # Ambiente de deploy - usar modal
-                    st.session_state["show_manual"] = True
-                    st.rerun()
+                st.session_state["view_mode"] = "manual"
+                st.rerun()
         
         st.markdown("---")
 
@@ -242,10 +228,6 @@ def vendas_dashboard():
         _render_download_section()
         _render_charts()
         _render_data_grid()
-        
-        # Renderizar manual se solicitado
-        from manual_viewer import render_manual_if_requested
-        render_manual_if_requested()
 
     except SGRException as e:
         logger.error(f"SGR Error: {str(e)}")
@@ -1012,6 +994,99 @@ def _render_charts():
             st.error(f"Erro ao exibir vendedores: {str(e)}")
 
     st.markdown("---")
+
+
+def _render_manual_fullscreen():
+    """Renderiza o manual em tela cheia"""
+    try:
+        # Aplicar tema
+        apply_theme()
+        
+        # Ler arquivo do manual primeiro
+        manual_path = "documentacao/Manual_Relatorio_Vendas.md"
+        with open(manual_path, "r", encoding="utf-8") as file:
+            content = file.read()
+        
+        # CSS para melhorar alinhamento e aparência dos botões
+        st.markdown("""
+        <style>
+        .manual-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+        
+        .manual-title {
+            text-align: center;
+            color: #1E88E5;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .manual-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        /* Alinhar botões corretamente */
+        div[data-testid="column"] .stDownloadButton,
+        div[data-testid="column"] .stButton {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+        
+        div[data-testid="column"] .stDownloadButton > button,
+        div[data-testid="column"] .stButton > button {
+            height: 2.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            margin: 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Header com layout melhorado
+        st.markdown(
+            '<div class="manual-header">'
+            '<h1 class="manual-title">📖 Manual do Relatório de Vendas</h1>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        
+        # Botões de ação centralizados
+        col1, col2, col3, col4, col5 = st.columns([2, 1.5, 0.5, 1.5, 2])
+        
+        with col2:
+            st.download_button(
+                label="📥 Download Manual",
+                data=content,
+                file_name="Manual_Relatorio_Vendas.md",
+                mime="text/markdown",
+                key="download_manual_fullscreen",
+                use_container_width=True
+            )
+        
+        with col4:
+            if st.button("⬅️ Voltar ao Dashboard", key="back_to_dashboard", use_container_width=True):
+                st.session_state["view_mode"] = "dashboard"
+                st.rerun()
+        
+        st.markdown("---")
+        
+        # Exibir conteúdo do manual diretamente
+        st.markdown(content)
+                    
+    except FileNotFoundError:
+        st.error(f"❌ Arquivo do manual não encontrado: documentacao/Manual_Relatorio_Vendas.md")
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar manual: {str(e)}")
 
 
 def _render_data_grid():

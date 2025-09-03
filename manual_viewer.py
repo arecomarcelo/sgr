@@ -60,8 +60,8 @@ def show_manual_in_dialog():
         with open(manual_path, "r", encoding="utf-8") as file:
             markdown_content = file.read()
         
-        # Usar st.container com tema dark
-        with st.container():
+        # Usar expander expandido como "modal"
+        with st.expander("📖 Manual do Relatório de Vendas", expanded=True):
             # CSS para tema dark no modal
             st.markdown("""
             <style>
@@ -195,9 +195,8 @@ def show_manual_in_dialog():
             </style>
             """, unsafe_allow_html=True)
             
-            # Header do modal
-            st.markdown("### 📖 Manual do Relatório de Vendas")
-            st.markdown("---")
+            # Espaçamento
+            st.markdown("")
             
             # Converter markdown para HTML e exibir
             html_content = convert_markdown_to_html(markdown_content)
@@ -239,4 +238,5 @@ def render_manual_if_requested():
     Verifica se o manual foi solicitado e o exibe
     """
     if st.session_state.get("show_manual", False):
+        st.markdown("---")
         show_manual_in_dialog()
