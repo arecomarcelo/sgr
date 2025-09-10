@@ -76,6 +76,10 @@
 - **Relatório de Vendas**
     - Implementação de Grid Produtos Detalhados
 
+### **09:50 - Commit 110**
+
+- Ajustado o Layout **Grid Produtos Detalhados**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

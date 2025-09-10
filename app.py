@@ -1296,232 +1296,170 @@ def _create_value_percentage_chart(df):
 
 
 def _render_advanced_products_grid(df_display):
-    """Renderiza grid avançada com controles de ordenação, filtros e visibilidade de colunas"""
+    """Renderiza grid avançada usando AgGrid com funcionalidades completas"""
+    from st_aggrid import AgGrid, GridOptionsBuilder
 
-    # Inicializar estado da sessão para controles da grid
-    if "produtos_grid_config" not in st.session_state:
-        st.session_state.produtos_grid_config = {
-            "visible_columns": list(df_display.columns),
-            "sort_column": None,
-            "sort_ascending": True,
-            "column_filters": {},
-        }
+    def create_products_grid_options(df):
+        """Cria configurações para a grid de produtos"""
+        gb = GridOptionsBuilder.from_dataframe(df)
 
-    config = st.session_state.produtos_grid_config
-
-    # Interface de controles da grid
-    st.markdown("### 🔧 Controles da Grid")
-
-    # Linha 1: Controles de colunas e ordenação
-    col_controls1, col_controls2 = st.columns(2)
-
-    with col_controls1:
-        st.markdown("**👁️ Colunas Visíveis:**")
-        # Multiselect para controlar quais colunas mostrar
-        visible_columns = st.multiselect(
-            label="Selecione as colunas para exibir",
-            options=list(df_display.columns),
-            default=config["visible_columns"],
-            key="produtos_visible_columns",
+        gb.configure_grid_options(
+            domLayout="normal",
+            enableRangeSelection=True,
+            enableCellTextSelection=True,
+            suppressRowClickSelection=True,
+            enableExcelExport=True,
+            enableCsvExport=True,
+            onFirstDataRendered="onFirstDataRendered",
+            onFilterChanged="onFilterChanged",
         )
-        config["visible_columns"] = visible_columns
 
-    with col_controls2:
-        st.markdown("**🔄 Ordenação:**")
-        col_sort1, col_sort2 = st.columns([3, 1])
+        # Configurações de coluna
+        gb.configure_default_column(
+            filter=True, cellStyle={"border": "1px solid black"}, floatingFilter=True
+        )
 
-        with col_sort1:
-            sort_column = st.selectbox(
-                "Coluna para ordenação",
-                options=["Nenhuma"] + list(df_display.columns),
-                index=0
-                if config["sort_column"] is None
-                else list(df_display.columns).index(config["sort_column"]) + 1,
-                key="produtos_sort_column",
-            )
-            config["sort_column"] = sort_column if sort_column != "Nenhuma" else None
+        # Configuração dos cabeçalhos e formatação personalizada
+        for col in df.columns:
+            if col == "Produto":
+                gb.configure_column(col, headerName="Produto")
+            elif col == "Código Expedição":
+                gb.configure_column(col, headerName="Código Expedição")
+            elif col == "Quantidade":
+                gb.configure_column(
+                    col,
+                    headerName="Quantidade",
+                    type=["numericColumn", "numberColumnFilter"],
+                    valueFormatter="x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})",
+                )
+            elif "Valor" in col:
+                gb.configure_column(
+                    col,
+                    headerName=col,
+                    type=["numericColumn", "numberColumnFilter"],
+                    valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})",
+                )
+            else:
+                gb.configure_column(col, headerName=col)
 
-        with col_sort2:
-            sort_ascending = st.selectbox(
-                "Ordem",
-                options=["⬆️ Crescente", "⬇️ Decrescente"],
-                index=0 if config["sort_ascending"] else 1,
-                key="produtos_sort_direction",
-            )
-            config["sort_ascending"] = sort_ascending == "⬆️ Crescente"
+        # Totalizadores
+        if "Quantidade" in df.columns:
+            gb.configure_column("Quantidade", aggFunc="sum", header_name="Total Quantidade")
+        for col in df.columns:
+            if "Valor" in col:
+                gb.configure_column(col, aggFunc="sum", header_name=f"Total {col}")
 
-    # Linha 2: Filtros por coluna
-    st.markdown("**🔍 Filtros por Coluna:**")
-    filter_cols = st.columns(len(visible_columns) if visible_columns else 1)
+        return gb.build()
 
-    for i, col_name in enumerate(visible_columns):
-        if i < len(filter_cols):
-            with filter_cols[i]:
-                # Obter valores únicos da coluna para filtro
-                unique_values = df_display[col_name].dropna().unique()
+    # Calcular totalizadores
+    def calculate_products_totals(data):
+        totals = {"total_produtos": len(data)}
+        
+        if "Quantidade" in data.columns:
+            try:
+                # Converter valores formatados para numérico
+                qty_values = []
+                for val in data["Quantidade"]:
+                    try:
+                        if isinstance(val, str):
+                            val_clean = val.replace(".", "").replace(",", ".")
+                            qty_values.append(float(val_clean))
+                        else:
+                            qty_values.append(float(val))
+                    except:
+                        qty_values.append(0)
+                totals["total_quantidade"] = sum(qty_values)
+            except:
+                totals["total_quantidade"] = 0
+        
+        # Calcular totais de valores monetários
+        for col in data.columns:
+            if "Valor" in col:
+                try:
+                    val_values = []
+                    for val in data[col]:
+                        try:
+                            if isinstance(val, str):
+                                val_clean = val.replace("R$", "").replace(".", "").replace(",", ".").strip()
+                                val_values.append(float(val_clean))
+                            else:
+                                val_values.append(float(val))
+                        except:
+                            val_values.append(0)
+                    totals[f"total_{col.lower().replace(' ', '_')}"] = sum(val_values)
+                except:
+                    totals[f"total_{col.lower().replace(' ', '_')}"] = 0
+        
+        return totals
 
-                if len(unique_values) <= 20:  # Selectbox para poucos valores
-                    selected_values = st.multiselect(
-                        f"Filtrar {col_name}",
-                        options=sorted(unique_values.astype(str)),
-                        default=config["column_filters"].get(col_name, []),
-                        key=f"filter_{col_name}",
-                    )
-                else:  # Text input para muitos valores
-                    filter_text = st.text_input(
-                        f"Buscar em {col_name}",
-                        value=config["column_filters"].get(col_name, ""),
-                        key=f"filter_{col_name}",
-                    )
-                    selected_values = filter_text
+    # Exibir totalizadores
+    def display_products_totals(totals, df):
+        from io import BytesIO
+        
+        container = st.container()
+        with container:
+            # Dividindo em colunas para totalizadores e botão
+            cols = st.columns([2, 2, 2, 2, 2])
+            
+            with cols[0]:
+                st.metric("📊 Total Produtos", totals["total_produtos"])
+            
+            if "total_quantidade" in totals:
+                with cols[1]:
+                    st.metric("📦 Quantidade Total", f"{totals['total_quantidade']:,.2f}".replace(",", "."))
+            
+            # Exibir valores monetários
+            col_idx = 2
+            for key, value in totals.items():
+                if key.startswith("total_valor") and col_idx < len(cols):
+                    with cols[col_idx]:
+                        col_name = key.replace("total_valor_", "").replace("_", " ").title()
+                        st.metric(f"💰 {col_name}", f"R$ {value:,.2f}".replace(",", ".").replace(".", ",", 1).replace(".", "."))
+                    col_idx += 1
+            
+            # Botão de download
+            if col_idx < len(cols):
+                with cols[col_idx]:
+                    st.write("")  # Espaço para alinhar
+                    buffer = BytesIO()
+                    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                        df.to_excel(writer, index=False, sheet_name="Produtos")
+                    
+                    if st.download_button(
+                        label="📥 Baixar Excel",
+                        data=buffer.getvalue(),
+                        file_name=f"produtos_detalhados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True,
+                    ):
+                        st.success("Download iniciado!")
 
-                config["column_filters"][col_name] = selected_values
+    # Container para os totalizadores
+    totals_container = st.container()
 
-    # Botões de controle
-    col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
+    # Renderizar o grid
+    with st.spinner("Carregando grid..."):
+        grid_options = create_products_grid_options(df_display)
+        grid_response = AgGrid(
+            df_display,
+            gridOptions=grid_options,
+            height=800,
+            fit_columns_on_grid_load=True,
+            theme="alpine",
+            allow_unsafe_jscode=True,
+            reload_data=True,
+            key="produtos_grid",
+        )
 
-    with col_btn1:
-        if st.button("🔄 Aplicar Filtros", type="primary"):
-            st.rerun()
-
-    with col_btn2:
-        if st.button("🗑️ Limpar Filtros"):
-            config["column_filters"] = {}
-            st.rerun()
-
-    with col_btn3:
-        if st.button("👁️ Mostrar Todas"):
-            config["visible_columns"] = list(df_display.columns)
-            st.rerun()
-
-    with col_btn4:
-        if st.button("🔄 Reset Grid"):
-            st.session_state.produtos_grid_config = {
-                "visible_columns": list(df_display.columns),
-                "sort_column": None,
-                "sort_ascending": True,
-                "column_filters": {},
-            }
-            st.rerun()
-
+    # Calcular e exibir totalizadores
+    totals = calculate_products_totals(grid_response["data"])
+    
+    with totals_container:
+        display_products_totals(totals, grid_response["data"])
+    
     st.markdown("---")
 
-    # Aplicar configurações ao DataFrame
-    df_filtered = df_display.copy()
-
-    # Aplicar filtros por coluna
-    for col_name, filter_value in config["column_filters"].items():
-        if filter_value:  # Se há filtro aplicado
-            if isinstance(filter_value, list) and filter_value:
-                # Filtro por seleção múltipla
-                df_filtered = df_filtered[
-                    df_filtered[col_name].astype(str).isin(filter_value)
-                ]
-            elif isinstance(filter_value, str) and filter_value.strip():
-                # Filtro por texto
-                df_filtered = df_filtered[
-                    df_filtered[col_name]
-                    .astype(str)
-                    .str.contains(filter_value, case=False, na=False)
-                ]
-
-    # Aplicar ordenação
-    if config["sort_column"] and config["sort_column"] in df_filtered.columns:
-        # Para colunas numéricas, extrair valores numéricos para ordenação correta
-        if any(keyword in config["sort_column"] for keyword in ["Valor", "Quantidade"]):
-            # Criar coluna temporária só com números para ordenação
-            df_filtered["_temp_sort"] = (
-                df_filtered[config["sort_column"]]
-                .astype(str)
-                .str.extract(r'([0-9,.-]+)')[0]
-            )
-            df_filtered["_temp_sort"] = pd.to_numeric(
-                df_filtered["_temp_sort"].str.replace(",", "."), errors="coerce"
-            )
-            df_filtered = df_filtered.sort_values(
-                "_temp_sort", ascending=config["sort_ascending"]
-            )
-            df_filtered = df_filtered.drop("_temp_sort", axis=1)
-        else:
-            df_filtered = df_filtered.sort_values(
-                config["sort_column"], ascending=config["sort_ascending"]
-            )
-
-    # Aplicar seleção de colunas visíveis
-    if visible_columns:
-        df_final = df_filtered[visible_columns]
-    else:
-        df_final = df_filtered
-
-    # Exibir estatísticas
-    col_stats1, col_stats2, col_stats3 = st.columns(3)
-
-    with col_stats1:
-        st.metric("📊 Total de Produtos", len(df_final))
-
-    with col_stats2:
-        if "Quantidade" in df_final.columns:
-            total_qty = 0
-            for qty_str in df_final["Quantidade"]:
-                try:
-                    # Extrair número da string formatada
-                    qty_num = float(str(qty_str).replace(".", "").replace(",", "."))
-                    total_qty += qty_num
-                except:
-                    pass
-            st.metric("📦 Quantidade Total", f"{total_qty:,.0f}".replace(",", "."))
-
-    with col_stats3:
-        if "Valor Total" in df_final.columns:
-            total_value = 0
-            for val_str in df_final["Valor Total"]:
-                try:
-                    # Extrair valor da string "R$ 1.234,56"
-                    val_clean = (
-                        str(val_str)
-                        .replace("R$", "")
-                        .replace(".", "")
-                        .replace(",", ".")
-                        .strip()
-                    )
-                    total_value += float(val_clean)
-                except:
-                    pass
-            st.metric(
-                "💰 Valor Total",
-                f"R$ {total_value:,.2f}".replace(".", "#")
-                .replace(",", ".")
-                .replace("#", ","),
-            )
-
-    # Renderizar tabela com configurações aplicadas
-    st.markdown("### 📋 Grid de Produtos")
-
-    # Configurações da tabela
-    column_config = {}
-    for col in df_final.columns:
-        if any(keyword in col for keyword in ["Valor", "Total", "Custo"]):
-            column_config[col] = st.column_config.TextColumn(
-                col, help=f"Filtrar ou ordenar por {col}", width="medium"
-            )
-        elif "Quantidade" in col:
-            column_config[col] = st.column_config.TextColumn(
-                col, help="Quantidade do produto", width="small"
-            )
-        else:
-            column_config[col] = st.column_config.TextColumn(
-                col, help=f"Filtrar ou ordenar por {col}", width="medium"
-            )
-
-    st.dataframe(
-        df_final,
-        use_container_width=True,
-        hide_index=True,
-        height=400,
-        column_config=column_config,
-    )
-
-    return df_final
+    return grid_response["data"]
 
 
 def _render_produtos_detalhados():
@@ -1598,110 +1536,8 @@ def _render_produtos_detalhados():
                 else "0,00"
             )
 
-        # Renderizar grid avançada com controles
+        # Renderizar grid avançada com AgGrid
         df_final = _render_advanced_products_grid(df_display)
-
-        # Seção de download
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            # Download Excel - usando dados filtrados da grid
-            from io import BytesIO
-
-            buffer = BytesIO()
-            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-                df_final.to_excel(writer, sheet_name="Produtos", index=False)
-
-            st.download_button(
-                label="📊 Exportar Excel",
-                data=buffer.getvalue(),
-                file_name=f"produtos_detalhados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-            )
-
-        with col2:
-            # Download CSV - usando dados filtrados da grid
-            csv = df_final.to_csv(index=False)
-            st.download_button(
-                label="📄 Exportar CSV",
-                data=csv,
-                file_name=f"produtos_detalhados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
-
-        with col3:
-            # Download PDF (usando reportlab se disponível)
-            try:
-                from reportlab.lib import colors
-                from reportlab.lib.pagesizes import A4, letter
-                from reportlab.lib.units import inch
-                from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-
-                buffer_pdf = BytesIO()
-                doc = SimpleDocTemplate(buffer_pdf, pagesize=A4)
-
-                # Converter dataframe para lista de listas para o PDF - usando dados filtrados da grid
-                data_for_pdf = [df_final.columns.tolist()] + df_final.values.tolist()
-
-                # Criar tabela
-                table = Table(data_for_pdf)
-                table.setStyle(
-                    TableStyle(
-                        [
-                            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                            ('FONTSIZE', (0, 0), (-1, 0), 10),
-                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                            ('FONTSIZE', (0, 1), (-1, -1), 8),
-                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ]
-                    )
-                )
-
-                doc.build([table])
-
-                st.download_button(
-                    label="📄 Exportar PDF",
-                    data=buffer_pdf.getvalue(),
-                    file_name=f"produtos_detalhados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-
-            except ImportError:
-                st.button(
-                    "📄 Exportar PDF",
-                    disabled=True,
-                    help="ReportLab não instalado",
-                    use_container_width=True,
-                )
-
-        with col4:
-            st.markdown(
-                f"""
-                <div style='
-                    height: 38px; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center; 
-                    background-color: #d1ecf1; 
-                    border: 1px solid #bee5eb; 
-                    border-radius: 0.25rem; 
-                    color: #0c5460; 
-                    font-weight: 500;
-                '>
-                    📦 {len(df_final)} produtos
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        st.markdown("---")
 
     except Exception as e:
         logger.error(f"Erro ao renderizar produtos detalhados: {str(e)}")
