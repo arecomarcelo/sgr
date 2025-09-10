@@ -1,53 +1,55 @@
 import http.server
-import socketserver
 import os
+import socketserver
 import threading
 import webbrowser
 from urllib.parse import unquote
 
+
 class ManualHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=os.getcwd(), **kwargs)
-    
+
     def do_GET(self):
         if self.path == '/manual' or self.path == '/manual/':
             self.send_manual()
         else:
             super().do_GET()
-    
+
     def send_manual(self):
         try:
             # Ler o conteúdo do manual
             manual_path = "documentacao/Manual_Relatorio_Vendas.md"
-            
+
             with open(manual_path, "r", encoding="utf-8") as file:
                 markdown_content = file.read()
-            
+
             # Converter para HTML com tema dark
             html_content = self.convert_markdown_to_dark_html(markdown_content)
-            
+
             # Enviar resposta
             self.send_response(200)
             self.send_header('Content-type', 'text/html; charset=utf-8')
             self.end_headers()
             self.wfile.write(html_content.encode('utf-8'))
-            
+
         except Exception as e:
             self.send_error(500, f"Erro ao carregar manual: {str(e)}")
-    
+
     def convert_markdown_to_dark_html(self, markdown_content):
         """
         Converte markdown para HTML com tema dark
         """
         try:
             import markdown
+
             html = markdown.markdown(
-                markdown_content, 
-                extensions=['tables', 'fenced_code', 'toc', 'codehilite']
+                markdown_content,
+                extensions=['tables', 'fenced_code', 'toc', 'codehilite'],
             )
         except ImportError:
             html = self.basic_markdown_to_html(markdown_content)
-        
+
         return f"""
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -332,7 +334,7 @@ class ManualHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         </body>
         </html>
         """
-    
+
     def basic_markdown_to_html(self, content):
         """
         Conversão básica de markdown para HTML
@@ -347,15 +349,16 @@ class ManualHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         content = content.replace('`', '<code>').replace('`', '</code>')
         content = content.replace('\n', '<br>')
         content = content.replace('---', '<hr>')
-        
+
         return content
+
 
 def start_manual_server():
     """
     Inicia servidor HTTP para servir o manual
     """
     PORT = 8888
-    
+
     try:
         with socketserver.TCPServer(("", PORT), ManualHTTPRequestHandler) as httpd:
             print(f"Servidor do manual iniciado em http://localhost:{PORT}/manual")
@@ -370,6 +373,7 @@ def start_manual_server():
         except Exception as e:
             print(f"Erro ao iniciar servidor: {e}")
 
+
 def open_manual_in_browser():
     """
     Abre o manual no navegador
@@ -377,13 +381,15 @@ def open_manual_in_browser():
     # Iniciar servidor em thread separada
     server_thread = threading.Thread(target=start_manual_server, daemon=True)
     server_thread.start()
-    
+
     # Aguardar um pouco para o servidor iniciar
     import time
+
     time.sleep(1)
-    
+
     # Abrir no navegador
     webbrowser.open('http://localhost:8888/manual')
+
 
 if __name__ == "__main__":
     open_manual_in_browser()

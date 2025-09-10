@@ -92,17 +92,27 @@ def login_screen(user_service):
     st.markdown(login_style, unsafe_allow_html=True)
 
     # Header do login
-    st.markdown("""
+    st.markdown(
+        """
     <div class="login-header">
         Login
     </div>
     <div class="login-container">
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Usar form para capturar Enter
     with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("Usuário", placeholder="Digite seu usuário", key="login_username")
-        password = st.text_input("Senha", type="password", placeholder="Digite sua senha", key="login_password")
+        username = st.text_input(
+            "Usuário", placeholder="Digite seu usuário", key="login_username"
+        )
+        password = st.text_input(
+            "Senha",
+            type="password",
+            placeholder="Digite sua senha",
+            key="login_password",
+        )
 
         # Submit button - será ativado ao pressionar Enter
         login_submitted = st.form_submit_button("🔐 Entrar", use_container_width=True)

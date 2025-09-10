@@ -1,5 +1,114 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 10/09/2025
+
+### 🕐 09:35 - Grid Avançada para Produtos Detalhados
+**O que foi pedido:** Implementar funcionalidades avançadas na grid de Produtos Detalhados (ordenação, filtros por coluna, ocultar/exibir colunas) e garantir que a exportação obedeça às configurações aplicadas
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🎛️ 1. Controles Avançados da Grid:**
+- ✅ **Colunas Visíveis:** Multiselect para controlar quais colunas exibir
+- ✅ **Ordenação Dinâmica:** Seleção de coluna e direção (crescente/decrescente)
+- ✅ **Filtros Inteligentes:** Adaptação automática por tipo de dados
+  - Multiselect para colunas com ≤20 valores únicos
+  - Busca por texto para colunas com >20 valores únicos
+- ✅ **Estado Persistente:** Configurações mantidas na sessão do usuário
+
+**🔧 2. Interface de Controle:**
+- ✅ **4 Botões de Ação:**
+  - 🔄 Aplicar Filtros (primary)
+  - 🗑️ Limpar Filtros
+  - 👁️ Mostrar Todas (colunas)
+  - 🔄 Reset Grid (configuração inicial)
+- ✅ **Layout Responsivo:** Organizado em colunas e seções
+- ✅ **Feedback Visual:** Métricas dinâmicas atualizadas em tempo real
+
+**📊 3. Métricas Dinâmicas:**
+- ✅ **Total de Produtos:** Contagem dos registros filtrados
+- ✅ **Quantidade Total:** Soma das quantidades com parsing de formato BR
+- ✅ **Valor Total:** Soma dos valores monetários com formatação brasileira
+- ✅ **Atualização Automática:** Métricas recalculadas conforme filtros aplicados
+
+**🔄 4. Processamento de Dados:**
+- ✅ **Ordenação Numérica:** Extração de valores numéricos para ordenação correta
+- ✅ **Filtros Combinados:** Aplicação sequencial de múltiplos filtros
+- ✅ **Parsing Brasileiro:** Tratamento de formatos "R$ 1.234,56" e "12,34"
+- ✅ **Validação de Dados:** Error handling robusto para valores malformados
+
+**💾 5. Exportação Inteligente:**
+- ✅ **Excel:** Usa dados filtrados e colunas visíveis
+- ✅ **CSV:** Respeita configurações de filtros e colunas
+- ✅ **PDF:** Aplica mesmas configurações da grid
+- ✅ **Consistência:** Todos os formatos refletem o estado atual da grid
+
+**⚡ 6. Performance e UX:**
+- ✅ **Estado na Sessão:** `st.session_state.produtos_grid_config`
+- ✅ **Rerun Otimizado:** Atualizações apenas quando necessário
+- ✅ **Column Config:** Configuração personalizada por tipo de dado
+- ✅ **Help Text:** Tooltips explicativos nos cabeçalhos
+
+**🎯 7. Funcionalidades Implementadas:**
+- ✅ **Ordenação:** Por qualquer coluna, crescente ou decrescente
+- ✅ **Filtros:** Por coluna com adaptação automática do tipo de controle
+- ✅ **Visibilidade:** Controle completo sobre colunas exibidas
+- ✅ **Exportação:** 100% sincronizada com configurações da grid
+- ✅ **Persistência:** Configurações mantidas durante a sessão
+
+**📁 Lista de Arquivos Alterados:**
+- `app.py` (função `_render_advanced_products_grid()` criada e integrada)
+
+---
+
+### 🕐 09:08 - Implementação do Painel Produtos Detalhados
+**O que foi pedido:** Adicionar novo painel "Produtos Detalhados" no Relatório de Vendas com dados do modelo VendaProdutos
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🛠️ 1. Nova Arquitetura para Produtos:**
+- ✅ **Interface VendaProdutosRepositoryInterface:** Criada com métodos `get_produtos_por_vendas()` e `get_produtos_agregados()`
+- ✅ **VendaProdutosRepository:** Implementação com queries SQL otimizadas e limpeza de dados
+- ✅ **VendasService Atualizado:** Novos métodos `get_produtos_detalhados()` e `get_produtos_agregados()`
+- ✅ **Container DI:** Integração do repositório de produtos no container de injeção de dependência
+
+**📦 2. Características do Painel:**
+- ✅ **Dados Exibidos:** Nome, Código Expedição, Quantidade, Valor Custo, Valor Venda, Valor Desconto, Valor Total
+- ✅ **Agregação:** Somatórios por produto respeitando os filtros aplicados
+- ✅ **Filtros:** Mesmo filtros das vendas (data, vendedor, situação)
+- ✅ **Ordenação:** Produtos ordenados por valor total decrescente
+
+**🔄 3. Tratamento de Dados Problemáticos:**
+- ✅ **Limpeza de Tuplas:** Conversão de valores como `('10.00',)` para `10.00`
+- ✅ **Valores Vazios:** Tratamento de strings vazias como zero
+- ✅ **Agregação Python:** Processamento no lado da aplicação para maior flexibilidade
+- ✅ **Formatação Brasileira:** Valores monetários e numéricos no padrão BR
+
+**📊 4. Funcionalidades de Exportação:**
+- ✅ **Excel:** Exportação com formatação personalizada
+- ✅ **CSV:** Formato padrão para integração
+- ✅ **PDF:** Exportação usando ReportLab (quando disponível)
+- ✅ **Interface:** Botões de download organizados em 4 colunas
+
+**⚡ 5. Performance e Otimização:**
+- ✅ **Filtros Compartilhados:** Reutilização dos filtros aplicados nas vendas
+- ✅ **Cache de Sessão:** Armazenamento dos filtros ativos na sessão
+- ✅ **Loading States:** Indicadores de carregamento para melhor UX
+- ✅ **Error Handling:** Tratamento robusto de erros com logs detalhados
+
+**📊 6. Dados do Teste:**
+- ✅ **83 produtos únicos** agregados do mês atual
+- ✅ **Top produtos:** ESTEIRA DIAMOND LED (R$ 74.250,00), INFINITY FREE WEIGHT LEG PRESS 45° (R$ 57.930,37)
+- ✅ **Integração completa** entre repositório, serviço e interface
+
+**📁 Lista de Arquivos Alterados ou Criados:**
+- `infrastructure/database/interfaces.py` (nova interface VendaProdutosRepositoryInterface)
+- `infrastructure/database/repositories_vendas.py` (implementação VendaProdutosRepository)
+- `domain/services/vendas_service.py` (novos métodos para produtos)
+- `core/container_vendas.py` (integração do repositório de produtos)
+- `app.py` (novo painel _render_produtos_detalhados())
+
+---
+
 ## 📅 03/09/2025
 
 ### 🕐 10:15 - Implementação do Menu Moderno

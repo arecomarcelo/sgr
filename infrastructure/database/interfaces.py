@@ -45,6 +45,34 @@ class VendaRepositoryInterface(BaseRepositoryInterface):
         pass
 
 
+class VendaProdutosRepositoryInterface(BaseRepositoryInterface):
+    """Interface para repositório de produtos de vendas"""
+
+    @abstractmethod
+    def get_produtos_por_vendas(
+        self,
+        venda_ids: Optional[List[str]] = None,
+        data_inicial: Optional[date] = None,
+        data_final: Optional[date] = None,
+        vendedores: Optional[List[str]] = None,
+        situacoes: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
+        """Obtém produtos das vendas com filtros aplicados"""
+        pass
+
+    @abstractmethod
+    def get_produtos_agregados(
+        self,
+        venda_ids: Optional[List[str]] = None,
+        data_inicial: Optional[date] = None,
+        data_final: Optional[date] = None,
+        vendedores: Optional[List[str]] = None,
+        situacoes: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
+        """Obtém produtos agregados (somatórios) das vendas com filtros aplicados"""
+        pass
+
+
 class VendaPagamentoRepositoryInterface(BaseRepositoryInterface):
     """Interface para repositório de pagamentos de vendas"""
 

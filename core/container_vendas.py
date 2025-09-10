@@ -10,6 +10,7 @@ from domain.services.vendas_service import VendasService
 from infrastructure.database.repositories_vendas import (
     VendaAtualizacaoRepository,
     VendaPagamentoRepository,
+    VendaProdutosRepository,
     VendaRepository,
 )
 
@@ -43,12 +44,14 @@ class DIContainer:
             # Criar repositórios
             venda_repo = VendaRepository()
             pagamento_repo = VendaPagamentoRepository()
+            produtos_repo = VendaProdutosRepository()
             atualizacao_repo = VendaAtualizacaoRepository()
 
             # Criar serviço com dependências injetadas
             self._services["vendas_service"] = VendasService(
                 venda_repository=venda_repo,
                 pagamento_repository=pagamento_repo,
+                produtos_repository=produtos_repo,
                 atualizacao_repository=atualizacao_repo,
             )
 
@@ -80,6 +83,14 @@ class DIContainer:
         except Exception as e:
             health["pagamentos"] = False
             self.logger.error(f"Pagamentos health check failed: {e}")
+
+        try:
+            # Testar repositório de produtos
+            produtos_repo = VendaProdutosRepository()
+            health["produtos"] = produtos_repo.health_check()
+        except Exception as e:
+            health["produtos"] = False
+            self.logger.error(f"Produtos health check failed: {e}")
 
         try:
             # Testar repositório de atualizações

@@ -12,6 +12,7 @@ from domain.validators_simple import DateRangeValidator, VendasFilterValidator
 from infrastructure.database.repositories_vendas import (
     VendaAtualizacaoRepository,
     VendaPagamentoRepository,
+    VendaProdutosRepository,
     VendaRepository,
 )
 
@@ -23,10 +24,12 @@ class VendasService:
         self,
         venda_repository: VendaRepository,
         pagamento_repository: VendaPagamentoRepository,
+        produtos_repository: VendaProdutosRepository,
         atualizacao_repository: VendaAtualizacaoRepository,
     ):
         self.venda_repository = venda_repository
         self.pagamento_repository = pagamento_repository
+        self.produtos_repository = produtos_repository
         self.atualizacao_repository = atualizacao_repository
 
     def get_vendas_mes_atual(self) -> pd.DataFrame:
@@ -373,6 +376,166 @@ class VendasService:
         for col in date_columns:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], errors="coerce")
+
+        return df
+
+    def get_produtos_detalhados(
+        self,
+        data_inicio: Optional[datetime] = None,
+        data_fim: Optional[datetime] = None,
+        vendedores: Optional[List[str]] = None,
+        situacoes: Optional[List[str]] = None,
+        venda_ids: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
+        """
+        Obtém produtos detalhados das vendas com filtros aplicados
+
+        Args:
+            data_inicio: Data inicial do filtro (opcional)
+            data_fim: Data final do filtro (opcional)
+            vendedores: Lista de vendedores (opcional)
+            situacoes: Lista de situações (opcional)
+            venda_ids: Lista de IDs de vendas (opcional)
+
+        Returns:
+            pd.DataFrame: Dados detalhados dos produtos
+
+        Raises:
+            BusinessLogicError: Se erro na lógica de negócio
+        """
+        try:
+            # Converter datetime para date se necessário
+            data_inicial = data_inicio.date() if data_inicio else None
+            data_final = data_fim.date() if data_fim else None
+
+            df = self.produtos_repository.get_produtos_por_vendas(
+                venda_ids=venda_ids,
+                data_inicial=data_inicial,
+                data_final=data_final,
+                vendedores=vendedores,
+                situacoes=situacoes,
+            )
+
+            return self._processar_dados_produtos(df)
+
+        except Exception as e:
+            raise BusinessLogicError(f"Erro ao obter produtos detalhados: {str(e)}")
+
+    def get_produtos_agregados(
+        self,
+        data_inicio: Optional[datetime] = None,
+        data_fim: Optional[datetime] = None,
+        vendedores: Optional[List[str]] = None,
+        situacoes: Optional[List[str]] = None,
+        venda_ids: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
+        """
+        Obtém produtos agregados (somatórios) das vendas com filtros aplicados
+
+        Args:
+            data_inicio: Data inicial do filtro (opcional)
+            data_fim: Data final do filtro (opcional)
+            vendedores: Lista de vendedores (opcional)
+            situacoes: Lista de situações (opcional)
+            venda_ids: Lista de IDs de vendas (opcional)
+
+        Returns:
+            pd.DataFrame: Dados agregados dos produtos
+
+        Raises:
+            BusinessLogicError: Se erro na lógica de negócio
+        """
+        try:
+            # Converter datetime para date se necessário
+            data_inicial = data_inicio.date() if data_inicio else None
+            data_final = data_fim.date() if data_fim else None
+
+            df = self.produtos_repository.get_produtos_agregados(
+                venda_ids=venda_ids,
+                data_inicial=data_inicial,
+                data_final=data_final,
+                vendedores=vendedores,
+                situacoes=situacoes,
+            )
+
+            return self._processar_dados_produtos_agregados(df)
+
+        except Exception as e:
+            raise BusinessLogicError(f"Erro ao obter produtos agregados: {str(e)}")
+
+    def _processar_dados_produtos(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Processa e limpa dados de produtos de vendas
+
+        Args:
+            df: DataFrame bruto de produtos
+
+        Returns:
+            pd.DataFrame: DataFrame processado
+        """
+        if df.empty:
+            return df
+
+        # Fazer cópia para evitar modificar original
+        df = df.copy()
+
+        # Converter colunas de valores
+        valor_columns = [
+            "Quantidade",
+            "ValorCusto",
+            "ValorVenda",
+            "ValorDesconto",
+            "ValorTotal",
+        ]
+        for col in valor_columns:
+            if col in df.columns:
+                # Garantir que seja string antes de processar
+                df[col] = df[col].astype(str)
+                # Tratar valores vazios
+                df[col] = df[col].apply(
+                    lambda x: "0" if not x or str(x).strip() == "" else str(x)
+                )
+                # Converter vírgula para ponto e para float
+                df[col] = df[col].str.replace(",", ".").astype(float)
+
+        # Converter colunas de data
+        date_columns = ["Data"]
+        for col in date_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+
+        return df
+
+    def _processar_dados_produtos_agregados(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Processa dados agregados de produtos
+
+        Args:
+            df: DataFrame de produtos agregados
+
+        Returns:
+            pd.DataFrame: DataFrame processado
+        """
+        if df.empty:
+            return df
+
+        # Fazer cópia para evitar modificar original
+        df = df.copy()
+
+        # As colunas já vêm do banco com nomes corretos (TotalQuantidade, etc.)
+        # Apenas garantir que os valores sejam float
+        valor_columns = [
+            "TotalQuantidade",
+            "TotalValorCusto",
+            "TotalValorVenda",
+            "TotalValorDesconto",
+            "TotalValorTotal",
+        ]
+
+        for col in valor_columns:
+            if col in df.columns:
+                # Converter para float, tratando valores nulos como 0
+                df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
         return df
 

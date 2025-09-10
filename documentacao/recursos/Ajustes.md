@@ -64,6 +64,18 @@
 
 - Corrigindo Erro de Abertura **Manual Relatório de Vendas** no **Streamlit**
 
+**10/09/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **09:20 - Commit 109**
+
+- **Relatório de Vendas**
+    - Implementação de Grid Produtos Detalhados
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

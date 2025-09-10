@@ -14,6 +14,7 @@ from infrastructure.database.base import BaseRepository
 from infrastructure.database.interfaces import (
     VendaAtualizacaoRepositoryInterface,
     VendaPagamentoRepositoryInterface,
+    VendaProdutosRepositoryInterface,
     VendaRepositoryInterface,
 )
 
@@ -115,6 +116,232 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
         except Exception as e:
             logger.error(f"Error fetching available statuses: {str(e)}")
             raise DatabaseError(f"Erro ao buscar situações disponíveis: {str(e)}")
+
+    def health_check(self) -> bool:
+        """Verifica se a conexão está saudável"""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                return True
+        except Exception:
+            return False
+
+
+class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
+    """Repositório para operações com produtos de vendas"""
+
+    def get_produtos_por_vendas(
+        self,
+        venda_ids: Optional[List[str]] = None,
+        data_inicial: Optional[date] = None,
+        data_final: Optional[date] = None,
+        vendedores: Optional[List[str]] = None,
+        situacoes: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
+        """Obtém produtos das vendas com filtros aplicados"""
+        try:
+            # Query base para obter produtos com join nas vendas e produtos
+            query = """
+                SELECT 
+                    vp.id,
+                    vp."Venda_ID",
+                    vp."Nome",
+                    vp."Detalhes",
+                    vp."Quantidade",
+                    vp."ValorCusto",
+                    vp."ValorVenda",
+                    vp."ValorDesconto",
+                    vp."ValorTotal",
+                    p."CodigoExpedicao",
+                    v."VendedorNome",
+                    v."Data",
+                    v."SituacaoNome"
+                FROM "VendaProdutos" vp
+                INNER JOIN "Vendas" v ON vp."Venda_ID" = v."ID_Gestao"
+                LEFT JOIN "Produtos" p ON vp."Nome" = p."Nome"
+                WHERE 1=1
+            """
+            params = []
+
+            # Aplicar filtros de vendas
+            if data_inicial and data_final:
+                query += ' AND v."Data"::DATE BETWEEN %s AND %s'
+                params.extend([data_inicial, data_final])
+
+            if vendedores:
+                placeholders = ",".join(["%s"] * len(vendedores))
+                query += f' AND v."VendedorNome" IN ({placeholders})'
+                params.extend(vendedores)
+
+            if situacoes:
+                placeholders = ",".join(["%s"] * len(situacoes))
+                query += f' AND v."SituacaoNome" IN ({placeholders})'
+                params.extend(situacoes)
+            else:
+                # Filtro padrão para situação 'Em andamento'
+                query += ' AND v."SituacaoNome" = %s'
+                params.append('Em andamento')
+
+            if venda_ids:
+                placeholders = ",".join(["%s"] * len(venda_ids))
+                query += f' AND vp."Venda_ID" IN ({placeholders})'
+                params.extend(venda_ids)
+
+            # Aplicar filtro obrigatório de vendedores ativos
+            query += ' AND TRIM(v."VendedorNome") IN (SELECT "Nome" FROM "Vendedores")'
+
+            query += ' ORDER BY v."Data" DESC, vp."Nome"'
+
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                columns = [col[0] for col in cursor.description]
+                data = cursor.fetchall()
+
+                result = pd.DataFrame(data, columns=columns)
+
+            logger.info(f"Retrieved {len(result)} product records")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching products by sales: {str(e)}")
+            raise DatabaseError(f"Erro ao buscar produtos por vendas: {str(e)}")
+
+    def get_produtos_agregados(
+        self,
+        venda_ids: Optional[List[str]] = None,
+        data_inicial: Optional[date] = None,
+        data_final: Optional[date] = None,
+        vendedores: Optional[List[str]] = None,
+        situacoes: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
+        """Obtém produtos agregados (somatórios) das vendas com filtros aplicados"""
+        try:
+            # Query simples para obter os dados brutos - agregação será feita no Python
+            query = """
+                SELECT 
+                    vp."Nome",
+                    p."CodigoExpedicao",
+                    vp."Quantidade",
+                    vp."ValorCusto",
+                    vp."ValorVenda",
+                    vp."ValorDesconto",
+                    vp."ValorTotal"
+                FROM "VendaProdutos" vp
+                INNER JOIN "Vendas" v ON vp."Venda_ID" = v."ID_Gestao"
+                LEFT JOIN "Produtos" p ON vp."Nome" = p."Nome"
+                WHERE 1=1
+            """
+            params = []
+
+            # Aplicar os mesmos filtros da query de produtos detalhados
+            if data_inicial and data_final:
+                query += ' AND v."Data"::DATE BETWEEN %s AND %s'
+                params.extend([data_inicial, data_final])
+
+            if vendedores:
+                placeholders = ",".join(["%s"] * len(vendedores))
+                query += f' AND v."VendedorNome" IN ({placeholders})'
+                params.extend(vendedores)
+
+            if situacoes:
+                placeholders = ",".join(["%s"] * len(situacoes))
+                query += f' AND v."SituacaoNome" IN ({placeholders})'
+                params.extend(situacoes)
+            else:
+                # Filtro padrão para situação 'Em andamento'
+                query += ' AND v."SituacaoNome" = %s'
+                params.append('Em andamento')
+
+            if venda_ids:
+                placeholders = ",".join(["%s"] * len(venda_ids))
+                query += f' AND vp."Venda_ID" IN ({placeholders})'
+                params.extend(venda_ids)
+
+            # Aplicar filtro obrigatório de vendedores ativos
+            query += ' AND TRIM(v."VendedorNome") IN (SELECT "Nome" FROM "Vendedores")'
+
+            query += ' ORDER BY vp."Nome"'
+
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                columns = [col[0] for col in cursor.description]
+                data = cursor.fetchall()
+
+                df_raw = pd.DataFrame(data, columns=columns)
+
+            # Processar e agregar os dados no Python
+            if df_raw.empty:
+                return pd.DataFrame()
+
+            # Limpar e converter valores
+            def clean_value(val):
+                """Limpa valores que podem estar no formato ('10.00',)"""
+                if not val or str(val).strip() == '':
+                    return 0.0
+
+                # Converter para string e limpar
+                val_str = str(val)
+                # Remover tuplas: ('10.00',) -> 10.00
+                val_str = (
+                    val_str.replace("(", "")
+                    .replace(")", "")
+                    .replace("'", "")
+                    .replace(",", ".")
+                )
+                val_str = val_str.strip()
+
+                try:
+                    return float(val_str) if val_str else 0.0
+                except:
+                    return 0.0
+
+            # Aplicar limpeza aos campos numéricos
+            numeric_columns = [
+                'Quantidade',
+                'ValorCusto',
+                'ValorVenda',
+                'ValorDesconto',
+                'ValorTotal',
+            ]
+            for col in numeric_columns:
+                if col in df_raw.columns:
+                    df_raw[col] = df_raw[col].apply(clean_value)
+
+            # Agregar por produto
+            result = (
+                df_raw.groupby(['Nome', 'CodigoExpedicao'])
+                .agg(
+                    {
+                        'Quantidade': 'sum',
+                        'ValorCusto': 'sum',
+                        'ValorVenda': 'sum',
+                        'ValorDesconto': 'sum',
+                        'ValorTotal': 'sum',
+                    }
+                )
+                .reset_index()
+            )
+
+            # Renomear colunas
+            result.columns = [
+                'Nome',
+                'CodigoExpedicao',
+                'TotalQuantidade',
+                'TotalValorCusto',
+                'TotalValorVenda',
+                'TotalValorDesconto',
+                'TotalValorTotal',
+            ]
+
+            # Ordenar por valor total decrescente
+            result = result.sort_values('TotalValorTotal', ascending=False)
+
+            logger.info(f"Retrieved {len(result)} aggregated product records")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching aggregated products: {str(e)}")
+            raise DatabaseError(f"Erro ao buscar produtos agregados: {str(e)}")
 
     def health_check(self) -> bool:
         """Verifica se a conexão está saudável"""
