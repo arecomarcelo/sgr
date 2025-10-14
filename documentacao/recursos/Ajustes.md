@@ -106,6 +106,10 @@
 
 - Correção requirements
 
+### **17:13 - Commit 115**
+
+- Correção requirements
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
