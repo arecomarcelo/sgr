@@ -2,7 +2,7 @@
 Serviço de domínio para Vendas
 Implementa a lógica de negócios para análise de vendas
 """
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -405,8 +405,21 @@ class VendasService:
         """
         try:
             # Converter datetime para date se necessário
-            data_inicial = data_inicio.date() if data_inicio else None
-            data_final = data_fim.date() if data_fim else None
+            if data_inicio:
+                if isinstance(data_inicio, datetime):
+                    data_inicial = data_inicio.date()
+                else:
+                    data_inicial = data_inicio
+            else:
+                data_inicial = None
+
+            if data_fim:
+                if isinstance(data_fim, datetime):
+                    data_final = data_fim.date()
+                else:
+                    data_final = data_fim
+            else:
+                data_final = None
 
             df = self.produtos_repository.get_produtos_por_vendas(
                 venda_ids=venda_ids,
@@ -447,8 +460,21 @@ class VendasService:
         """
         try:
             # Converter datetime para date se necessário
-            data_inicial = data_inicio.date() if data_inicio else None
-            data_final = data_fim.date() if data_fim else None
+            if data_inicio:
+                if isinstance(data_inicio, datetime):
+                    data_inicial = data_inicio.date()
+                else:
+                    data_inicial = data_inicio
+            else:
+                data_inicial = None
+
+            if data_fim:
+                if isinstance(data_fim, datetime):
+                    data_final = data_fim.date()
+                else:
+                    data_final = data_fim
+            else:
+                data_final = None
 
             df = self.produtos_repository.get_produtos_agregados(
                 venda_ids=venda_ids,
@@ -479,6 +505,28 @@ class VendasService:
         # Fazer cópia para evitar modificar original
         df = df.copy()
 
+        def clean_numeric_value(val):
+            """Limpa valores numéricos que podem estar no formato ('10.00',) ou vazios"""
+            if not val or str(val).strip() == '' or str(val) == 'None':
+                return 0.0
+
+            # Converter para string e limpar
+            val_str = str(val)
+            # Remover tuplas: ('10.00',) -> 10.00
+            val_str = (
+                val_str.replace("(", "")
+                .replace(")", "")
+                .replace("'", "")
+                .replace('"', '')
+                .replace(",", ".")
+            )
+            val_str = val_str.strip()
+
+            try:
+                return float(val_str) if val_str else 0.0
+            except:
+                return 0.0
+
         # Converter colunas de valores
         valor_columns = [
             "Quantidade",
@@ -489,14 +537,7 @@ class VendasService:
         ]
         for col in valor_columns:
             if col in df.columns:
-                # Garantir que seja string antes de processar
-                df[col] = df[col].astype(str)
-                # Tratar valores vazios
-                df[col] = df[col].apply(
-                    lambda x: "0" if not x or str(x).strip() == "" else str(x)
-                )
-                # Converter vírgula para ponto e para float
-                df[col] = df[col].str.replace(",", ".").astype(float)
+                df[col] = df[col].apply(clean_numeric_value)
 
         # Converter colunas de data
         date_columns = ["Data"]

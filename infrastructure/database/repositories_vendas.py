@@ -173,16 +173,13 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
                 query += f' AND v."VendedorNome" IN ({placeholders})'
                 params.extend(vendedores)
 
-            if situacoes:
+            if situacoes and len(situacoes) > 0:
                 placeholders = ",".join(["%s"] * len(situacoes))
                 query += f' AND v."SituacaoNome" IN ({placeholders})'
                 params.extend(situacoes)
-            else:
-                # Filtro padrão para situação 'Em andamento'
-                query += ' AND v."SituacaoNome" = %s'
-                params.append('Em andamento')
+            # Se situacoes=None ou [], não filtra por situação (busca todas)
 
-            if venda_ids:
+            if venda_ids and len(venda_ids) > 0:
                 placeholders = ",".join(["%s"] * len(venda_ids))
                 query += f' AND vp."Venda_ID" IN ({placeholders})'
                 params.extend(venda_ids)
@@ -243,16 +240,13 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
                 query += f' AND v."VendedorNome" IN ({placeholders})'
                 params.extend(vendedores)
 
-            if situacoes:
+            if situacoes and len(situacoes) > 0:
                 placeholders = ",".join(["%s"] * len(situacoes))
                 query += f' AND v."SituacaoNome" IN ({placeholders})'
                 params.extend(situacoes)
-            else:
-                # Filtro padrão para situação 'Em andamento'
-                query += ' AND v."SituacaoNome" = %s'
-                params.append('Em andamento')
+            # Se situacoes=None ou [], não filtra por situação (busca todas)
 
-            if venda_ids:
+            if venda_ids and len(venda_ids) > 0:
                 placeholders = ",".join(["%s"] * len(venda_ids))
                 query += f' AND vp."Venda_ID" IN ({placeholders})'
                 params.extend(venda_ids)

@@ -80,6 +80,17 @@
 
 - Ajustado o Layout **Grid Produtos Detalhados**
 
+**14/10/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **09:15 - Commit 111**
+
+- Implementado *Ranking de Produtos*
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
