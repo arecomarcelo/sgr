@@ -386,6 +386,7 @@ class VendasService:
         vendedores: Optional[List[str]] = None,
         situacoes: Optional[List[str]] = None,
         venda_ids: Optional[List[str]] = None,
+        excluir_grupos: bool = False,
     ) -> pd.DataFrame:
         """
         Obtém produtos detalhados das vendas com filtros aplicados
@@ -396,6 +397,7 @@ class VendasService:
             vendedores: Lista de vendedores (opcional)
             situacoes: Lista de situações (opcional)
             venda_ids: Lista de IDs de vendas (opcional)
+            excluir_grupos: Se True, exclui produtos dos grupos indesejados
 
         Returns:
             pd.DataFrame: Dados detalhados dos produtos
@@ -427,6 +429,7 @@ class VendasService:
                 data_final=data_final,
                 vendedores=vendedores,
                 situacoes=situacoes,
+                excluir_grupos=excluir_grupos,
             )
 
             return self._processar_dados_produtos(df)

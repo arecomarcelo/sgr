@@ -137,12 +137,19 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
         data_final: Optional[date] = None,
         vendedores: Optional[List[str]] = None,
         situacoes: Optional[List[str]] = None,
+        excluir_grupos: bool = False,
     ) -> pd.DataFrame:
-        """Obtém produtos das vendas com filtros aplicados"""
+        """Obtém produtos das vendas com filtros aplicados
+
+        Args:
+            excluir_grupos: Se True, exclui produtos dos grupos:
+                           'PRODUTOS SEM GRUPO', 'PEÇA DE REPOSIÇÃO', 'ACESSÓRIOS'
+        """
         try:
             # Query base para obter produtos com join nas vendas e produtos
+            # JOIN ignora cores (PRETO/CINZA) dos nomes em Produtos
             query = """
-                SELECT 
+                SELECT
                     vp.id,
                     vp."Venda_ID",
                     vp."Nome",
@@ -153,12 +160,14 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
                     vp."ValorDesconto",
                     vp."ValorTotal",
                     p."CodigoExpedicao",
+                    p."NomeGrupo",
                     v."VendedorNome",
                     v."Data",
                     v."SituacaoNome"
                 FROM "VendaProdutos" vp
                 INNER JOIN "Vendas" v ON vp."Venda_ID" = v."ID_Gestao"
-                LEFT JOIN "Produtos" p ON vp."Nome" = p."Nome"
+                LEFT JOIN "Produtos" p ON
+                    vp."Nome" = REPLACE(REPLACE(p."Nome", ' CINZA', ''), ' PRETO', '')
                 WHERE 1=1
             """
             params = []
@@ -186,6 +195,11 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
 
             # Aplicar filtro obrigatório de vendedores ativos
             query += ' AND TRIM(v."VendedorNome") IN (SELECT "Nome" FROM "Vendedores")'
+
+            # Excluir grupos específicos se solicitado
+            if excluir_grupos:
+                query += """ AND (p."NomeGrupo" IS NULL OR p."NomeGrupo" NOT IN (%s, %s, %s))"""
+                params.extend(['PRODUTOS SEM GRUPO', 'PEÇA DE REPOSIÇÃO', 'ACESSÓRIOS'])
 
             query += ' ORDER BY v."Data" DESC, vp."Nome"'
 

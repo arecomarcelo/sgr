@@ -2,6 +2,100 @@
 
 ## 🗓️ 14 de Outubro de 2025
 
+### ⏰ 11:45 - Filtro de Grupos no Ranking de Produtos
+
+#### 📝 O que foi pedido
+Ao selecionar os produtos para o Ranking de Produtos, selecionar somente os produtos que não sejam dos grupos: PRODUTOS SEM GRUPO, PEÇA DE REPOSIÇÃO e ACESSÓRIOS. As informações estão na Tabela Produtos. Observar que alguns nomes possuem cores (PRETO ou CINZA) que devem ser ignoradas nas buscas, pois na Tabela VendaProdutos os nomes não possuem estas cores.
+
+#### 🔧 Detalhamento da Solução ou Implementação
+
+1. **🎯 Análise do Problema**:
+   - Tabela `Produtos` contém coluna `NomeGrupo` com os grupos
+   - Nomes em `Produtos` podem ter sufixos: " PRETO" ou " CINZA"
+   - Nomes em `VendaProdutos` NÃO têm esses sufixos
+   - JOIN entre tabelas falhava por causa dessa diferença
+
+2. **✅ Solução Implementada**:
+
+   **A) Ajuste no JOIN (repositories_vendas.py)**:
+   ```sql
+   -- Antes:
+   LEFT JOIN "Produtos" p ON vp."Nome" = p."Nome"
+
+   -- Depois:
+   LEFT JOIN "Produtos" p ON
+       vp."Nome" = REPLACE(REPLACE(p."Nome", ' CINZA', ''), ' PRETO', '')
+   ```
+   - Agora o JOIN remove as cores dos nomes em Produtos antes de comparar
+
+   **B) Adição da coluna NomeGrupo no SELECT**:
+   ```sql
+   SELECT
+       vp.id, vp."Venda_ID", vp."Nome", ...
+       p."CodigoExpedicao",
+       p."NomeGrupo",  -- ✅ Coluna adicionada
+       v."VendedorNome", ...
+   ```
+
+   **C) Novo parâmetro `excluir_grupos`**:
+   ```python
+   # infrastructure/database/repositories_vendas.py
+   def get_produtos_por_vendas(
+       self,
+       venda_ids: Optional[List[str]] = None,
+       data_inicial: Optional[date] = None,
+       data_final: Optional[date] = None,
+       vendedores: Optional[List[str]] = None,
+       situacoes: Optional[List[str]] = None,
+       excluir_grupos: bool = False,  # ✅ Novo parâmetro
+   ) -> pd.DataFrame:
+   ```
+
+   **D) Filtro SQL para exclusão de grupos**:
+   ```sql
+   -- Aplicado quando excluir_grupos=True
+   AND (p."NomeGrupo" IS NULL OR p."NomeGrupo" NOT IN (
+       'PRODUTOS SEM GRUPO',
+       'PEÇA DE REPOSIÇÃO',
+       'ACESSÓRIOS'
+   ))
+   ```
+
+   **E) Propagação do parâmetro**:
+   - `VendaProdutosRepository.get_produtos_por_vendas()` → recebe `excluir_grupos`
+   - `VendasService.get_produtos_detalhados()` → repassa `excluir_grupos`
+   - `app.py._get_ranking_produtos()` → chama com `excluir_grupos=True`
+
+#### 📁 Lista de Arquivos Alterados
+- ✏️ `infrastructure/database/repositories_vendas.py` - JOIN ajustado, filtro de grupos (linhas 133-204)
+- ✏️ `domain/services/vendas_service.py` - Parâmetro `excluir_grupos` adicionado (linha 389)
+- ✏️ `app.py` - Chamada com `excluir_grupos=True` no ranking (linha 1669)
+- 📝 `documentacao/Historico.md` - Atualizado com implementação
+
+#### 💡 Resultado das Alterações
+- ✅ **JOIN corrigido**: Nomes com cores (PRETO/CINZA) são ignorados na comparação
+- ✅ **Grupos filtrados**: 458 produtos removidos dos grupos excluídos
+- ✅ **Ranking relevante**: Agora exibe apenas produtos dos grupos válidos:
+  - NEW PREMIUM (869 produtos)
+  - UNIQUE (624 produtos)
+  - INFINITY FREE WEIGHT (296 produtos)
+  - INFINITY (216 produtos)
+  - CARDIO (202 produtos)
+  - GOLD (139 produtos)
+  - ENERGY (103 produtos)
+  - NEW BLACK (3 produtos)
+- ✅ **Top 10 atualizado**: Produtos como ESTEIRA PREMIUM, BIKE SPINNING DIAMOND, etc.
+
+#### 🧪 Teste Realizado
+```
+SEM filtro: 2911 produtos
+COM filtro: 2453 produtos
+Removidos: 458 produtos
+✅ Todos os 3 grupos excluídos corretamente
+```
+
+---
+
 ### ⏰ 08:55 - Correção PROFUNDA dos Filtros no Ranking de Produtos
 
 #### 📝 O que foi pedido

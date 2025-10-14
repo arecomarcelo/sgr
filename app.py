@@ -1659,12 +1659,14 @@ def _get_ranking_produtos(
         logger.info(f"DEBUG Ranking - venda_ids: {venda_ids}")
 
         # Obter produtos DETALHADOS (não agregados) para contar vendas corretamente
+        # Excluir grupos: PRODUTOS SEM GRUPO, PEÇA DE REPOSIÇÃO, ACESSÓRIOS
         df_produtos = vendas_service.get_produtos_detalhados(
             data_inicio=data_inicio,
             data_fim=data_fim,
             vendedores=vendedores,
             situacoes=situacoes,
             venda_ids=venda_ids,
+            excluir_grupos=True,
         )
 
         logger.info(f"DEBUG Ranking - df_produtos shape: {df_produtos.shape}")

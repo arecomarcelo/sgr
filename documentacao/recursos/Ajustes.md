@@ -91,6 +91,13 @@
 
 - Implementado *Ranking de Produtos*
 
+### **11:48 - Commit 112**
+
+**Ranking de Produtos** ignorando Grupos:
+    - PRODUTOS SEM GRUPO
+    - PEÇA DE REPOSIÇÃO
+    - ACESSÓRIOS
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
