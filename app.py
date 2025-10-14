@@ -865,13 +865,11 @@ def _load_initial_data():
         st.session_state["metricas"] = metricas
 
         # Limpar filtros na sessão (dados do mês atual)
-        # Para mês atual, usar apenas situação "Em andamento"
+        # Mês atual sem filtro de situação (todas as situações)
         st.session_state["data_inicio_filtro"] = None
         st.session_state["data_fim_filtro"] = None
         st.session_state["vendedores_filtro"] = None
-        st.session_state["situacoes_filtro"] = [
-            "Em andamento"
-        ]  # Filtro padrão do mês atual
+        st.session_state["situacoes_filtro"] = None  # Sem filtro padrão
 
         if df_vendas.empty:
             ValidationHelper.show_warning("Nenhum dado encontrado para o mês atual")
@@ -1066,6 +1064,7 @@ def _render_charts():
 
         # Terceiro gráfico - Valor de Vendas por Vendedor com fotos
         st.subheader("💰 Valor de Vendas por Vendedor")
+
         try:
             _render_vendedores_com_fotos(vendas_por_vendedor)
         except Exception as e:
@@ -1076,6 +1075,7 @@ def _render_charts():
 
     # Quarto painel - Ranking de Produtos Mais Vendidos
     st.subheader("🏆 Ranking de Produtos")
+
     try:
         # Obter IDs de vendas do DataFrame já carregado (mais eficiente)
         venda_ids = None

@@ -34,9 +34,9 @@ class VendasService:
 
     def get_vendas_mes_atual(self) -> pd.DataFrame:
         """
-        Obtém vendas do mês atual com filtros de negócio aplicados
-        Se hoje for dia 1, retorna dados do mês anterior
-        Aplica critério rígido: VendedorNome IN (SELECT Nome FROM Vendedores) AND SituacaoNome = 'Em andamento'
+        Obtém vendas do mês atual
+        Aplica apenas critérios obrigatórios: Período e Vendedores Válidos
+        Situação deve ser filtrada apenas via filtro opcional pelo usuário
 
         Returns:
             pd.DataFrame: Dados de vendas filtrados
@@ -51,7 +51,7 @@ class VendasService:
             data_inicial = datetime(hoje.year, hoje.month, 1).date()
             data_final = hoje.date()
 
-            # Os critérios obrigatórios são aplicados automaticamente no repositório
+            # Buscar vendas sem filtro de situação (apenas período e vendedores válidos)
             df = self.venda_repository.get_vendas_filtradas(
                 data_inicial=data_inicial,
                 data_final=data_final,

@@ -40,7 +40,6 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
                 SELECT * FROM "Vendas"
                 WHERE "Data"::DATE BETWEEN %s AND %s
                 AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
-                AND "SituacaoNome" = 'Em andamento'
             """
             params = [data_inicial, data_final]
 
@@ -50,17 +49,13 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
                 query += f' AND "VendedorNome" IN ({placeholders})'
                 params.extend(vendedores)
 
-            # Filtro de situação única (sobrescreve o critério obrigatório se especificado)
+            # Filtro de situação única (opcional)
             if situacao:
-                # Remove o filtro obrigatório de situação e aplica o específico
-                query = query.replace('AND "SituacaoNome" = \'Em andamento\'', '')
                 query += ' AND "SituacaoNome" = %s'
                 params.append(situacao)
 
-            # Filtro de situações múltiplas (sobrescreve o critério obrigatório se especificado)
+            # Filtro de situações múltiplas (opcional)
             if situacoes:
-                # Remove o filtro obrigatório de situação e aplica os específicos
-                query = query.replace('AND "SituacaoNome" = \'Em andamento\'', '')
                 placeholders = ",".join(["%s"] * len(situacoes))
                 query += f' AND "SituacaoNome" IN ({placeholders})'
                 params.extend(situacoes)

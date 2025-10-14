@@ -98,6 +98,10 @@
     - PEÇA DE REPOSIÇÃO
     - ACESSÓRIOS
 
+### **16:59 - Commit 113**
+
+- **Relatório de Vendas** removido critério **Situação**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

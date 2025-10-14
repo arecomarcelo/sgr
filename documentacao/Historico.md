@@ -2,6 +2,467 @@
 
 ## 🗓️ 14 de Outubro de 2025
 
+### ⏰ 19:45 - Correção Crítica: Filtro de Situação Removido da Query Base
+
+#### 📝 O que foi pedido
+Ao verificar os totais, identificou-se discrepância:
+- Query SQL direta no banco: R$ 4.957.591,98
+- Relatório de Vendas: R$ 4.878.492,68
+- Diferença: R$ 79.099,30
+
+#### 🐛 Problema Identificado
+
+**Filtro de Situação FIXO na Query Base** (linha 43 de `repositories_vendas.py`):
+```sql
+AND "SituacaoNome" = 'Em andamento'
+```
+
+Este filtro estava **hardcoded** na query base, causando:
+1. ❌ Impossibilidade de buscar vendas sem filtro de situação
+2. ❌ Valores incorretos quando usuário não seleciona situação
+3. ❌ Discrepância entre query manual e relatório
+
+#### 🔧 Solução Implementada
+
+**1. ✅ Removido filtro fixo da query base**:
+
+```sql
+-- ANTES (errado - linha 43)
+SELECT * FROM "Vendas"
+WHERE "Data"::DATE BETWEEN %s AND %s
+AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+AND "SituacaoNome" = 'Em andamento'  -- ❌ FIXO
+
+-- DEPOIS (correto)
+SELECT * FROM "Vendas"
+WHERE "Data"::DATE BETWEEN %s AND %s
+AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+-- Situação agora é OPCIONAL via parâmetro
+```
+
+**2. ✅ Filtro de situação tornado completamente opcional**:
+
+```python
+# infrastructure/database/repositories_vendas.py (linhas 52-61)
+
+# Filtro de situação única (opcional)
+if situacao:
+    query += ' AND "SituacaoNome" = %s'
+    params.append(situacao)
+
+# Filtro de situações múltiplas (opcional)
+if situacoes:
+    placeholders = ",".join(["%s"] * len(situacoes))
+    query += f' AND "SituacaoNome" IN ({placeholders})'
+    params.extend(situacoes)
+```
+
+**3. ✅ Carregamento inicial SEM filtro de situação**:
+
+```python
+# domain/services/vendas_service.py (linha 54-58)
+df = self.venda_repository.get_vendas_filtradas(
+    data_inicial=data_inicial,
+    data_final=data_final,
+    # SEM parâmetro situacoes = busca TODAS as situações
+)
+```
+
+#### 📋 Comparação: Antes vs Depois
+
+| Aspecto | Antes | Depois |
+|---------|-------|--------|
+| **Filtro na Query Base** | ❌ Hardcoded 'Em andamento' | ✅ Nenhum (query limpa) |
+| **Flexibilidade** | ❌ Sempre filtrava 'Em andamento' | ✅ Totalmente opcional |
+| **Carregamento Inicial** | ❌ Implícito (query base) | ✅ Explícito (parâmetro) |
+| **Filtros Customizados** | ❌ Usava .replace() para remover | ✅ Adiciona apenas se fornecido |
+| **Sem Filtro de Situação** | ❌ Impossível | ✅ Possível (busca todas) |
+
+#### 📁 Arquivos Alterados
+
+1. ✅ **infrastructure/database/repositories_vendas.py** (linhas 39-61):
+   - Removida linha 43: `AND "SituacaoNome" = 'Em andamento'`
+   - Simplificados blocos de filtro de situação (linhas 52-61)
+   - Removidas linhas 56 e 63 com `.replace()` desnecessário
+
+2. ✅ **domain/services/vendas_service.py** (linhas 54-58):
+   - REMOVIDO parâmetro `situacoes` do carregamento inicial
+   - Atualizada documentação da função (busca todas as situações)
+
+3. ✅ **app.py** (linha 872):
+   - Alterado `situacoes_filtro` de `["Em andamento"]` para `None`
+   - Carregamento inicial sem filtro de situação
+
+3. ✅ **documentacao/Historico.md** - Atualizado com correção
+
+#### ✅ Resultado da Correção
+
+**Agora o comportamento é correto**:
+
+1. **Query Base Limpa**:
+   - ✅ Apenas critérios obrigatórios: Período + Vendedores Válidos
+   - ✅ Sem filtros hardcoded de situação
+
+2. **Carregamento Inicial do Mês**:
+   - ✅ SEM filtro de situação (busca TODAS as situações)
+   - ✅ Total correto: R$ 4.957.591,98 (todas as situações)
+
+3. **Filtros Customizados**:
+   - ✅ Usuário pode selecionar qualquer situação
+   - ✅ Usuário pode NÃO selecionar situação (busca todas)
+   - ✅ Valores corretos em qualquer cenário
+
+#### 💡 Validação
+
+**Query sem filtro de situação**:
+```sql
+SELECT SUM(v."ValorTotal"::NUMERIC) AS total_vendas
+FROM "Vendas" v
+WHERE TRIM(v."VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+AND v."Data"::DATE >= '2025-10-01'
+AND v."Data"::DATE <= '2025-10-14'
+```
+**Resultado**: R$ 4.957.591,98 ✅
+
+**Query com filtro 'Em andamento' (quando usuário seleciona)**:
+```sql
+-- (mesma query acima)
+AND v."SituacaoNome" = 'Em andamento'
+```
+**Resultado**: R$ 4.878.492,68 ✅
+
+**Diferença**: R$ 79.099,30 (vendas em outras situações que são incluídas no carregamento inicial) ✅
+
+**Comportamento Correto**:
+- ✅ Carregamento inicial: R$ 4.957.591,98 (TODAS as situações)
+- ✅ Com filtro "Em andamento": R$ 4.878.492,68 (apenas situação selecionada)
+- ✅ Filtro aplicado SOMENTE quando usuário seleciona
+
+---
+
+### ⏰ 19:30 - Análise das Queries Utilizadas no Relatório de Vendas
+
+#### 📝 O que foi pedido
+Verificar qual query está sendo utilizada para retornar os dados iniciais do Relatório de Vendas e quais critérios de seleção estão sendo utilizados.
+
+#### 🔍 Detalhamento da Análise
+
+**1. 📊 Query Principal - Dados Iniciais do Mês Atual**:
+
+**Função**: `get_vendas_mes_atual()` em `domain/services/vendas_service.py` (linhas 35-63)
+
+**Critérios Aplicados**:
+```python
+# SEMPRE usa mês atual: dia 1 até dia atual
+data_inicial = datetime(hoje.year, hoje.month, 1).date()
+data_final = hoje.date()
+
+# Os critérios obrigatórios são aplicados automaticamente no repositório
+df = self.venda_repository.get_vendas_filtradas(
+    data_inicial=data_inicial,
+    data_final=data_final,
+)
+```
+
+**2. 🔍 Query SQL no Repositório**:
+
+**Função**: `get_vendas_filtradas()` em `infrastructure/database/repositories_vendas.py` (linhas 27-82)
+
+**Query Base** (linhas 39-45):
+```sql
+SELECT * FROM "Vendas"
+WHERE "Data"::DATE BETWEEN %s AND %s
+AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+ORDER BY "Data" DESC
+```
+
+**3. 🎯 Critérios Obrigatórios SEMPRE Aplicados**:
+
+| Critério | Descrição | Linha |
+|----------|-----------|-------|
+| **📅 Período** | `"Data"::DATE BETWEEN data_inicial AND data_final` | 41 |
+| **👤 Vendedores Ativos** | `TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")` | 42 |
+| **📝 Ordenação** | `ORDER BY "Data" DESC` | 68 |
+
+**4. 🔧 Filtros Opcionais**:
+
+**A) Filtro de Vendedores Específicos** (linhas 48-51):
+```sql
+-- Se vendedores fornecidos
+AND "VendedorNome" IN (%s, %s, ...)
+```
+
+**B) Filtro de Situação Única** (linhas 54-58):
+```sql
+-- Se situação fornecida
+AND "SituacaoNome" = %s
+```
+
+**C) Filtro de Situações Múltiplas** (linhas 61-66):
+```sql
+-- Se situações fornecidas
+AND "SituacaoNome" IN (%s, %s, ...)
+```
+
+**Observação sobre Situação**:
+- O filtro de situação é **OPCIONAL** na query base
+- No carregamento inicial do mês, o sistema aplica automaticamente situação "Em andamento" via parâmetro
+- O usuário pode alterar ou remover esse filtro conforme necessário
+
+**5. 📝 Exemplo de Query Completa com Todos os Filtros**:
+```sql
+SELECT * FROM "Vendas"
+WHERE "Data"::DATE BETWEEN '2025-10-01' AND '2025-10-14'
+AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+AND "VendedorNome" IN ('Vendedor1', 'Vendedor2')  -- Opcional
+AND "SituacaoNome" IN ('Em andamento', 'Concluída')  -- Opcional
+ORDER BY "Data" DESC
+```
+
+**6. 🔄 Processamento dos Dados**:
+
+Após a query, os dados passam por `_processar_dados_vendas()` (linhas 340-380):
+
+```python
+# Conversões aplicadas:
+- ValorTotal: string → float (obrigatório, remove vazios)
+- ValorDesconto: string → float (vazios = 0)
+- ValorProdutos: string → float (vazios = 0)
+- ValorCusto: string → float (vazios = 0)
+- Data: string → datetime
+```
+
+**7. 🎯 Queries Relacionadas - Produtos**:
+
+**Produtos Detalhados** - `get_produtos_por_vendas()` (linhas 133-218):
+```sql
+SELECT
+    vp.id,
+    vp."Venda_ID",
+    vp."Nome",
+    vp."Detalhes",
+    vp."Quantidade",
+    vp."ValorCusto",
+    vp."ValorVenda",
+    vp."ValorDesconto",
+    vp."ValorTotal",
+    p."CodigoExpedicao",
+    p."NomeGrupo",
+    v."VendedorNome",
+    v."Data",
+    v."SituacaoNome"
+FROM "VendaProdutos" vp
+INNER JOIN "Vendas" v ON vp."Venda_ID" = v."ID_Gestao"
+LEFT JOIN "Produtos" p ON
+    vp."Nome" = REPLACE(REPLACE(p."Nome", ' CINZA', ''), ' PRETO', '')
+WHERE 1=1
+-- Filtros aplicados:
+AND v."Data"::DATE BETWEEN %s AND %s
+AND v."VendedorNome" IN (...)
+AND v."SituacaoNome" IN (...)
+AND TRIM(v."VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+-- Exclusão de grupos (quando excluir_grupos=True):
+AND (p."NomeGrupo" IS NULL OR p."NomeGrupo" NOT IN (
+    'PRODUTOS SEM GRUPO',
+    'PEÇA DE REPOSIÇÃO',
+    'ACESSÓRIOS'
+))
+ORDER BY v."Data" DESC, vp."Nome"
+```
+
+**8. 📊 Queries de Pagamentos**:
+
+**Função**: `get_pagamentos_por_vendas()` (linhas 367-392):
+```sql
+SELECT * FROM "VendaPagamentos"
+WHERE "Venda_ID" IN (%s, %s, ...)
+ORDER BY "DataVencimento"
+```
+
+#### 📋 Resumo dos Critérios de Seleção
+
+**Critérios Obrigatórios (SEMPRE aplicados)**:
+1. ✅ **Data**: Período definido (inicial até final)
+2. ✅ **Vendedores Válidos**: Apenas vendedores cadastrados na tabela `Vendedores`
+3. ✅ **Ordenação**: Por data decrescente
+
+**Filtros Opcionais (configuráveis)**:
+1. 🔧 **Período**: Padrão = mês atual (dia 1 até hoje) | Customizável pelo usuário
+2. 🔧 **Vendedores Específicos**: Padrão = todos os vendedores válidos | Pode filtrar específicos
+3. 🔧 **Situação**: Padrão no carregamento inicial = "Em andamento" | Pode selecionar outras situações
+
+**Comportamento no Carregamento Inicial**:
+- 📅 Período: 01/10/2025 até 14/10/2025 (mês atual)
+- 👤 Vendedores: Todos da tabela Vendedores
+- 📌 Situação: TODAS (sem filtro aplicado)
+- 📝 Ordenação: Data decrescente
+
+#### 🎯 Fluxo Completo de Dados
+
+```
+1. Usuário abre Relatório
+   ↓
+2. get_vendas_mes_atual()
+   ↓
+3. get_vendas_filtradas(data_inicial=1º dia mês, data_final=hoje)
+   ↓
+4. SQL: SELECT * FROM Vendas
+       WHERE Data BETWEEN data_inicial AND data_final
+       AND VendedorNome IN (SELECT Nome FROM Vendedores)
+       ORDER BY Data DESC
+   ↓
+   (Filtro de situação "Em andamento" aplicado via parâmetro no carregamento inicial)
+   ↓
+5. _processar_dados_vendas() - conversão de tipos
+   ↓
+6. Retorna DataFrame com vendas filtradas
+   ↓
+7. Exibe métricas, gráficos e grids
+```
+
+#### 📁 Arquivos Analisados
+1. ✅ **app.py** - Interface e chamadas (linhas 850-941)
+2. ✅ **domain/services/vendas_service.py** - Lógica de negócio (linhas 35-113)
+3. ✅ **infrastructure/database/repositories_vendas.py** - Queries SQL (linhas 27-485)
+
+#### 💡 Observações Importantes
+
+**Critérios SEMPRE Aplicados na Query Base**:
+- 🔒 **Período**: WHERE Data BETWEEN data_inicial AND data_final
+- 🔒 **Vendedores Válidos**: AND VendedorNome IN (SELECT Nome FROM Vendedores)
+- 🔒 **Ordenação**: ORDER BY Data DESC
+
+**Filtros Opcionais (aplicados conforme parâmetros)**:
+- 🔧 **Vendedores Específicos**: Pode filtrar vendedores individuais
+- 🔧 **Situação**: Pode filtrar por situações específicas
+
+**Comportamento Padrão no Carregamento Inicial**:
+- 📅 **Data Inicial**: Dia 1 do mês atual
+- 📅 **Data Final**: Dia atual
+- 📌 **Situação**: NENHUM filtro (busca todas as situações)
+
+**Otimizações**:
+- ⚡ JOIN otimizado para produtos (ignora cores PRETO/CINZA)
+- ⚡ Exclusão de grupos desnecessários no ranking
+- ⚡ Uso de IDs de vendas para buscar produtos relacionados
+
+---
+
+### ⏰ 19:15 - Remoção de Funções de Exportação HTML
+
+#### 📝 O que foi pedido
+Remover as funções de exportação HTML implementadas anteriormente.
+
+#### 🔧 Detalhamento da Solução ou Implementação
+
+1. **🗑️ Funções Removidas**:
+   - `_generate_vendedores_html()` (300+ linhas)
+   - `_generate_ranking_html()` (300+ linhas)
+
+2. **🔘 Botões de Exportação Removidos**:
+   - Removidos botões HTML→PDF e Screenshot do painel Vendedores
+   - Removidos botões HTML→PDF e Screenshot do painel Ranking
+   - Layout simplificado: voltou ao título direto sem colunas adicionais
+
+#### 📂 Arquivos Alterados
+1. ✅ **app.py**:
+   - Removidas funções de geração HTML (linhas 514-813)
+   - Removidos botões de exportação dos painéis
+   - Simplificado layout dos títulos
+
+2. ✅ **documentacao/Historico.md**: Atualizado com esta tarefa
+
+---
+
+### ⏰ 12:10 - Exportação PDF e PNG nos Painéis de Vendedores e Ranking
+
+#### 📝 O que foi pedido
+Implementar exportação em PDF e PNG nos painéis:
+1. Valor de Vendas por Vendedor
+2. Ranking de Produtos
+
+#### 🔧 Detalhamento da Solução ou Implementação
+
+1. **🎯 Estrutura de Exportação Implementada**:
+
+   **A) Botões de exportação no layout**:
+   - Adicionados botões "📄 PDF" e "🖼️ PNG" ao lado dos títulos dos painéis
+   - Layout: `[Título: 3, Espaçador: 1, PDF: 1, PNG: 1]`
+   - Botões aparecem somente quando há dados disponíveis
+
+   **B) Painel Valor de Vendas por Vendedor**:
+   - **PDF** (`_export_vendedores_to_pdf()`):
+     - Usa ReportLab para gerar PDF
+     - Tabela com colunas: #, Vendedor, Valor Total, % do Total
+     - Formato paisagem (landscape A4)
+     - Cabeçalho azul (#1f77b4)
+     - Linhas alternadas (branco/cinza)
+
+   - **PNG** (`_export_vendedores_to_png()`):
+     - Usa Plotly para gerar gráfico de barras horizontal
+     - Escala de cores azul proporcional aos valores
+     - Texto nas barras mostra valor e percentual
+     - Resolução: 1200x600px, scale=2 (alta qualidade)
+
+   **C) Painel Ranking de Produtos**:
+   - **PDF** (`_export_ranking_to_pdf()`):
+     - Tabela com colunas: #, Produto, Qtd. Total, Nº Vendas
+     - Formato retrato (A4)
+     - Cabeçalho dourado (#FFD700)
+     - Cores especiais para pódio:
+       - 🥇 Top 1: Ouro (#FFD700)
+       - 🥈 Top 2: Prata (#C0C0C0)
+       - 🥉 Top 3: Bronze (#CD7F32)
+       - Demais: Branco/cinza alternado
+
+   - **PNG** (`_export_ranking_to_png()`):
+     - Gráfico de barras horizontal com cores de medalha
+     - Ordem invertida (top no topo)
+     - Texto nas barras: "Qtd: X | Vendas: Y"
+     - Resolução: 1200x700px, scale=2
+
+2. **📦 Dependência Instalada**:
+   - Adicionado `kaleido==0.2.1` ao requirements.txt
+   - Necessário para exportar gráficos Plotly como PNG
+   - Biblioteca já existentes: `plotly==5.18.0`, `reportlab==4.2.5`
+
+3. **🔄 Fluxo de Exportação**:
+   ```
+   Usuário clica "PDF" ou "PNG"
+   → Função de exportação gera bytes
+   → Download button aparece automaticamente
+   → Arquivo salvo com timestamp: vendas_YYYYMMDD_HHMMSS.pdf
+   ```
+
+#### 📁 Lista de Arquivos Alterados
+- ✏️ `app.py` - Botões e funções de exportação (linhas 514-755, 1068-1172)
+- ✏️ `requirements.txt` - Adicionado kaleido==0.2.1 (linha 22)
+- 📝 `documentacao/Historico.md` - Atualizado com implementação
+
+#### 💡 Resultado das Alterações
+- ✅ **PDF Vendedores**: Tabela formatada com valores e percentuais
+- ✅ **PNG Vendedores**: Gráfico de barras horizontal com escala de cores
+- ✅ **PDF Ranking**: Tabela com cores de medalha (ouro/prata/bronze)
+- ✅ **PNG Ranking**: Gráfico de barras com cores temáticas do ranking
+- ✅ **Alta qualidade**: Todos os exports em alta resolução (scale=2)
+- ✅ **Nomes automáticos**: Arquivos com timestamp para não sobrescrever
+- ✅ **UX otimizada**: Botões aparecem apenas quando há dados
+
+#### 🎨 Características Visuais
+**PDF:**
+- Tabelas profissionais com bordas e cores
+- Alinhamento centralizado
+- Fontes Helvetica (Bold nos cabeçalhos)
+- Títulos coloridos e espaçados
+
+**PNG:**
+- Gráficos interativos convertidos para imagem
+- Cores consistentes com o tema da aplicação
+- Fundo branco para impressão
+- Labels e valores bem visíveis
+
+---
+
 ### ⏰ 11:45 - Filtro de Grupos no Ranking de Produtos
 
 #### 📝 O que foi pedido
