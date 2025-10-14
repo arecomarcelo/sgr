@@ -102,6 +102,10 @@
 
 - **Relatório de Vendas** removido critério **Situação**
 
+### **17:03 - Commit 114**
+
+- Correção requirements
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
