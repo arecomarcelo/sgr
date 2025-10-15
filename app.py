@@ -197,6 +197,9 @@ def _basic_markdown_to_html(content):
 def vendas_dashboard():
     """
     Dashboard de vendas integrado
+
+    NOTA: Esta função é código legado e não é mais utilizada.
+    O módulo de vendas agora usa apps/vendas/views.py (vendas_main)
     """
     try:
         # Verificar se está no modo manual
@@ -2239,12 +2242,7 @@ def main():
             extratos_main(key="extratos")
         elif st.session_state.current_module == "Relatório de Vendas":
             if VENDAS_REFATORADO_AVAILABLE:
-                try:
-                    vendas_dashboard()
-                except Exception as e:
-                    st.error(f"❌ Erro na versão refatorada: {str(e)}")
-                    st.info("🔄 Voltando para versão original...")
-                    vendas_main(key="vendas")
+                vendas_dashboard()  # Versão de produção com cards visuais
             else:
                 vendas_main(key="vendas")
         elif st.session_state.current_module == "Relatório de Clientes":

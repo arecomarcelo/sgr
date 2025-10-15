@@ -81,9 +81,14 @@ class VendasControllerIntegrado:
 
         except Exception as e:
             self.logger.error(f"Erro no dashboard: {str(e)}")
+            self.logger.error(traceback.format_exc())
             st.error("❌ Erro inesperado no dashboard. Verifique os logs.")
-            with st.expander("Detalhes do erro"):
+            with st.expander(
+                "🔍 Detalhes do erro (clique para expandir)", expanded=True
+            ):
                 st.code(traceback.format_exc())
+                st.error(f"Tipo de erro: {type(e).__name__}")
+                st.error(f"Mensagem: {str(e)}")
 
     def _health_check(self) -> bool:
         """Verifica saúde do sistema"""
@@ -144,6 +149,14 @@ class VendasControllerIntegrado:
         if st.session_state.vendas_df is not None:
             self._render_metrics()
             self._render_data_table()
+        else:
+            # Mensagem informativa quando não há dados carregados
+            st.info(
+                "ℹ️ **Nenhum dado carregado ainda.**\n\n"
+                "👆 Use os botões acima para:\n"
+                "- **🔍 Aplicar Filtros**: Carregar dados com período e filtros personalizados\n"
+                "- **📅 Dados do Mês Atual**: Carregar dados do mês corrente rapidamente"
+            )
 
     def _render_filters(self):
         """Renderiza seção de filtros"""
@@ -301,10 +314,17 @@ class VendasControllerIntegrado:
         """Renderiza análises avançadas"""
         df = st.session_state.vendas_df
 
-        if df is None or df.empty:
-            return
-
+        # Sempre exibir a seção, mesmo sem dados
         with st.expander("📈 Análise Avançada", expanded=False):
+            if df is None or df.empty:
+                st.info(
+                    "ℹ️ **Análises não disponíveis.**\n\n"
+                    "Carregue dados usando os filtros acima para visualizar:\n"
+                    "- 🏆 **Ranking de Vendedores** - Top 10 por valor\n"
+                    "- 📦 **Ranking de Produtos** - Top 10 mais vendidos\n"
+                    "- 📈 **Tendência por Período** - Evolução temporal"
+                )
+                return
             try:
                 # Análise por vendedor
                 vendas_por_vendedor = self.vendas_service.get_vendas_por_vendedor(
@@ -315,7 +335,7 @@ class VendasControllerIntegrado:
                     col1, col2 = st.columns(2)
 
                     with col1:
-                        st.subheader("🏆 Top 10 Vendedores - Valor")
+                        st.subheader("🏆 Ranking de Vendedores")
                         st.dataframe(
                             vendas_por_vendedor[
                                 ["VendedorNome", "total_valor", "quantidade"]
@@ -334,7 +354,54 @@ class VendasControllerIntegrado:
                             )
                             st.metric("Maior Valor", valor_formatado)
 
+                # Análise por produtos
+                st.markdown("---")
+                st.subheader("📦 Ranking de Produtos")
+
+                try:
+                    # Obter IDs das vendas filtradas
+                    venda_ids = df['Id'].tolist() if 'Id' in df.columns else None
+
+                    if venda_ids:
+                        produtos_df = self.vendas_service.get_produtos_agregados(
+                            venda_ids=venda_ids
+                        )
+
+                        if not produtos_df.empty:
+                            # Ordenar por valor total e pegar top 10
+                            produtos_top = produtos_df.nlargest(10, 'ValorTotal')
+
+                            col1, col2 = st.columns(2)
+
+                            with col1:
+                                st.dataframe(
+                                    produtos_top[
+                                        ['ProdutoNome', 'Quantidade', 'ValorTotal']
+                                    ],
+                                    use_container_width=True,
+                                )
+
+                            with col2:
+                                st.metric(
+                                    "Produto Mais Vendido",
+                                    produtos_top.iloc[0]['ProdutoNome'],
+                                )
+                                valor_formatado = f"R$ {produtos_top.iloc[0]['ValorTotal']:,.2f}".replace(
+                                    ",", "."
+                                )
+                                st.metric("Valor Total", valor_formatado)
+                        else:
+                            st.info("ℹ️ Nenhum produto encontrado para o período")
+                    else:
+                        st.warning("⚠️ IDs de vendas não disponíveis")
+
+                except Exception as e:
+                    st.warning(
+                        f"⚠️ Não foi possível carregar ranking de produtos: {str(e)}"
+                    )
+
                 # Tendência temporal
+                st.markdown("---")
                 if "Data" in df.columns:
                     tendencia = self.vendas_service.get_tendencia_vendas(df)
 

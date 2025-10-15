@@ -114,6 +114,17 @@
 
 - Correção requirements
 
+**15/10/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **10:21 - Commit 117**
+
+- Atualização **Manual Dasboard Vendas**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
