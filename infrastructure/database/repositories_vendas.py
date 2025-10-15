@@ -477,3 +477,43 @@ class VendaAtualizacaoRepository(BaseRepository, VendaAtualizacaoRepositoryInter
                 return True
         except Exception:
             return False
+
+
+class VendaConfiguracaoRepository(BaseRepository):
+    """Repositório para configurações de vendas"""
+
+    def get_meta_vendas(self) -> Optional[float]:
+        """Obtém a meta de vendas configurada
+
+        Returns:
+            float: Valor da meta de vendas ou None se não encontrado
+        """
+        try:
+            query = 'SELECT "Valor" FROM "VendaConfiguracao" WHERE "Descricao" = %s LIMIT 1'
+
+            with connection.cursor() as cursor:
+                cursor.execute(query, ['Meta'])
+                result = cursor.fetchone()
+
+                if result and result[0]:
+                    # Tentar converter para float
+                    try:
+                        return float(result[0])
+                    except (ValueError, TypeError):
+                        logger.warning(f"Valor de meta inválido: {result[0]}")
+                        return None
+
+                return None
+
+        except Exception as e:
+            logger.error(f"Error fetching sales goal: {str(e)}")
+            raise DatabaseError(f"Erro ao buscar meta de vendas: {str(e)}")
+
+    def health_check(self) -> bool:
+        """Verifica se a conexão está saudável"""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                return True
+        except Exception:
+            return False

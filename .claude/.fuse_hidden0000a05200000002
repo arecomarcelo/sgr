@@ -3,7 +3,10 @@
     "allow": [
       "Bash(python:*)",
       "Bash(pip show:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(source:*)",
+      "Bash(pip uninstall:*)"
     ],
     "deny": [],
     "ask": []

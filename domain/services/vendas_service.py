@@ -11,6 +11,7 @@ from core.exceptions import BusinessLogicError, SGRException, ValidationError
 from domain.validators_simple import DateRangeValidator, VendasFilterValidator
 from infrastructure.database.repositories_vendas import (
     VendaAtualizacaoRepository,
+    VendaConfiguracaoRepository,
     VendaPagamentoRepository,
     VendaProdutosRepository,
     VendaRepository,
@@ -26,11 +27,13 @@ class VendasService:
         pagamento_repository: VendaPagamentoRepository,
         produtos_repository: VendaProdutosRepository,
         atualizacao_repository: VendaAtualizacaoRepository,
+        configuracao_repository: Optional[VendaConfiguracaoRepository] = None,
     ):
         self.venda_repository = venda_repository
         self.pagamento_repository = pagamento_repository
         self.produtos_repository = produtos_repository
         self.atualizacao_repository = atualizacao_repository
+        self.configuracao_repository = configuracao_repository or VendaConfiguracaoRepository()
 
     def get_vendas_mes_atual(self) -> pd.DataFrame:
         """
@@ -594,3 +597,18 @@ class VendasService:
             str: Valor formatado
         """
         return f"R$ {valor:,.2f}".replace(".", "#").replace(",", ".").replace("#", ",")
+
+    def get_meta_vendas(self) -> Optional[float]:
+        """
+        Obtém a meta de vendas configurada
+
+        Returns:
+            float: Valor da meta de vendas ou None se não configurada
+
+        Raises:
+            BusinessLogicError: Se erro ao buscar meta
+        """
+        try:
+            return self.configuracao_repository.get_meta_vendas()
+        except Exception as e:
+            raise BusinessLogicError(f"Erro ao obter meta de vendas: {str(e)}")

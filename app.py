@@ -370,10 +370,10 @@ def _render_metrics_cards(metrics):
         st.markdown(
             f"""
         <div style='
-            background: #ffffff; 
-            border-radius: 10px; 
-            padding: 16px; 
-            text-align: center; 
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
             box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
             font-family: Roboto, sans-serif;
             min-height: 90px;
@@ -394,10 +394,10 @@ def _render_metrics_cards(metrics):
         st.markdown(
             f"""
         <div style='
-            background: #ffffff; 
-            border-radius: 10px; 
-            padding: 16px; 
-            text-align: center; 
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
             box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
             font-family: Roboto, sans-serif;
             min-height: 90px;
@@ -418,10 +418,10 @@ def _render_metrics_cards(metrics):
         st.markdown(
             f"""
         <div style='
-            background: #ffffff; 
-            border-radius: 10px; 
-            padding: 16px; 
-            text-align: center; 
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
             box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
             font-family: Roboto, sans-serif;
             min-height: 90px;
@@ -447,10 +447,10 @@ def _render_metrics_cards(metrics):
         st.markdown(
             f"""
         <div style='
-            background: #ffffff; 
-            border-radius: 10px; 
-            padding: 16px; 
-            text-align: center; 
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
             box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
             font-family: Roboto, sans-serif;
             min-height: 90px;
@@ -471,10 +471,10 @@ def _render_metrics_cards(metrics):
         st.markdown(
             f"""
         <div style='
-            background: #ffffff; 
-            border-radius: 10px; 
-            padding: 16px; 
-            text-align: center; 
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
             box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
             font-family: Roboto, sans-serif;
             min-height: 90px;
@@ -495,10 +495,10 @@ def _render_metrics_cards(metrics):
         st.markdown(
             f"""
         <div style='
-            background: #ffffff; 
-            border-radius: 10px; 
-            padding: 16px; 
-            text-align: center; 
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
             box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
             font-family: Roboto, sans-serif;
             min-height: 90px;
@@ -512,6 +512,161 @@ def _render_metrics_cards(metrics):
         """,
             unsafe_allow_html=True,
         )
+
+
+def _render_gauge_meta():
+    """Renderiza gauge de meta de vendas do mês atual - Estilo circular com tons de azul"""
+    try:
+        import plotly.graph_objects as go
+
+        # Obter meta configurada
+        meta = vendas_service.get_meta_vendas()
+
+        if not meta or meta <= 0:
+            # Meta não configurada, não exibir gauge
+            return
+
+        # Obter vendas do mês atual (sempre, independente dos filtros aplicados)
+        hoje = datetime.now()
+        data_inicial = datetime(hoje.year, hoje.month, 1).date()
+        data_final = hoje.date()
+
+        df_mes_atual = vendas_service.venda_repository.get_vendas_filtradas(
+            data_inicial=data_inicial,
+            data_final=data_final,
+        )
+
+        # Processar dados
+        df_mes_atual = vendas_service._processar_dados_vendas(df_mes_atual)
+
+        # Calcular valor total do mês
+        valor_total_mes = df_mes_atual["ValorTotal"].sum() if not df_mes_atual.empty else 0
+
+        # Calcular percentual atingido
+        percentual = (valor_total_mes / meta * 100) if meta > 0 else 0
+
+        # Determinar tonalidade de azul baseada no percentual
+        if percentual >= 100:
+            cor_gauge = "#0d47a1"  # Azul escuro (meta atingida)
+        elif percentual >= 75:
+            cor_gauge = "#1976d2"  # Azul médio
+        elif percentual >= 50:
+            cor_gauge = "#42a5f5"  # Azul claro
+        else:
+            cor_gauge = "#90caf9"  # Azul muito claro
+
+        # Renderizar gauge
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Formatar valores para exibição
+        valor_realizado_fmt = f"R$ {valor_total_mes:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        valor_meta_fmt = f"R$ {meta:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+        # Criar gauge circular estilo donut usando Plotly
+        # Percentual restante para completar 100%
+        percentual_restante = max(0, 100 - percentual)
+
+        fig = go.Figure(data=[go.Pie(
+            values=[percentual, percentual_restante],
+            labels=['Atingido', 'Restante'],
+            hole=0.7,  # Tamanho do buraco central (donut)
+            marker=dict(
+                colors=[cor_gauge, '#e0e0e0'],  # Azul para atingido, cinza claro para restante
+                line=dict(color='#ffffff', width=3)
+            ),
+            textinfo='none',  # Não mostrar texto nas fatias
+            hoverinfo='label+percent',
+            showlegend=False
+        )])
+
+        # Adicionar anotação no centro com o percentual
+        fig.add_annotation(
+            text=f"<b>{percentual:.0f}%</b>",
+            x=0.5, y=0.55,
+            font=dict(size=48, color=cor_gauge, family="Roboto"),
+            showarrow=False,
+            xref="paper",
+            yref="paper"
+        )
+
+        # Adicionar texto "da Meta" abaixo do percentual
+        fig.add_annotation(
+            text="da Meta",
+            x=0.5, y=0.42,
+            font=dict(size=16, color='#6b7280', family="Roboto"),
+            showarrow=False,
+            xref="paper",
+            yref="paper"
+        )
+
+        fig.update_layout(
+            height=320,
+            margin=dict(l=10, r=10, t=30, b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+
+        # Layout com título e gauge
+        st.markdown(
+            """
+            <div style='text-align: center; margin-bottom: 10px;'>
+                <h3 style='color: #1E88E5; font-family: Roboto, sans-serif; margin: 0;'>
+                    🎯 Meta de Vendas do Mês
+                </h3>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Exibir gauge centralizado
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            # Card com fundo branco para o gauge
+            st.markdown(
+                """
+                <div style='
+                    background: #ffffff;
+                    border-radius: 15px;
+                    padding: 20px;
+                    box-shadow: 0 6px 16px rgba(30, 136, 229, 0.2);
+                    margin-bottom: 15px;
+                '>
+                """,
+                unsafe_allow_html=True
+            )
+
+            st.plotly_chart(fig, use_container_width=True, key="gauge_meta_vendas")
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # Informações adicionais abaixo do gauge
+            st.markdown(
+                f"""
+                <div style='
+                    background: #ffffff;
+                    border-radius: 10px;
+                    padding: 20px;
+                    text-align: center;
+                    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+                '>
+                    <div style='margin-bottom: 15px;'>
+                        <div style='font-size: 0.9rem; color: #6b7280; margin-bottom: 5px; font-weight: 500;'>💰 Realizado no Mês</div>
+                        <div style='font-size: 1.5rem; font-weight: 700; color: {cor_gauge};'>{valor_realizado_fmt}</div>
+                    </div>
+                    <div style='border-top: 1px solid #e5e7eb; padding-top: 15px;'>
+                        <div style='font-size: 0.9rem; color: #6b7280; margin-bottom: 5px; font-weight: 500;'>🎯 Meta do Mês</div>
+                        <div style='font-size: 1.3rem; font-weight: 600; color: #1E88E5;'>{valor_meta_fmt}</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    except Exception as e:
+        logger.error(f"Erro ao renderizar gauge de meta: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        # Não exibir erro para o usuário, apenas não mostrar o gauge
 
 
 def _render_vendedores_com_fotos(vendas_por_vendedor):
@@ -848,6 +1003,9 @@ def _render_filters_and_metrics():
 
         # Renderizar os cards de métricas
         _render_metrics_cards(st.session_state.get("metricas", {}))
+
+        # Renderizar gauge de meta (sempre com dados do mês atual)
+        _render_gauge_meta()
 
 
 def _load_initial_data():

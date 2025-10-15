@@ -1,5 +1,160 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 15/10/2025
+
+### 🕐 11:15 - Ajuste do Gauge para Estilo Circular com Tons de Azul
+**O que foi pedido:** Ajustar o gauge para estilo circular (donut) similar à imagem de referência, utilizando tons de azul ao invés de verde.
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🔵 1. Gauge Circular (Donut):**
+- ✅ **go.Pie com hole=0.7:** Gráfico de pizza com buraco central (donut)
+- ✅ **Duas fatias:** Percentual atingido (azul) e restante (cinza claro)
+- ✅ **Borda branca:** Separação de 3px entre as fatias
+- ✅ **Sem legenda:** Layout limpo e minimalista
+
+**🎨 2. Tons de Azul Dinâmicos:**
+- ✅ **≥100%:** #0d47a1 (Azul escuro - meta atingida)
+- ✅ **75-99%:** #1976d2 (Azul médio)
+- ✅ **50-74%:** #42a5f5 (Azul claro)
+- ✅ **<50%:** #90caf9 (Azul muito claro)
+- ✅ **Restante:** #e0e0e0 (Cinza claro)
+
+**📊 3. Texto Central:**
+- ✅ **Percentual:** 48px, negrito, cor azul dinâmica
+- ✅ **"da Meta":** 16px, cinza, abaixo do percentual
+- ✅ **Posicionamento:** Centralizado no buraco do donut
+- ✅ **Font:** Roboto (consistente com o tema)
+
+**🎁 4. Card com Fundo Branco:**
+- ✅ **Background:** #ffffff
+- ✅ **Border-radius:** 15px
+- ✅ **Box-shadow:** Sombra azul suave
+- ✅ **Padding:** 20px para espaçamento interno
+
+**📍 5. Layout:**
+- ✅ **Título Centralizado:** "🎯 Meta de Vendas do Mês" em H3
+- ✅ **Gauge em Card:** Fundo branco com sombra
+- ✅ **Card de Informações:** Valores realizados e meta abaixo
+- ✅ **Cores Consistentes:** Valor realizado usa a mesma cor do gauge
+
+**📂 Arquivos Alterados:**
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/app.py`
+  - 🔄 _render_gauge_meta() modificado para gauge circular (donut)
+  - 🎨 Mudança de cores: verde → azul
+  - 📊 Texto central: percentual + "da Meta"
+  - 🎁 Card branco envolvendo o gauge
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/Historico.md`
+  - ➕ Entrada desta alteração
+
+---
+
+### 🕐 11:00 - Correção da Renderização do Gauge (Plotly)
+**O que foi pedido:** Corrigir a exibição do gauge que estava aparecendo apenas como texto, implementar gauge visual tipo velocímetro usando Plotly.
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🎨 1. Gauge Visual com Plotly:**
+- ✅ **plotly.graph_objects.Indicator:** Componente gauge profissional
+- ✅ **Modo "gauge+number+delta":** Exibe velocímetro, número e variação
+- ✅ **Escala 0-100%:** Range fixo para percentual
+- ✅ **Faixas de Cores:**
+  - 🔴 0-50%: Fundo vermelho claro (#fee2e2)
+  - 🟠 50-75%: Fundo laranja claro (#fed7aa)
+  - 🟡 75-100%: Fundo amarelo claro (#fef08a)
+
+**📊 2. Elementos Visuais:**
+- ✅ **Barra do Gauge:** Cor dinâmica baseada no percentual
+- ✅ **Threshold Line:** Linha azul marcando 100% da meta
+- ✅ **Número Central:** Percentual grande (60px) com cor dinâmica
+- ✅ **Título:** "% da Meta Atingida" em azul
+- ✅ **Delta:** Mostra variação em relação a 100%
+
+**💳 3. Card de Informações:**
+- ✅ **Realizado no Mês:** Valor com cor dinâmica
+- ✅ **Meta do Mês:** Valor em azul
+- ✅ **Separador Visual:** Borda entre os valores
+- ✅ **Shadow e Bordas:** Consistente com design existente
+
+**🎯 4. Layout e Posicionamento:**
+- ✅ **Centralizado:** Gauge em coluna central (proporção 1:2:1)
+- ✅ **Altura Otimizada:** 350px para boa visualização
+- ✅ **Margens Ajustadas:** Espaçamento balanceado
+- ✅ **Background Transparente:** Integração com tema
+
+**📂 Arquivos Alterados:**
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/app.py`
+  - 🔄 Função _render_gauge_meta() reescrita com Plotly
+  - ➕ Import plotly.graph_objects
+  - 🎨 Card de informações estilizado abaixo do gauge
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/Historico.md`
+  - ➕ Entrada desta correção
+
+---
+
+### 🕐 10:30 - Implementação de Gauge de Meta no Relatório de Vendas
+**O que foi pedido:** Adicionar gauge de meta de vendas no Painel de Métricas de Vendas, exibindo o percentual atingido da meta configurada no banco de dados (tabela VendaConfiguracao), sempre com base no mês atual independente dos filtros aplicados.
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🎯 1. Novo Modelo de Configuração:**
+- ✅ **VendaConfiguracaoRepository:** Criado repositório para acessar tabela VendaConfiguracao
+- ✅ **Método get_meta_vendas():** Busca valor da meta onde Descricao = 'Meta'
+- ✅ **Tratamento de Erros:** Conversão segura de string para float com validação
+
+**🔧 2. Serviço de Vendas:**
+- ✅ **Método get_meta_vendas():** Adicionado ao VendasService
+- ✅ **Injeção de Dependência:** VendaConfiguracaoRepository injetado no construtor
+- ✅ **BusinessLogicError:** Tratamento de exceções consistente com padrão existente
+
+**📊 3. Componente Gauge:**
+- ✅ **Função _render_gauge_meta():** Componente visual circular tipo gauge
+- ✅ **Cálculo Automático:** Percentual = (Valor Total Mês / Meta) × 100
+- ✅ **Cores Dinâmicas:**
+  - 🟢 Verde: ≥100% da meta
+  - 🟡 Amarelo: 75-99% da meta
+  - 🟠 Laranja: 50-74% da meta
+  - 🔴 Vermelho: <50% da meta
+- ✅ **Layout Responsivo:** Gauge centralizado em 3 colunas
+- ✅ **Informações Exibidas:**
+  - Percentual atingido (grande, central)
+  - Valor realizado (formatação brasileira)
+  - Valor da meta (formatação brasileira)
+
+**🔒 4. Isolamento de Dados:**
+- ✅ **Sempre Mês Atual:** Gauge busca dados do dia 1 até hoje do mês atual
+- ✅ **Independente de Filtros:** Não afetado por filtros de data/vendedor/situação
+- ✅ **Acesso Direto:** Usa venda_repository.get_vendas_filtradas() diretamente
+- ✅ **Processamento Consistente:** Reutiliza _processar_dados_vendas()
+
+**🎨 5. Visual e UX:**
+- ✅ **Gauge Circular:** Implementado com conic-gradient CSS
+- ✅ **Título Descritivo:** "🎯 Meta de Vendas do Mês"
+- ✅ **Shadow e Bordas:** Design consistente com cards existentes
+- ✅ **Ocultação Inteligente:** Não exibe se meta não configurada ou ≤0
+- ✅ **Error Handling:** Erros logados mas não exibidos ao usuário
+
+**📍 6. Posicionamento:**
+- ✅ **Após Cards de Métricas:** Integrado em _render_filters_and_metrics()
+- ✅ **Antes dos Gráficos:** Posição estratégica para visibilidade
+- ✅ **Espaçamento:** Margem superior para separação visual
+
+**📂 Arquivos Alterados ou Criados:**
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/infrastructure/database/repositories_vendas.py`
+  - ➕ Classe VendaConfiguracaoRepository
+  - ➕ Método get_meta_vendas()
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/domain/services/vendas_service.py`
+  - ➕ Import VendaConfiguracaoRepository
+  - ➕ Parâmetro configuracao_repository no __init__
+  - ➕ Método get_meta_vendas()
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/app.py`
+  - ➕ Função _render_gauge_meta()
+  - ➕ Chamada _render_gauge_meta() em _render_filters_and_metrics()
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/Historico.md`
+  - ➕ Entrada desta implementação
+
+---
+
 ## 📅 10/09/2025
 
 ### 🕐 09:35 - Grid Avançada para Produtos Detalhados

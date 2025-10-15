@@ -125,6 +125,10 @@
 
 - Atualização **Manual Dasboard Vendas**
 
+### **15:39 - Commit 118**
+
+- **Relatório de Vendas** Implementado **Meta de Vendas**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
