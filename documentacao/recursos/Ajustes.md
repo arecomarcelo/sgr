@@ -133,6 +133,10 @@
 
 - **Relatório de Vendas** Implementado Gauge **Meta de Vendedores**
 
+### **17:16 - Commit 120**
+
+- Correção requirements
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
