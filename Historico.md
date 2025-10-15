@@ -2,6 +2,115 @@
 
 ## 📅 15/10/2025
 
+### 🕐 17:05 - Correção e Limpeza do Código dos Gauges
+**O que foi pedido:** Remover comentários de debug após validação do funcionamento dos gauges.
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**🔍 Problema Identificado e Resolvido:**
+- ❌ **Filtros vazios:** `data_inicio_filtro` e `data_fim_filtro` estavam vazios no `session_state`
+- ❌ **Meta zerada:** Função não conseguia buscar vendas do período anterior
+- ✅ **Solução:** Implementada lógica em cascata para buscar período de múltiplas fontes
+
+**🔧 Lógica em Cascata Implementada:**
+1. ✅ **Tenta buscar dos filtros** - `session_state.get("data_inicio_filtro")`
+2. ✅ **Se não encontrar, busca do DataFrame** - `df_vendas["DataVenda"].min/max()`
+3. ✅ **Se ainda não encontrar, usa mês atual** - `datetime(ano, mês, 1)` até hoje
+
+**🧹 Limpeza do Código:**
+- ✅ Removidos todos os `print()` de debug
+- ✅ Removidos logs de debug desnecessários
+- ✅ Código limpo e funcional mantido
+
+**📊 Resultado Validado:**
+- ✅ Gauges exibindo percentuais corretos
+- ✅ Vendedores com meta do ano anterior: percentuais calculados corretamente
+- ✅ Vendedores sem meta (novos): exibindo 0% (comportamento esperado)
+
+**📂 Arquivos Alterados:**
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/app.py`
+  - 🔄 _render_vendedores_com_fotos() - Lógica em cascata para buscar período
+  - 🧹 Removidos prints e logs de debug
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/Historico.md`
+  - ➕ Entrada desta correção
+
+---
+
+### 🕐 14:45 - Correção da Incompatibilidade do Kaleido
+**O que foi pedido:** Corrigir erro de incompatibilidade entre Plotly 5.18.0 e Kaleido 1.1.0 que impedia a exibição dos gauges.
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**⚠️ Problema Identificado:**
+- ❌ Kaleido 1.1.0 estava instalado (incompatível com Plotly 5.18.0)
+- ❌ Gauges não eram exibidos (aparecia apenas `</div>` no lugar)
+- ⚠️ Warning: "Plotly version 5.18.0, which is not compatible with this version of Kaleido (1.1.0)"
+
+**✅ Solução Aplicada:**
+- ✅ **Reinstalação forçada:** `pip install kaleido==0.2.1 --force-reinstall`
+- ✅ **Desinstalação da versão incompatível:** Kaleido 1.1.0 removido
+- ✅ **Instalação da versão compatível:** Kaleido 0.2.1 instalado
+- ✅ **Verificação:** Confirmada versão correta com `pip show kaleido`
+
+**🔧 Comando Executado:**
+```bash
+source venv/bin/activate && pip install kaleido==0.2.1 --force-reinstall
+```
+
+**📂 Arquivos Alterados:**
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/Historico.md`
+  - ➕ Entrada desta correção
+
+---
+
+### 🕐 14:30 - Implementação de Gauges Individuais por Vendedor
+**O que foi pedido:** Adicionar gauges pequenos no painel "Valor de Vendas por Vendedor", ao lado direito do percentual de cada vendedor, comparando as vendas do período atual com o mesmo período do ano anterior.
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**📊 1. Função de Cálculo do Período Anterior:**
+- ✅ **_calcular_vendas_periodo_anterior():** Nova função que busca vendas do mesmo período do ano anterior
+- ✅ **Cálculo dinâmico:** Usa data_inicio e data_fim dos filtros aplicados
+- ✅ **Período anterior:** Subtrai 1 ano usando relativedelta
+- ✅ **Agregação por vendedor:** Agrupa e soma vendas por VendedorNome
+
+**🎯 2. Lógica de Meta e Realizado:**
+- ✅ **Meta:** Total de vendas do vendedor no mesmo período do ano anterior
+- ✅ **Realizado:** Total de vendas do vendedor no período atual (mês corrente)
+- ✅ **Exemplo:** Se hoje é 15/10/2025, Meta = 01-15/10/2024, Realizado = 01-15/10/2025
+
+**🎨 3. Função de Criação do Gauge:**
+- ✅ **_criar_gauge_vendedor():** Cria gauge estilo donut com cores dinâmicas
+- ✅ **Tamanho compacto:** 60x60 pixels para não alterar altura do card
+- ✅ **Cores por desempenho:** Azul escuro (≥100%), médio (≥75%), claro (≥50%), muito claro (<50%)
+- ✅ **Formato:** Imagem PNG base64 para inserir no HTML
+- ✅ **Fallback:** Tratamento de erro caso kaleido não esteja disponível
+
+**🎁 4. Modificação nos Cards dos Vendedores:**
+- ✅ **Dados ampliados:** Adicionados campos "meta" e "realizado" para cada vendedor
+- ✅ **Layout flex:** Percentual e gauge lado a lado usando display: flex
+- ✅ **Gap:** 8px de espaçamento entre percentual e gauge
+- ✅ **Centralizado:** Alinhamento centralizado com align-items: center
+- ✅ **Sem alteração de altura:** Card mantém dimensões originais
+
+**🔄 5. Integração com Filtros:**
+- ✅ **Session state:** Usa data_inicio_filtro e data_fim_filtro
+- ✅ **Sincronização:** Gauges sempre refletem o período filtrado
+- ✅ **Cálculo automático:** Período anterior calculado automaticamente
+
+**📂 Arquivos Alterados:**
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/app.py`
+  - ➕ _calcular_vendas_periodo_anterior() - Nova função
+  - ➕ _criar_gauge_vendedor() - Nova função
+  - 🔄 _render_vendedores_com_fotos() - Calcula vendas do período anterior
+  - 🔄 _render_card_vendedor() - Adiciona gauge ao layout do card
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/requirements.txt`
+  - ➕ kaleido==0.2.1 - Biblioteca para conversão de gráficos Plotly em imagens
+- 📝 `/media/areco/Backup/Oficial/Projetos/sgr/Historico.md`
+  - ➕ Entrada desta alteração
+
+---
+
 ### 🕐 11:15 - Ajuste do Gauge para Estilo Circular com Tons de Azul
 **O que foi pedido:** Ajustar o gauge para estilo circular (donut) similar à imagem de referência, utilizando tons de azul ao invés de verde.
 

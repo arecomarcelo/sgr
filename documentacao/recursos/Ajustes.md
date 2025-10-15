@@ -129,6 +129,10 @@
 
 - **Relatório de Vendas** Implementado **Meta de Vendas**
 
+### **17:12 - Commit 119**
+
+- **Relatório de Vendas** Implementado Gauge **Meta de Vendedores**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
