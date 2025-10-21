@@ -212,7 +212,7 @@ def vendas_dashboard():
 
         # Header
         st.markdown(
-            "<h1 style='text-align: center; color: #1E88E5;'>📊 SGR - Dashboard de Vendas</h1>",
+            "<h1 style='text-align: center; color: #1E88E5;'>📊 SGR - Dashboard de Vendas Geral</h1>",
             unsafe_allow_html=True,
         )
 
@@ -540,7 +540,9 @@ def _render_gauge_meta():
         df_mes_atual = vendas_service._processar_dados_vendas(df_mes_atual)
 
         # Calcular valor total do mês
-        valor_total_mes = df_mes_atual["ValorTotal"].sum() if not df_mes_atual.empty else 0
+        valor_total_mes = (
+            df_mes_atual["ValorTotal"].sum() if not df_mes_atual.empty else 0
+        )
 
         # Calcular percentual atingido
         percentual = (valor_total_mes / meta * 100) if meta > 0 else 0
@@ -559,44 +561,59 @@ def _render_gauge_meta():
         st.markdown("<br>", unsafe_allow_html=True)
 
         # Formatar valores para exibição
-        valor_realizado_fmt = f"R$ {valor_total_mes:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        valor_meta_fmt = f"R$ {meta:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        valor_realizado_fmt = (
+            f"R$ {valor_total_mes:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
+        valor_meta_fmt = (
+            f"R$ {meta:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        )
 
         # Criar gauge circular estilo donut usando Plotly
         # Percentual restante para completar 100%
         percentual_restante = max(0, 100 - percentual)
 
-        fig = go.Figure(data=[go.Pie(
-            values=[percentual, percentual_restante],
-            labels=['Atingido', 'Restante'],
-            hole=0.7,  # Tamanho do buraco central (donut)
-            marker=dict(
-                colors=[cor_gauge, '#e0e0e0'],  # Azul para atingido, cinza claro para restante
-                line=dict(color='#ffffff', width=3)
-            ),
-            textinfo='none',  # Não mostrar texto nas fatias
-            hoverinfo='label+percent',
-            showlegend=False
-        )])
+        fig = go.Figure(
+            data=[
+                go.Pie(
+                    values=[percentual, percentual_restante],
+                    labels=['Atingido', 'Restante'],
+                    hole=0.7,  # Tamanho do buraco central (donut)
+                    marker=dict(
+                        colors=[
+                            cor_gauge,
+                            '#e0e0e0',
+                        ],  # Azul para atingido, cinza claro para restante
+                        line=dict(color='#ffffff', width=3),
+                    ),
+                    textinfo='none',  # Não mostrar texto nas fatias
+                    hoverinfo='label+percent',
+                    showlegend=False,
+                )
+            ]
+        )
 
         # Adicionar anotação no centro com o percentual
         fig.add_annotation(
             text=f"<b>{percentual:.0f}%</b>",
-            x=0.5, y=0.55,
+            x=0.5,
+            y=0.55,
             font=dict(size=48, color=cor_gauge, family="Roboto"),
             showarrow=False,
             xref="paper",
-            yref="paper"
+            yref="paper",
         )
 
         # Adicionar texto "da Meta" abaixo do percentual
         fig.add_annotation(
             text="da Meta",
-            x=0.5, y=0.42,
+            x=0.5,
+            y=0.42,
             font=dict(size=16, color='#6b7280', family="Roboto"),
             showarrow=False,
             xref="paper",
-            yref="paper"
+            yref="paper",
         )
 
         fig.update_layout(
@@ -615,7 +632,7 @@ def _render_gauge_meta():
                 </h3>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
         # Exibir gauge centralizado
@@ -632,7 +649,7 @@ def _render_gauge_meta():
                     margin-bottom: 15px;
                 '>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
             st.plotly_chart(fig, use_container_width=True, key="gauge_meta_vendas")
@@ -665,6 +682,7 @@ def _render_gauge_meta():
     except Exception as e:
         logger.error(f"Erro ao renderizar gauge de meta: {str(e)}")
         import traceback
+
         logger.error(f"Traceback: {traceback.format_exc()}")
         # Não exibir erro para o usuário, apenas não mostrar o gauge
 
@@ -683,6 +701,7 @@ def _calcular_vendas_periodo_anterior(data_inicio, data_fim, vendedores_nomes):
     """
     try:
         from datetime import timedelta
+
         from dateutil.relativedelta import relativedelta
 
         # Calcular período anterior (mesmo período do ano anterior)
@@ -699,12 +718,21 @@ def _calcular_vendas_periodo_anterior(data_inicio, data_fim, vendedores_nomes):
             return {}
 
         # Processar dados
-        df_periodo_anterior = vendas_service._processar_dados_vendas(df_periodo_anterior)
+        df_periodo_anterior = vendas_service._processar_dados_vendas(
+            df_periodo_anterior
+        )
 
         # Agrupar por vendedor
         vendas_anteriores = {}
-        if not df_periodo_anterior.empty and "VendedorNome" in df_periodo_anterior.columns:
-            df_agrupado = df_periodo_anterior.groupby("VendedorNome")["ValorTotal"].sum().reset_index()
+        if (
+            not df_periodo_anterior.empty
+            and "VendedorNome" in df_periodo_anterior.columns
+        ):
+            df_agrupado = (
+                df_periodo_anterior.groupby("VendedorNome")["ValorTotal"]
+                .sum()
+                .reset_index()
+            )
             for _, row in df_agrupado.iterrows():
                 vendas_anteriores[row["VendedorNome"]] = float(row["ValorTotal"])
 
@@ -713,6 +741,80 @@ def _calcular_vendas_periodo_anterior(data_inicio, data_fim, vendedores_nomes):
     except Exception as e:
         logger.error(f"Erro ao calcular vendas do período anterior: {str(e)}")
         return {}
+
+
+def _calcular_vendas_mes_atual_para_gauge(vendedores_nomes):
+    """
+    Calcula as vendas do mês atual (sempre) para os gauges
+
+    Realizado: 01 do mês atual até hoje
+    Meta: 01 do mesmo mês do ano anterior até o mesmo dia
+
+    Args:
+        vendedores_nomes: Lista de nomes dos vendedores
+
+    Returns:
+        tuple: (dict realizado, dict meta) com vendas por vendedor
+    """
+    try:
+        from datetime import datetime
+
+        from dateutil.relativedelta import relativedelta
+
+        # Sempre usar mês atual
+        hoje = datetime.now()
+        data_inicio_atual = datetime(hoje.year, hoje.month, 1).date()
+        data_fim_atual = hoje.date()
+
+        # Calcular mesmo período do ano anterior
+        data_inicio_anterior = data_inicio_atual - relativedelta(years=1)
+        data_fim_anterior = data_fim_atual - relativedelta(years=1)
+
+        # Buscar vendas do período atual (realizado)
+        df_periodo_atual = vendas_service.venda_repository.get_vendas_filtradas(
+            data_inicial=data_inicio_atual,
+            data_final=data_fim_atual,
+        )
+
+        # Buscar vendas do período anterior (meta)
+        df_periodo_anterior = vendas_service.venda_repository.get_vendas_filtradas(
+            data_inicial=data_inicio_anterior,
+            data_final=data_fim_anterior,
+        )
+
+        # Processar realizado
+        vendas_realizadas = {}
+        if not df_periodo_atual.empty:
+            df_periodo_atual = vendas_service._processar_dados_vendas(df_periodo_atual)
+            if "VendedorNome" in df_periodo_atual.columns:
+                df_agrupado = (
+                    df_periodo_atual.groupby("VendedorNome")["ValorTotal"]
+                    .sum()
+                    .reset_index()
+                )
+                for _, row in df_agrupado.iterrows():
+                    vendas_realizadas[row["VendedorNome"]] = float(row["ValorTotal"])
+
+        # Processar meta (período anterior)
+        vendas_meta = {}
+        if not df_periodo_anterior.empty:
+            df_periodo_anterior = vendas_service._processar_dados_vendas(
+                df_periodo_anterior
+            )
+            if "VendedorNome" in df_periodo_anterior.columns:
+                df_agrupado = (
+                    df_periodo_anterior.groupby("VendedorNome")["ValorTotal"]
+                    .sum()
+                    .reset_index()
+                )
+                for _, row in df_agrupado.iterrows():
+                    vendas_meta[row["VendedorNome"]] = float(row["ValorTotal"])
+
+        return vendas_realizadas, vendas_meta
+
+    except Exception as e:
+        logger.error(f"Erro ao calcular vendas do mês atual para gauge: {str(e)}")
+        return {}, {}
 
 
 def _render_vendedores_com_fotos(vendas_por_vendedor):
@@ -738,28 +840,14 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
         {"nome": "Cássio Gadagnoto", "foto": "10"},
     ]
 
-    # Obter período filtrado para calcular vendas do ano anterior
-    data_inicio = st.session_state.get("data_inicio_filtro")
-    data_fim = st.session_state.get("data_fim_filtro")
-
-    # Se não encontrou nos filtros, usar dados do DataFrame de vendas atual
-    if (not data_inicio or not data_fim) and vendas_por_vendedor is not None and not vendas_por_vendedor.empty:
-        # Buscar do DataFrame principal se disponível
-        df_vendas = st.session_state.get("df_vendas")
-        if df_vendas is not None and not df_vendas.empty and "DataVenda" in df_vendas.columns:
-            data_inicio = df_vendas["DataVenda"].min()
-            data_fim = df_vendas["DataVenda"].max()
-
-    # Se ainda não tem, usar o mês atual
-    if not data_inicio or not data_fim:
-        from datetime import datetime
-        hoje = datetime.now()
-        data_inicio = datetime(hoje.year, hoje.month, 1).date()
-        data_fim = hoje.date()
-
-    # Calcular vendas do período anterior (mesmo período do ano anterior)
+    # Calcular vendas do mês atual para os gauges
+    # IMPORTANTE: Os gauges sempre usam o mês atual, independente dos filtros
+    # Realizado: 01 do mês atual até hoje
+    # Meta: 01 do mesmo mês do ano anterior até o mesmo dia
     vendedores_nomes = [v["nome"] for v in vendedores_tabela]
-    vendas_anteriores = _calcular_vendas_periodo_anterior(data_inicio, data_fim, vendedores_nomes)
+    vendas_realizadas_gauge, vendas_meta_gauge = _calcular_vendas_mes_atual_para_gauge(
+        vendedores_nomes
+    )
 
     # Criar dicionário de vendas existentes para consulta rápida
     vendas_dict = {}
@@ -779,13 +867,14 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
     vendedores_completos = []
     for vendedor in vendedores_tabela:
         nome = vendedor["nome"]
-        # Meta = vendas do período anterior (mesmo período do ano anterior)
-        meta_vendedor = vendas_anteriores.get(nome, 0.0)
-        # Realizado = vendas do período atual
-        realizado_vendedor = vendas_dict.get(nome, {}).get("total_valor", 0.0)
+        # Para o GAUGE:
+        # Meta = vendas do mesmo mês do ano anterior (sempre mês atual)
+        meta_vendedor = vendas_meta_gauge.get(nome, 0.0)
+        # Realizado = vendas do mês atual até hoje (sempre mês atual)
+        realizado_vendedor = vendas_realizadas_gauge.get(nome, 0.0)
 
         if nome in vendas_dict:
-            # Vendedor com vendas
+            # Vendedor com vendas (total_valor e percentual seguem os filtros aplicados)
             vendedores_completos.append(
                 {
                     "nome": nome,
@@ -884,8 +973,9 @@ def _criar_gauge_vendedor(meta, realizado):
         str: HTML do gauge em formato base64
     """
     try:
-        import plotly.graph_objects as go
         import base64
+
+        import plotly.graph_objects as go
 
         # Calcular percentual
         percentual = (realizado / meta * 100) if meta > 0 else 0
@@ -904,27 +994,32 @@ def _criar_gauge_vendedor(meta, realizado):
         percentual_restante = max(0, 100 - percentual)
 
         # Criar gauge estilo donut
-        fig = go.Figure(data=[go.Pie(
-            values=[percentual, percentual_restante],
-            labels=['Atingido', 'Restante'],
-            hole=0.65,
-            marker=dict(
-                colors=[cor_gauge, '#e0e0e0'],
-                line=dict(color='#ffffff', width=1)
-            ),
-            textinfo='none',
-            hoverinfo='label+percent',
-            showlegend=False
-        )])
+        fig = go.Figure(
+            data=[
+                go.Pie(
+                    values=[percentual, percentual_restante],
+                    labels=['Atingido', 'Restante'],
+                    hole=0.65,
+                    marker=dict(
+                        colors=[cor_gauge, '#e0e0e0'],
+                        line=dict(color='#ffffff', width=1),
+                    ),
+                    textinfo='none',
+                    hoverinfo='label+percent',
+                    showlegend=False,
+                )
+            ]
+        )
 
         # Adicionar percentual no centro
         fig.add_annotation(
             text=f"<b>{percentual:.0f}%</b>",
-            x=0.5, y=0.5,
+            x=0.5,
+            y=0.5,
             font=dict(size=12, color=cor_gauge, family="Roboto"),
             showarrow=False,
             xref="paper",
-            yref="paper"
+            yref="paper",
         )
 
         fig.update_layout(
@@ -960,8 +1055,14 @@ def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
         image_b64 = get_image_base64(foto_path)
 
         # Criar gauge do vendedor
-        gauge_b64 = _criar_gauge_vendedor(vendedor.get('meta', 0), vendedor.get('realizado', 0))
-        gauge_html = f'<img src="{gauge_b64}" style="width: 60px; height: 60px; margin-left: 8px;">' if gauge_b64 else ''
+        gauge_b64 = _criar_gauge_vendedor(
+            vendedor.get('meta', 0), vendedor.get('realizado', 0)
+        )
+        gauge_html = (
+            f'<img src="{gauge_b64}" style="width: 60px; height: 60px; margin-left: 8px;">'
+            if gauge_b64
+            else ''
+        )
 
         if image_b64:
             # Com foto
@@ -1385,8 +1486,8 @@ def _render_charts():
 
         st.markdown("---")
 
-        # Terceiro gráfico - Valor de Vendas por Vendedor com fotos
-        st.subheader("💰 Valor de Vendas por Vendedor")
+        # Terceiro gráfico - Ranking de Vendedores
+        st.subheader("🏆 Ranking de Vendedores")
 
         try:
             _render_vendedores_com_fotos(vendas_por_vendedor)
@@ -1561,14 +1662,34 @@ def _render_data_grid():
         ]
     ].copy()
 
-    # Formatar valores monetários
+    # Função para limpar e converter valores monetários
+    def clean_monetary_value(val):
+        """Remove formatação monetária e converte para float"""
+        if pd.isna(val):
+            return 0.0
+        if isinstance(val, (int, float)):
+            return float(val)
+        # Converter para string e limpar
+        val_str = str(val).replace('R$', '').strip()
+
+        # Se tem vírgula, é formato brasileiro (1.500,00)
+        if ',' in val_str:
+            # Remover pontos (separador de milhares) e trocar vírgula por ponto
+            val_clean = val_str.replace('.', '').replace(',', '.')
+        else:
+            # Formato americano ou já limpo (1500.00 ou 1500)
+            val_clean = val_str
+
+        val_clean = val_clean.strip()
+        try:
+            return float(val_clean) if val_clean else 0.0
+        except:
+            return 0.0
+
+    # Garantir que valores monetários sejam float (sem formatação - AgGrid fará a formatação visual)
     for col in ["ValorProdutos", "ValorDesconto", "ValorTotal"]:
         if col in df_display.columns:
-            df_display[col] = df_display[col].apply(
-                lambda x: vendas_service.formatar_valor_monetario(x)
-                if pd.notna(x)
-                else ""
-            )
+            df_display[col] = df_display[col].apply(clean_monetary_value)
 
     # Renomear colunas
     df_display.columns = [
@@ -1580,11 +1701,55 @@ def _render_data_grid():
         "Data",
     ]
 
-    # Renderizar grid avançada com AgGrid
-    _render_advanced_sales_grid(df_display)
+    # Renderizar grid avançada com AgGrid e capturar dados filtrados
+    df_filtered = _render_advanced_sales_grid(df_display, df_vendas)
+
+    # Armazenar IDs das vendas filtradas na grid para uso no painel de Produtos
+    if df_filtered is not None and not df_filtered.empty:
+        # Mapear vendas filtradas de volta ao df original para pegar os IDs
+        # Criar chave única para matching
+        df_vendas_with_key = df_vendas.copy()
+        df_vendas_with_key['_match_key'] = (
+            df_vendas_with_key['ClienteNome'].astype(str)
+            + '|'
+            + df_vendas_with_key['VendedorNome'].astype(str)
+            + '|'
+            + df_vendas_with_key['ValorTotal'].astype(str)
+            + '|'
+            + df_vendas_with_key['Data'].astype(str)
+        )
+
+        df_filtered_with_key = df_filtered.copy()
+        df_filtered_with_key['_match_key'] = (
+            df_filtered_with_key['Cliente'].astype(str)
+            + '|'
+            + df_filtered_with_key['Vendedor'].astype(str)
+            + '|'
+            + df_filtered_with_key['Valor Total']
+            .apply(lambda x: str(x) if isinstance(x, (int, float)) else str(x))
+            .astype(str)
+            + '|'
+            + df_filtered_with_key['Data'].astype(str)
+        )
+
+        # Encontrar IDs das vendas filtradas
+        vendas_filtradas = df_vendas_with_key[
+            df_vendas_with_key['_match_key'].isin(df_filtered_with_key['_match_key'])
+        ]
+
+        if 'Id' in vendas_filtradas.columns:
+            ids_vendas_filtradas = vendas_filtradas['Id'].tolist()
+        elif 'ID_Gestao' in vendas_filtradas.columns:
+            ids_vendas_filtradas = vendas_filtradas['ID_Gestao'].tolist()
+        else:
+            ids_vendas_filtradas = None
+
+        st.session_state['ids_vendas_grid_filtradas'] = ids_vendas_filtradas
+    else:
+        st.session_state['ids_vendas_grid_filtradas'] = None
 
 
-def _render_advanced_sales_grid(df_display):
+def _render_advanced_sales_grid(df_display, df_original):
     """Renderiza grid avançada de vendas usando AgGrid com funcionalidades completas"""
     from st_aggrid import AgGrid, GridOptionsBuilder
 
@@ -1666,22 +1831,10 @@ def _render_advanced_sales_grid(df_display):
         for col in data.columns:
             if "Valor" in col or col == "Desconto":
                 try:
-                    val_values = []
-                    for val in data[col]:
-                        try:
-                            if isinstance(val, str):
-                                val_clean = (
-                                    val.replace("R$", "")
-                                    .replace(".", "")
-                                    .replace(",", ".")
-                                    .strip()
-                                )
-                                val_values.append(float(val_clean))
-                            else:
-                                val_values.append(float(val))
-                        except:
-                            val_values.append(0)
-                    totals[f"total_{col.lower().replace(' ', '_')}"] = sum(val_values)
+                    # Valores já são numéricos, apenas somar
+                    totals[f"total_{col.lower().replace(' ', '_')}"] = (
+                        pd.to_numeric(data[col], errors='coerce').fillna(0).sum()
+                    )
                 except:
                     totals[f"total_{col.lower().replace(' ', '_')}"] = 0
 
@@ -2276,18 +2429,10 @@ def _render_advanced_products_grid(df_display):
 
         if "Quantidade" in data.columns:
             try:
-                # Converter valores formatados para numérico
-                qty_values = []
-                for val in data["Quantidade"]:
-                    try:
-                        if isinstance(val, str):
-                            val_clean = val.replace(".", "").replace(",", ".")
-                            qty_values.append(float(val_clean))
-                        else:
-                            qty_values.append(float(val))
-                    except:
-                        qty_values.append(0)
-                totals["total_quantidade"] = sum(qty_values)
+                # Valores já são numéricos, apenas somar
+                totals["total_quantidade"] = (
+                    pd.to_numeric(data["Quantidade"], errors='coerce').fillna(0).sum()
+                )
             except:
                 totals["total_quantidade"] = 0
 
@@ -2295,22 +2440,10 @@ def _render_advanced_products_grid(df_display):
         for col in data.columns:
             if "Valor" in col:
                 try:
-                    val_values = []
-                    for val in data[col]:
-                        try:
-                            if isinstance(val, str):
-                                val_clean = (
-                                    val.replace("R$", "")
-                                    .replace(".", "")
-                                    .replace(",", ".")
-                                    .strip()
-                                )
-                                val_values.append(float(val_clean))
-                            else:
-                                val_values.append(float(val))
-                        except:
-                            val_values.append(0)
-                    totals[f"total_{col.lower().replace(' ', '_')}"] = sum(val_values)
+                    # Valores já são numéricos, apenas somar
+                    totals[f"total_{col.lower().replace(' ', '_')}"] = (
+                        pd.to_numeric(data[col], errors='coerce').fillna(0).sum()
+                    )
                 except:
                     totals[f"total_{col.lower().replace(' ', '_')}"] = 0
 
@@ -2466,20 +2599,29 @@ def _render_produtos_detalhados():
     st.subheader("📦 Produtos Detalhados")
 
     try:
-        # Obter filtros aplicados da sessão
-        data_inicio = st.session_state.get("data_inicio_filtro")
-        data_fim = st.session_state.get("data_fim_filtro")
-        vendedores = st.session_state.get("vendedores_filtro")
-        situacoes = st.session_state.get("situacoes_filtro")
-
-        # Obter produtos agregados usando os mesmos filtros das vendas
         loading = LoadingHelper.show_loading("Carregando produtos...")
+
+        # Verificar se há IDs de vendas filtradas na grid AgGrid
+        ids_vendas_grid_filtradas = st.session_state.get('ids_vendas_grid_filtradas')
+
+        # Determinar quais IDs de vendas usar
+        if ids_vendas_grid_filtradas is not None and len(ids_vendas_grid_filtradas) > 0:
+            # Usuário filtrou na grid AgGrid - usar IDs filtrados da grid
+            venda_ids = ids_vendas_grid_filtradas
+        else:
+            # Usar TODOS os IDs do df_vendas (que já está filtrado pelos filtros principais)
+            if 'Id' in df_vendas.columns:
+                venda_ids = df_vendas['Id'].tolist()
+            elif 'ID_Gestao' in df_vendas.columns:
+                venda_ids = df_vendas['ID_Gestao'].tolist()
+            else:
+                venda_ids = None
+
+        # Buscar produtos usando IDs de vendas
         df_produtos = vendas_service.get_produtos_agregados(
-            data_inicio=data_inicio,
-            data_fim=data_fim,
-            vendedores=vendedores,
-            situacoes=situacoes,
+            venda_ids=venda_ids,
         )
+
         LoadingHelper.hide_loading(loading)
 
         if df_produtos.empty:
@@ -2506,25 +2648,19 @@ def _render_produtos_detalhados():
         }
         df_display = df_display.rename(columns=existing_columns)
 
-        # Formatar valores monetários
+        # Garantir que valores monetários sejam float (sem formatação - a grid do AgGrid fará a formatação visual)
         valor_columns = ["Valor Custo", "Valor Venda", "Valor Desconto", "Valor Total"]
         for col in valor_columns:
             if col in df_display.columns:
-                df_display[col] = df_display[col].apply(
-                    lambda x: vendas_service.formatar_valor_monetario(x)
-                    if pd.notna(x)
-                    else "R$ 0,00"
-                )
+                df_display[col] = pd.to_numeric(
+                    df_display[col], errors='coerce'
+                ).fillna(0)
 
-        # Formatar quantidade
+        # Garantir que quantidade seja float (sem formatação - a grid do AgGrid fará a formatação visual)
         if "Quantidade" in df_display.columns:
-            df_display["Quantidade"] = df_display["Quantidade"].apply(
-                lambda x: f"{x:,.2f}".replace(".", "#")
-                .replace(",", ".")
-                .replace("#", ",")
-                if pd.notna(x)
-                else "0,00"
-            )
+            df_display["Quantidade"] = pd.to_numeric(
+                df_display["Quantidade"], errors='coerce'
+            ).fillna(0)
 
         # Renderizar grid avançada com AgGrid
         df_final = _render_advanced_products_grid(df_display)

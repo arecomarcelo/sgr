@@ -18,56 +18,83 @@ def menu():
         min-width: 280px !important;
         max-width: 280px !important;
     }
-    
-    .menu-card {
-        background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
-        border-radius: 10px;
-        padding: 12px;
-        margin: 8px 0;
-        color: white;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(30, 136, 229, 0.3);
+
+    /* Forçar estilo dos botões da sidebar para ficarem preenchidos */
+    /* Botões secundários (não selecionados) - cinza escuro */
+    [data-testid="stSidebar"] button[kind="secondary"],
+    [data-testid="stSidebar"] .stButton button[kind="secondary"],
+    section[data-testid="stSidebar"] button[kind="secondary"] {
+        background-color: #424242 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 10px 16px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+        width: 100% !important;
     }
-    
-    .menu-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(30, 136, 229, 0.4);
-        background: linear-gradient(135deg, #1976D2 0%, #1E88E5 100%);
+
+    [data-testid="stSidebar"] button[kind="secondary"]:hover,
+    [data-testid="stSidebar"] .stButton button[kind="secondary"]:hover,
+    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background-color: #525252 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.3) !important;
     }
-    
-    .menu-card-selected {
-        background: linear-gradient(135deg, #43A047 0%, #388E3C 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 12px rgba(67, 160, 71, 0.4);
+
+    /* Botões primários (selecionados) - azul */
+    [data-testid="stSidebar"] button[kind="primary"],
+    [data-testid="stSidebar"] .stButton button[kind="primary"],
+    section[data-testid="stSidebar"] button[kind="primary"] {
+        background-color: #1E88E5 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 10px 16px !important;
+        font-weight: 500 !important;
+        box-shadow: 0 2px 6px rgba(30, 136, 229, 0.4) !important;
+        width: 100% !important;
     }
-    
-    .menu-icon {
-        font-size: 20px;
-        margin-bottom: 6px;
-        display: block;
+
+    [data-testid="stSidebar"] button[kind="primary"]:hover,
+    [data-testid="stSidebar"] .stButton button[kind="primary"]:hover,
+    section[data-testid="stSidebar"] button[kind="primary"]:hover {
+        background-color: #1976D2 !important;
+        box-shadow: 0 3px 8px rgba(30, 136, 229, 0.5) !important;
     }
-    
-    .menu-title {
-        font-size: 13px;
-        font-weight: 600;
-        margin: 0;
-        line-height: 1.2;
+
+    /* Remover outline/border dos botões */
+    [data-testid="stSidebar"] button,
+    section[data-testid="stSidebar"] button {
+        border: none !important;
+        outline: none !important;
     }
-    
-    .logout-card {
-        background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
+
+    [data-testid="stSidebar"] button:focus,
+    section[data-testid="stSidebar"] button:focus {
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.3) !important;
     }
-    
-    .logout-card:hover {
-        background: linear-gradient(135deg, #F44336 0%, #E53935 100%);
-    }
-    
+
     /* Compactar ainda mais a sidebar */
     .block-container {
         padding-left: 1rem !important;
         padding-right: 1rem !important;
+    }
+
+    /* ESTRATÉGIA: Todos os botões secundários ficam com cor CLARA (#5A5A5A) por padrão */
+    /* CSS inline será aplicado nos grupos principais para sobrescrever com cor ESCURA (#424242) */
+    [data-testid="stSidebar"] button[kind="secondary"],
+    [data-testid="stSidebar"] .stButton button[kind="secondary"],
+    section[data-testid="stSidebar"] button[kind="secondary"] {
+        background-color: #5A5A5A !important;
+    }
+
+    [data-testid="stSidebar"] button[kind="secondary"]:hover,
+    [data-testid="stSidebar"] .stButton button[kind="secondary"]:hover,
+    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background-color: #6A6A6A !important;
     }
     </style>
     """,
@@ -87,57 +114,188 @@ def menu():
     )
 
     # Definindo os módulos com nomes atualizados
+    # Estrutura hierárquica: módulos principais e submódulos
     module_config = {
-        "Dashboard Produtos": {
+        "Estoque": {
             "permission": "view_produtos",
             "icon": "📦",
-            "original_name": "Estoque",
+            "type": "group",
+            "submenu": {
+                "Produtos": {
+                    "permission": "view_produtos",
+                    "icon": "📦",
+                    "original_name": "Estoque",
+                },
+            },
         },
-        "Dashboard Boletos": {
+        "Faturamento": {
             "permission": "view_boletos",
             "icon": "💰",
-            "original_name": "Cobrança",
+            "type": "group",
+            "submenu": {
+                "Boletos": {
+                    "permission": "view_boletos",
+                    "icon": "💰",
+                    "original_name": "Cobrança",
+                },
+            },
         },
-        "Dashboard Extratos": {
+        "Financeiro": {
             "permission": "view_extratos",
             "icon": "💳",
-            "original_name": "Financeiro",
+            "type": "group",
+            "submenu": {
+                "Extratos": {
+                    "permission": "view_extratos",
+                    "icon": "💳",
+                    "original_name": "Financeiro",
+                },
+            },
         },
-        "Dashboard Vendas": {
+        "Vendas": {
             "permission": "view_venda",
             "icon": "📊",
-            "original_name": "Relatório de Vendas",
+            "type": "group",
+            "submenu": {
+                "Geral": {
+                    "permission": "view_venda",
+                    "icon": "📈",
+                    "original_name": "Relatório de Vendas",
+                },
+            },
         },
-        "Dashboard Clientes": {
+        "Entidades": {
             "permission": "view_clientes",
             "icon": "👥",
-            "original_name": "Relatório de Clientes",
+            "type": "group",
+            "submenu": {
+                "Clientes": {
+                    "permission": "view_clientes",
+                    "icon": "👥",
+                    "original_name": "Relatório de Clientes",
+                },
+            },
         },
     }
 
-    # Verificar módulos disponíveis
-    available_modules = []
-    for module, config in module_config.items():
-        if (
-            config["permission"] in st.session_state.permissions
-            or st.session_state.username == "admin"
-        ):
-            available_modules.append(module)
+    # Inicializar estado de expansão dos grupos
+    if "menu_expanded_groups" not in st.session_state:
+        st.session_state.menu_expanded_groups = {}
 
-    # Renderizar cards dos módulos
+    # Renderizar módulos
     selected_module = None
     current_module = st.session_state.get("current_module", "")
 
-    for module in available_modules:
-        config = module_config[module]
+    for module, config in module_config.items():
+        # Verificar permissão para o módulo principal
+        has_permission = (
+            config["permission"] in st.session_state.permissions
+            or st.session_state.username == "admin"
+        )
 
-        # Determinar se está selecionado (comparar com nome original)
-        is_selected = current_module == config["original_name"]
+        if not has_permission:
+            continue
 
-        # Criar container clicável
-        with st.sidebar.container():
-            clicked = st.button(
-                f"{config['icon']}\n{module}",
+        # Se é um grupo com submenu
+        if config.get("type") == "group":
+            # Inicializar estado de expansão para este grupo
+            if module not in st.session_state.menu_expanded_groups:
+                st.session_state.menu_expanded_groups[module] = False
+
+            # Verificar se algum submódulo está selecionado
+            any_submodule_selected = False
+            for submodule, subconfig in config.get("submenu", {}).items():
+                if current_module == subconfig["original_name"]:
+                    any_submodule_selected = True
+                    # Auto-expandir se um submódulo está selecionado
+                    st.session_state.menu_expanded_groups[module] = True
+                    break
+
+            # Botão do grupo (para expandir/recolher)
+            is_expanded = st.session_state.menu_expanded_groups[module]
+            expand_icon = "▼" if is_expanded else "▶"
+
+            # CSS específico para forçar cor escura no grupo principal (se não estiver selecionado)
+            if not any_submodule_selected:
+                group_key = f"menu_group_{module}"
+                st.sidebar.markdown(
+                    f"""
+                    <style>
+                    button[data-baseweb="button"][aria-label="Expandir/Recolher {module}"] {{
+                        background-color: #424242 !important;
+                    }}
+                    button[data-baseweb="button"][aria-label="Expandir/Recolher {module}"]:hover {{
+                        background-color: #525252 !important;
+                    }}
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            # Criar botão do grupo
+            clicked = st.sidebar.button(
+                f"{config['icon']} {module} {expand_icon}",
+                key=f"menu_group_{module}",
+                help=f"Expandir/Recolher {module}",
+                use_container_width=True,
+                type="primary" if any_submodule_selected else "secondary",
+            )
+
+            if clicked:
+                # Comportamento accordion: ao expandir um grupo, recolher todos os outros
+                new_state = not st.session_state.menu_expanded_groups[module]
+
+                if new_state:  # Se vai expandir este grupo
+                    # Recolher todos os outros grupos primeiro
+                    for group_name in st.session_state.menu_expanded_groups:
+                        if group_name != module:
+                            st.session_state.menu_expanded_groups[group_name] = False
+
+                # Aplicar o toggle no grupo clicado
+                st.session_state.menu_expanded_groups[module] = new_state
+                st.rerun()
+
+            # Renderizar submódulos se expandido
+            if is_expanded:
+                for submodule, subconfig in config.get("submenu", {}).items():
+                    # Verificar permissão do submódulo
+                    has_sub_permission = (
+                        subconfig["permission"] in st.session_state.permissions
+                        or st.session_state.username == "admin"
+                    )
+
+                    if not has_sub_permission:
+                        continue
+
+                    # Determinar se está selecionado
+                    is_selected = current_module == subconfig["original_name"]
+
+                    # Chave única para o sub-item
+                    button_key = f"submenu_{module}_{submodule}".replace(" ", "_")
+
+                    # Criar botão do submódulo (com indentação visual)
+                    # A cor clara já é aplicada pelo CSS global
+                    sub_clicked = st.sidebar.button(
+                        f"  {subconfig['icon']} {submodule}",
+                        key=button_key,
+                        help=f"Acessar {submodule}",
+                        use_container_width=True,
+                        type="primary" if is_selected else "secondary",
+                    )
+
+                    if sub_clicked:
+                        selected_module = subconfig["original_name"]
+                        st.session_state.current_module = subconfig["original_name"]
+                        st.rerun()
+
+        # Se é um item simples
+        else:
+            # Determinar se está selecionado
+            is_selected = current_module == config["original_name"]
+
+            # Criar botão do módulo
+            clicked = st.sidebar.button(
+                f"{config['icon']} {module}",
                 key=f"menu_{module}",
                 help=f"Acessar {module}",
                 use_container_width=True,
@@ -145,7 +303,6 @@ def menu():
             )
 
             if clicked:
-                # Retornar o nome original para compatibilidade com app.py
                 selected_module = config["original_name"]
                 st.session_state.current_module = config["original_name"]
                 st.rerun()

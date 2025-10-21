@@ -489,7 +489,9 @@ class VendaConfiguracaoRepository(BaseRepository):
             float: Valor da meta de vendas ou None se não encontrado
         """
         try:
-            query = 'SELECT "Valor" FROM "VendaConfiguracao" WHERE "Descricao" = %s LIMIT 1'
+            query = (
+                'SELECT "Valor" FROM "VendaConfiguracao" WHERE "Descricao" = %s LIMIT 1'
+            )
 
             with connection.cursor() as cursor:
                 cursor.execute(query, ['Meta'])

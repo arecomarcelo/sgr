@@ -18,6 +18,28 @@ from infrastructure.database.repositories_vendas import (
 )
 
 
+def _convert_to_date(value: Any) -> Optional[date]:
+    """
+    Converte valor para date de forma segura
+
+    Args:
+        value: Valor a ser convertido (pode ser datetime, date, ou None)
+
+    Returns:
+        date ou None
+    """
+    if value is None:
+        return None
+    if isinstance(value, date) and not isinstance(value, datetime):
+        # Já é date (mas não datetime)
+        return value
+    if isinstance(value, datetime):
+        # É datetime, extrair date
+        return value.date()
+    # Outros casos, retornar como está
+    return value
+
+
 class VendasService:
     """Serviço para operações de vendas"""
 
@@ -33,7 +55,9 @@ class VendasService:
         self.pagamento_repository = pagamento_repository
         self.produtos_repository = produtos_repository
         self.atualizacao_repository = atualizacao_repository
-        self.configuracao_repository = configuracao_repository or VendaConfiguracaoRepository()
+        self.configuracao_repository = (
+            configuracao_repository or VendaConfiguracaoRepository()
+        )
 
     def get_vendas_mes_atual(self) -> pd.DataFrame:
         """
@@ -409,22 +433,9 @@ class VendasService:
             BusinessLogicError: Se erro na lógica de negócio
         """
         try:
-            # Converter datetime para date se necessário
-            if data_inicio:
-                if isinstance(data_inicio, datetime):
-                    data_inicial = data_inicio.date()
-                else:
-                    data_inicial = data_inicio
-            else:
-                data_inicial = None
-
-            if data_fim:
-                if isinstance(data_fim, datetime):
-                    data_final = data_fim.date()
-                else:
-                    data_final = data_fim
-            else:
-                data_final = None
+            # Converter datetime para date se necessário (usando função segura)
+            data_inicial = _convert_to_date(data_inicio)
+            data_final = _convert_to_date(data_fim)
 
             df = self.produtos_repository.get_produtos_por_vendas(
                 venda_ids=venda_ids,
@@ -465,22 +476,9 @@ class VendasService:
             BusinessLogicError: Se erro na lógica de negócio
         """
         try:
-            # Converter datetime para date se necessário
-            if data_inicio:
-                if isinstance(data_inicio, datetime):
-                    data_inicial = data_inicio.date()
-                else:
-                    data_inicial = data_inicio
-            else:
-                data_inicial = None
-
-            if data_fim:
-                if isinstance(data_fim, datetime):
-                    data_final = data_fim.date()
-                else:
-                    data_final = data_fim
-            else:
-                data_final = None
+            # Converter datetime para date se necessário (usando função segura)
+            data_inicial = _convert_to_date(data_inicio)
+            data_final = _convert_to_date(data_fim)
 
             df = self.produtos_repository.get_produtos_agregados(
                 venda_ids=venda_ids,

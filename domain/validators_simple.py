@@ -24,9 +24,6 @@ class VendasFilterValidator:
         if self.data_inicio > self.data_fim:
             raise ValueError("Data inicial não pode ser maior que data final")
 
-        if (self.data_fim - self.data_inicio).days > 365:
-            raise ValueError("Período não pode ser maior que 365 dias")
-
 
 @dataclass
 class DateRangeValidator:

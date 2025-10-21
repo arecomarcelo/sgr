@@ -2,6 +2,7 @@
 SGR - Módulo de Vendas
 Compatível com o sistema principal de login e menu
 """
+import io
 import logging
 import os
 import traceback
@@ -65,7 +66,7 @@ class VendasControllerIntegrado:
 
             # Header
             st.markdown(
-                "<h1 style='text-align: center; color: #1E88E5;'>📊 Dashboard de Vendas</h1>",
+                "<h1 style='text-align: center; color: #1E88E5;'>📊 SGR - Dashboard de Vendas Geral</h1>",
                 unsafe_allow_html=True,
             )
             st.markdown("---")
@@ -198,8 +199,18 @@ class VendasControllerIntegrado:
             ):
                 return
 
+            # Verificar se período é maior que 365 dias (aviso, não bloqueia)
+            diff_days = (filters["data_fim"] - filters["data_inicio"]).days
+            if diff_days > 365:
+                st.warning("⚠️ Período muito longo pode afetar a performance")
+
             # Carregar dados
-            with st.spinner("Carregando dados de vendas..."):
+            spinner_message = (
+                "⏳ Carregando dados de vendas..."
+                if diff_days > 365
+                else "Carregando dados de vendas..."
+            )
+            with st.spinner(spinner_message):
                 df_vendas = self.vendas_service.get_vendas_filtradas(
                     data_inicio=filters["data_inicio"],
                     data_fim=filters["data_fim"],
@@ -254,7 +265,7 @@ class VendasControllerIntegrado:
             st.markdown("---")
 
     def _render_data_table(self):
-        """Renderiza tabela de dados"""
+        """Renderiza tabela de dados usando AgGrid"""
         df = st.session_state.vendas_df
 
         if df is None or df.empty:
@@ -264,6 +275,8 @@ class VendasControllerIntegrado:
 
         # Preparar dados para exibição
         try:
+            from st_aggrid import AgGrid, GridOptionsBuilder
+
             colunas_exibir = [
                 "ClienteNome",
                 "VendedorNome",
@@ -274,17 +287,34 @@ class VendasControllerIntegrado:
             ]
             df_display = df[colunas_exibir].copy()
 
-            # Formatar valores monetários
+            # Função para limpar e converter valores monetários
+            def clean_monetary_value(val):
+                """Remove formatação monetária e converte para float"""
+                if pd.isna(val):
+                    return 0.0
+                if isinstance(val, (int, float)):
+                    return float(val)
+                # Converter para string e limpar
+                val_str = str(val).replace('R$', '').strip()
+
+                # Se tem vírgula, é formato brasileiro (1.500,00)
+                if ',' in val_str:
+                    # Remover pontos (separador de milhares) e trocar vírgula por ponto
+                    val_clean = val_str.replace('.', '').replace(',', '.')
+                else:
+                    # Formato americano ou já limpo (1500.00 ou 1500)
+                    val_clean = val_str
+
+                val_clean = val_clean.strip()
+                try:
+                    return float(val_clean) if val_clean else 0.0
+                except:
+                    return 0.0
+
+            # Garantir que valores monetários sejam float (sem formatação)
             for col in ["ValorProdutos", "ValorDesconto", "ValorTotal"]:
                 if col in df_display.columns:
-                    df_display[col] = df_display[col].apply(
-                        lambda x: f"R$ {float(x):,.2f}".replace(".", "#")
-                        .replace(",", ".")
-                        .replace("#", ",")
-                        if pd.notna(x)
-                        and str(x).replace(".", "").replace(",", "").isdigit()
-                        else str(x)
-                    )
+                    df_display[col] = df_display[col].apply(clean_monetary_value)
 
             # Renomear colunas
             df_display.columns = [
@@ -296,17 +326,110 @@ class VendasControllerIntegrado:
                 "Data",
             ]
 
-            # Exibir grid
-            data_grid = DataGrid()
-            data_grid.render_data_grid(
-                df_display,
-                title=f"Vendas Detalhadas ({len(df_display)} registros)",
-                show_download=True,
-                filename_prefix="vendas_detalhadas",
+            # Exibir com formatação visual (mantendo valores numéricos para ordenação)
+            st.subheader(f"Vendas Detalhadas ({len(df_display)} registros)")
+
+            # Mostrar informações do dataset
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Total de Registros", len(df_display))
+            with col2:
+                st.metric("Colunas", len(df_display.columns))
+
+            # Configurar AgGrid
+            gb = GridOptionsBuilder.from_dataframe(df_display)
+
+            gb.configure_grid_options(
+                domLayout="normal",
+                enableRangeSelection=True,
+                enableCellTextSelection=True,
+                suppressRowClickSelection=True,
             )
 
+            # Configurações de coluna padrão
+            gb.configure_default_column(
+                filter=True,
+                cellStyle={"border": "1px solid black"},
+                floatingFilter=True,
+                sortable=True,
+            )
+
+            # Configuração personalizada por coluna
+            for col in df_display.columns:
+                if col in ["Cliente", "Vendedor"]:
+                    gb.configure_column(col, headerName=col, width=200)
+                elif col == "Data":
+                    gb.configure_column(
+                        col,
+                        headerName="Data",
+                        type=["dateColumnFilter"],
+                        width=120,
+                    )
+                elif "Valor" in col or col == "Desconto":
+                    # Colunas monetárias com formatação e ordenação numérica
+                    gb.configure_column(
+                        col,
+                        headerName=col,
+                        type=["numericColumn", "numberColumnFilter"],
+                        valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})",
+                        width=150,
+                    )
+                else:
+                    gb.configure_column(col, headerName=col)
+
+            grid_options = gb.build()
+
+            # Renderizar AgGrid
+            grid_response = AgGrid(
+                df_display,
+                gridOptions=grid_options,
+                height=400,
+                fit_columns_on_grid_load=True,
+                theme="alpine",
+                allow_unsafe_jscode=True,
+                update_mode="MODEL_CHANGED",
+                key="vendas_grid",
+            )
+
+            # Seção de download
+            st.markdown("---")
+            st.subheader("📥 Download dos Dados")
+            col1, col2 = st.columns(2)
+
+            with col1:
+                # Download CSV
+                csv_data = df_display.to_csv(index=False)
+                st.download_button(
+                    label="📄 Download CSV",
+                    data=csv_data,
+                    file_name=f"vendas_detalhadas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+
+            with col2:
+                # Download Excel
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+                    df_display.to_excel(writer, index=False, sheet_name="Vendas")
+
+                st.download_button(
+                    label="📊 Download Excel",
+                    data=buffer.getvalue(),
+                    file_name=f"vendas_detalhadas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.ms-excel",
+                    use_container_width=True,
+                )
+
+        except ImportError:
+            st.error(
+                "❌ AgGrid não está instalado. Instale com: pip install streamlit-aggrid"
+            )
+            # Fallback: mostrar dataframe básico
+            st.dataframe(df.head(100), use_container_width=True)
         except Exception as e:
             st.error(f"❌ Erro ao exibir tabela: {str(e)}")
+            self.logger.error(f"Erro ao renderizar grid: {str(e)}")
             # Fallback: mostrar dataframe básico
             st.dataframe(df.head(100), use_container_width=True)
 

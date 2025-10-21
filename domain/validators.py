@@ -59,10 +59,8 @@ class DateRangeFilter(BaseModel):
 
     @validator("end_date")
     def validate_date_range(cls, v, values):
-        if "start_date" in values:
-            diff = (v - values["start_date"]).days
-            if diff > 365:
-                raise ValueError("Intervalo de datas não pode ser maior que 365 dias")
+        # Validação de 365 dias removida - período sem limite
+        # Avisos de performance são exibidos na interface quando apropriado
         return v
 
 

@@ -137,6 +137,17 @@
 
 - Correção requirements
 
+**21/10/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **15:44 - Commit 121**
+
+- Ajustes Ordenação **Painéis de Vendas**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
