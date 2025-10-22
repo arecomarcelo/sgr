@@ -1307,6 +1307,19 @@ def _load_initial_data():
 def _apply_filters(filters):
     """Aplica filtros personalizados"""
     try:
+        # LOG: Filtros recebidos
+        logger.info("=" * 50)
+        logger.info("APLICANDO FILTROS - INÍCIO")
+        logger.info(f"Filtros recebidos: {filters}")
+        logger.info(
+            f"Data Início: {filters.get('data_inicio')} (tipo: {type(filters.get('data_inicio'))})"
+        )
+        logger.info(
+            f"Data Fim: {filters.get('data_fim')} (tipo: {type(filters.get('data_fim'))})"
+        )
+        logger.info(f"Vendedores: {filters.get('vendedores')}")
+        logger.info(f"Situações: {filters.get('situacoes')}")
+
         # Validar filtros se informados
         if filters.get("data_inicio") and filters.get("data_fim"):
             if not ValidationHelper.validate_date_range(
@@ -1316,6 +1329,7 @@ def _apply_filters(filters):
 
             # Obter dados filtrados
             loading = LoadingHelper.show_loading("Carregando dados de vendas...")
+            logger.info("Chamando vendas_service.get_vendas_filtradas...")
             df_vendas = vendas_service.get_vendas_filtradas(
                 data_inicio=filters["data_inicio"],
                 data_fim=filters["data_fim"],
@@ -1323,6 +1337,22 @@ def _apply_filters(filters):
                 situacoes=filters["situacoes"] if filters["situacoes"] else None,
             )
             LoadingHelper.hide_loading(loading)
+
+            # LOG: Dados retornados
+            logger.info(f"Dados retornados: {len(df_vendas)} registros")
+            if not df_vendas.empty:
+                logger.info(f"Colunas: {df_vendas.columns.tolist()}")
+                if "VendedorNome" in df_vendas.columns:
+                    vendedores_unicos = df_vendas["VendedorNome"].unique().tolist()
+                    logger.info(f"Vendedores únicos nos dados: {vendedores_unicos}")
+                if "Data" in df_vendas.columns:
+                    try:
+                        datas = pd.to_datetime(df_vendas["Data"], errors='coerce')
+                        logger.info(f"Data mínima: {datas.min()}")
+                        logger.info(f"Data máxima: {datas.max()}")
+                    except:
+                        logger.info("Erro ao processar datas")
+            logger.info("=" * 50)
         else:
             ValidationHelper.show_error("Por favor, informe as datas de início e fim")
             return
@@ -1650,6 +1680,109 @@ def _render_data_grid():
 
     st.subheader("📋 Vendas Detalhadas")
 
+    # DEBUG: Mostrar informações sobre os filtros aplicados
+    with st.expander("🔍 Debug - Informações dos Filtros Aplicados", expanded=True):
+        # AVISO: Verificar se filtros foram aplicados
+        tem_filtro = bool(
+            st.session_state.get("data_inicio_filtro")
+            or st.session_state.get("data_fim_filtro")
+            or st.session_state.get("vendedores_filtro")
+            or st.session_state.get("situacoes_filtro")
+        )
+
+        if not tem_filtro:
+            st.error(
+                "⚠️ **ATENÇÃO:** Nenhum filtro aplicado! Exibindo dados do mês atual."
+            )
+            st.warning(
+                "👉 Para aplicar filtros, preencha os campos no 'Painel Filtros' e clique em '🔍 Aplicar Filtros'"
+            )
+        else:
+            st.success("✅ Filtros aplicados com sucesso!")
+
+        st.markdown("---")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total de Registros", len(df_vendas))
+        with col2:
+            vendedores_unicos = (
+                df_vendas["VendedorNome"].nunique()
+                if "VendedorNome" in df_vendas.columns
+                else 0
+            )
+            st.metric("Vendedores Únicos", vendedores_unicos)
+        with col3:
+            if "Data" in df_vendas.columns:
+                try:
+                    datas = pd.to_datetime(df_vendas["Data"], errors='coerce')
+                    data_min = (
+                        datas.min().strftime('%d/%m/%Y')
+                        if not pd.isna(datas.min())
+                        else "N/A"
+                    )
+                    data_max = (
+                        datas.max().strftime('%d/%m/%Y')
+                        if not pd.isna(datas.max())
+                        else "N/A"
+                    )
+                    st.metric("Período", f"{data_min} a {data_max}")
+                except:
+                    st.metric("Período", "Erro ao processar")
+
+        st.markdown("---")
+
+        # Mostrar filtros da sessão
+        st.markdown("**Filtros Aplicados:**")
+        filtros_info = []
+        if st.session_state.get("data_inicio_filtro"):
+            filtros_info.append(
+                f"📅 Data Início: {st.session_state.get('data_inicio_filtro')}"
+            )
+        if st.session_state.get("data_fim_filtro"):
+            filtros_info.append(
+                f"📅 Data Fim: {st.session_state.get('data_fim_filtro')}"
+            )
+        if st.session_state.get("vendedores_filtro"):
+            vendedores = st.session_state.get("vendedores_filtro")
+            filtros_info.append(f"👤 Vendedores: {', '.join(vendedores)}")
+        if st.session_state.get("situacoes_filtro"):
+            situacoes = st.session_state.get("situacoes_filtro")
+            filtros_info.append(f"📊 Situações: {', '.join(situacoes)}")
+
+        if filtros_info:
+            for info in filtros_info:
+                st.text(info)
+        else:
+            st.info("ℹ️ Nenhum filtro aplicado - Exibindo dados do mês atual")
+
+        st.markdown("---")
+
+        # Mostrar vendedores presentes nos dados
+        if "VendedorNome" in df_vendas.columns:
+            vendedores_presentes = df_vendas["VendedorNome"].unique().tolist()
+            st.markdown("**Vendedores nos Dados Carregados:**")
+            st.code(", ".join(sorted(vendedores_presentes)))
+
+            # VERIFICAÇÃO: Comparar vendedores nos dados com vendedores filtrados
+            if st.session_state.get("vendedores_filtro"):
+                vendedores_filtrados = st.session_state.get("vendedores_filtro")
+                vendedores_nao_esperados = [
+                    v for v in vendedores_presentes if v not in vendedores_filtrados
+                ]
+                if vendedores_nao_esperados:
+                    st.error(
+                        f"❌ **ERRO CRÍTICO:** Há vendedores nos dados que NÃO estão no filtro!"
+                    )
+                    st.error(
+                        f"Vendedores não esperados: {', '.join(vendedores_nao_esperados)}"
+                    )
+                    st.error(
+                        "🔧 **AÇÃO NECESSÁRIA:** O serviço get_vendas_filtradas() não está funcionando corretamente!"
+                    )
+                else:
+                    st.success("✅ Vendedores nos dados correspondem ao filtro aplicado")
+
     # Preparar dados para exibição
     df_display = df_vendas[
         [
@@ -1690,6 +1823,36 @@ def _render_data_grid():
     for col in ["ValorProdutos", "ValorDesconto", "ValorTotal"]:
         if col in df_display.columns:
             df_display[col] = df_display[col].apply(clean_monetary_value)
+
+    # Formatar coluna Data para exibir apenas dd/mm/yyyy (sem horário)
+    def format_date(val):
+        """Formata data para dd/mm/yyyy sem horário"""
+        if pd.isna(val):
+            return ""
+        try:
+            if isinstance(val, str):
+                # Se já é string, tentar parsear
+                if '/' in val:
+                    # Formato brasileiro dd/mm/yyyy ou dd/mm/yyyy HH:MM
+                    parts = val.split()[
+                        0
+                    ]  # Remove horário se houver (pega só a data antes do espaço)
+                    return parts
+                else:
+                    # Formato ISO ou outro, converter para datetime
+                    dt = pd.to_datetime(val)
+                    return dt.strftime('%d/%m/%Y')
+            elif isinstance(val, (datetime, pd.Timestamp)):
+                return val.strftime('%d/%m/%Y')
+            elif isinstance(val, date):
+                return val.strftime('%d/%m/%Y')
+            else:
+                return str(val)
+        except:
+            return str(val)
+
+    if "Data" in df_display.columns:
+        df_display["Data"] = df_display["Data"].apply(format_date)
 
     # Renomear colunas
     df_display.columns = [
@@ -1941,6 +2104,13 @@ def _render_advanced_sales_grid(df_display, df_original):
 
     # Renderizar o grid com colunas filtradas
     with st.spinner("Carregando grid..."):
+        # IMPORTANTE: Criar key dinâmica para forçar re-renderização quando filtros mudarem
+        # Usar hash dos filtros aplicados + timestamp para garantir atualização
+        import hashlib
+
+        filtros_str = f"{st.session_state.get('data_inicio_filtro')}_{st.session_state.get('data_fim_filtro')}_{st.session_state.get('vendedores_filtro')}_{st.session_state.get('situacoes_filtro')}_{len(df_display_filtered)}"
+        grid_key = f"vendas_grid_{hashlib.md5(filtros_str.encode()).hexdigest()}"
+
         grid_options = create_sales_grid_options(df_display_filtered)
         grid_response = AgGrid(
             df_display_filtered,
@@ -1950,7 +2120,7 @@ def _render_advanced_sales_grid(df_display, df_original):
             theme="alpine",
             allow_unsafe_jscode=True,
             reload_data=True,
-            key="vendas_grid",
+            key=grid_key,  # Key dinâmica que muda com os filtros
             columns_auto_size_mode="FIT_CONTENTS",
         )
 
@@ -2112,38 +2282,47 @@ def _get_ranking_produtos(
         pd.DataFrame com colunas: ProdutoNome, TotalQuantidade, NumeroVendas
     """
     try:
-        # Converter para datetime se necessário
-        if data_inicio and not isinstance(data_inicio, datetime):
-            if isinstance(data_inicio, str):
-                data_inicio = datetime.strptime(str(data_inicio), '%Y-%m-%d')
-            elif isinstance(data_inicio, date):
-                data_inicio = datetime.combine(data_inicio, datetime.min.time())
+        # IMPORTANTE: Se temos venda_ids, eles já representam as vendas filtradas
+        # Portanto, NÃO devemos passar outros filtros para evitar conflitos
+        if venda_ids:
+            # Usar APENAS venda_ids (que já vem do df_vendas filtrado)
+            logger.info(f"DEBUG Ranking - Usando venda_ids: {len(venda_ids)} vendas")
+            df_produtos = vendas_service.get_produtos_detalhados(
+                venda_ids=venda_ids,
+                excluir_grupos=True,
+            )
+        else:
+            # Fallback: usar filtros de data/vendedor/situação se não temos venda_ids
+            # Converter para datetime se necessário
+            if data_inicio and not isinstance(data_inicio, datetime):
+                if isinstance(data_inicio, str):
+                    data_inicio = datetime.strptime(str(data_inicio), '%Y-%m-%d')
+                elif isinstance(data_inicio, date):
+                    data_inicio = datetime.combine(data_inicio, datetime.min.time())
 
-        if data_fim and not isinstance(data_fim, datetime):
-            if isinstance(data_fim, str):
-                data_fim = datetime.strptime(str(data_fim), '%Y-%m-%d')
-            elif isinstance(data_fim, date):
-                data_fim = datetime.combine(data_fim, datetime.min.time())
+            if data_fim and not isinstance(data_fim, datetime):
+                if isinstance(data_fim, str):
+                    data_fim = datetime.strptime(str(data_fim), '%Y-%m-%d')
+                elif isinstance(data_fim, date):
+                    data_fim = datetime.combine(data_fim, datetime.min.time())
 
-        logger.info(
-            f"DEBUG Ranking - data_inicio convertido: {data_inicio} (tipo: {type(data_inicio)})"
-        )
-        logger.info(
-            f"DEBUG Ranking - data_fim convertido: {data_fim} (tipo: {type(data_fim)})"
-        )
-        logger.info(f"DEBUG Ranking - vendedores: {vendedores}, situacoes: {situacoes}")
-        logger.info(f"DEBUG Ranking - venda_ids: {venda_ids}")
+            logger.info(
+                f"DEBUG Ranking - data_inicio: {data_inicio}, data_fim: {data_fim}"
+            )
+            logger.info(
+                f"DEBUG Ranking - vendedores: {vendedores}, situacoes: {situacoes}"
+            )
 
-        # Obter produtos DETALHADOS (não agregados) para contar vendas corretamente
-        # Excluir grupos: PRODUTOS SEM GRUPO, PEÇA DE REPOSIÇÃO, ACESSÓRIOS
-        df_produtos = vendas_service.get_produtos_detalhados(
-            data_inicio=data_inicio,
-            data_fim=data_fim,
-            vendedores=vendedores,
-            situacoes=situacoes,
-            venda_ids=venda_ids,
-            excluir_grupos=True,
-        )
+            # Obter produtos DETALHADOS (não agregados) para contar vendas corretamente
+            # Excluir grupos: PRODUTOS SEM GRUPO, PEÇA DE REPOSIÇÃO, ACESSÓRIOS
+            df_produtos = vendas_service.get_produtos_detalhados(
+                data_inicio=data_inicio,
+                data_fim=data_fim,
+                vendedores=vendedores,
+                situacoes=situacoes,
+                venda_ids=None,
+                excluir_grupos=True,
+            )
 
         logger.info(f"DEBUG Ranking - df_produtos shape: {df_produtos.shape}")
         logger.info(
@@ -2556,6 +2735,12 @@ def _render_advanced_products_grid(df_display):
 
     # Renderizar o grid com colunas filtradas
     with st.spinner("Carregando grid..."):
+        # IMPORTANTE: Criar key dinâmica para forçar re-renderização quando filtros mudarem
+        import hashlib
+
+        filtros_str = f"{st.session_state.get('data_inicio_filtro')}_{st.session_state.get('data_fim_filtro')}_{st.session_state.get('vendedores_filtro')}_{st.session_state.get('situacoes_filtro')}_{len(df_display_filtered)}"
+        grid_key = f"produtos_grid_{hashlib.md5(filtros_str.encode()).hexdigest()}"
+
         grid_options = create_products_grid_options(df_display_filtered)
         grid_response = AgGrid(
             df_display_filtered,
@@ -2565,7 +2750,7 @@ def _render_advanced_products_grid(df_display):
             theme="alpine",
             allow_unsafe_jscode=True,
             reload_data=True,
-            key="produtos_grid",
+            key=grid_key,  # Key dinâmica que muda com os filtros
         )
 
     # Calcular e exibir totalizadores - usando dados filtrados da grid

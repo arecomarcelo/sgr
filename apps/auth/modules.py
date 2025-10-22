@@ -19,30 +19,6 @@ def menu():
         max-width: 280px !important;
     }
 
-    /* Forçar estilo dos botões da sidebar para ficarem preenchidos */
-    /* Botões secundários (não selecionados) - cinza escuro */
-    [data-testid="stSidebar"] button[kind="secondary"],
-    [data-testid="stSidebar"] .stButton button[kind="secondary"],
-    section[data-testid="stSidebar"] button[kind="secondary"] {
-        background-color: #424242 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 10px 16px !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        width: 100% !important;
-    }
-
-    [data-testid="stSidebar"] button[kind="secondary"]:hover,
-    [data-testid="stSidebar"] .stButton button[kind="secondary"]:hover,
-    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
-        background-color: #525252 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.3) !important;
-    }
-
     /* Botões primários (selecionados) - azul */
     [data-testid="stSidebar"] button[kind="primary"],
     [data-testid="stSidebar"] .stButton button[kind="primary"],
@@ -64,6 +40,63 @@ def menu():
         box-shadow: 0 3px 8px rgba(30, 136, 229, 0.5) !important;
     }
 
+    /* TODOS OS BOTÕES SECONDARY - CINZA ESCURO (padrão para menus principais) */
+    [data-testid="stSidebar"] button[kind="secondary"],
+    [data-testid="stSidebar"] .stButton button[kind="secondary"],
+    section[data-testid="stSidebar"] button[kind="secondary"] {
+        background-color: #5A5A5A !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 10px 16px !important;
+        font-weight: 500 !important;
+        width: 100% !important;
+    }
+
+    [data-testid="stSidebar"] button[kind="secondary"]:hover,
+    [data-testid="stSidebar"] .stButton button[kind="secondary"]:hover,
+    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background-color: #6A6A6A !important;
+    }
+
+    /* SUB-MENUS (Acessar) - BRANCO - Sobrescreve o cinza acima */
+    [data-testid="stSidebar"] button[kind="secondary"][title*="Acessar"],
+    [data-testid="stSidebar"] .stButton button[kind="secondary"][title*="Acessar"],
+    section[data-testid="stSidebar"] button[kind="secondary"][title*="Acessar"] {
+        background-color: #FFFFFF !important;
+        color: #424242 !important;
+        border: 1px solid #E0E0E0 !important;
+        border-radius: 8px !important;
+        padding: 8px 12px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        width: 100% !important;
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
+        margin-left: 12px !important;
+    }
+
+    [data-testid="stSidebar"] button[kind="secondary"][title*="Acessar"]:hover,
+    [data-testid="stSidebar"] .stButton button[kind="secondary"][title*="Acessar"]:hover,
+    section[data-testid="stSidebar"] button[kind="secondary"][title*="Acessar"]:hover {
+        background-color: #E3F2FD !important;
+        color: #1976D2 !important;
+        border: 1px solid #BBDEFB !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+    }
+
+    /* Reduzir espaço entre o botão de grupo e submenus */
+    [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div:has(button[title*="Expandir"]) {
+        margin-bottom: 0px !important;
+    }
+
+    /* Container dos submenus mais compacto */
+    [data-testid="stSidebar"] .element-container {
+        margin-bottom: 0px !important;
+    }
+
     /* Remover outline/border dos botões */
     [data-testid="stSidebar"] button,
     section[data-testid="stSidebar"] button {
@@ -81,20 +114,6 @@ def menu():
     .block-container {
         padding-left: 1rem !important;
         padding-right: 1rem !important;
-    }
-
-    /* ESTRATÉGIA: Todos os botões secundários ficam com cor CLARA (#5A5A5A) por padrão */
-    /* CSS inline será aplicado nos grupos principais para sobrescrever com cor ESCURA (#424242) */
-    [data-testid="stSidebar"] button[kind="secondary"],
-    [data-testid="stSidebar"] .stButton button[kind="secondary"],
-    section[data-testid="stSidebar"] button[kind="secondary"] {
-        background-color: #5A5A5A !important;
-    }
-
-    [data-testid="stSidebar"] button[kind="secondary"]:hover,
-    [data-testid="stSidebar"] .stButton button[kind="secondary"]:hover,
-    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
-        background-color: #6A6A6A !important;
     }
     </style>
     """,
@@ -186,6 +205,26 @@ def menu():
     selected_module = None
     current_module = st.session_state.get("current_module", "")
 
+    # ACCORDION: Primeiro, identificar qual grupo deve estar expandido
+    # baseado no módulo selecionado atualmente
+    active_group = None
+    for module, config in module_config.items():
+        if config.get("type") == "group":
+            for submodule, subconfig in config.get("submenu", {}).items():
+                if current_module == subconfig["original_name"]:
+                    active_group = module
+                    break
+        if active_group:
+            break
+
+    # Se há um grupo ativo, garantir que apenas ele esteja expandido (accordion)
+    if active_group:
+        for group_name in module_config.keys():
+            if module_config[group_name].get("type") == "group":
+                st.session_state.menu_expanded_groups[group_name] = (
+                    group_name == active_group
+                )
+
     for module, config in module_config.items():
         # Verificar permissão para o módulo principal
         has_permission = (
@@ -207,30 +246,11 @@ def menu():
             for submodule, subconfig in config.get("submenu", {}).items():
                 if current_module == subconfig["original_name"]:
                     any_submodule_selected = True
-                    # Auto-expandir se um submódulo está selecionado
-                    st.session_state.menu_expanded_groups[module] = True
                     break
 
             # Botão do grupo (para expandir/recolher)
             is_expanded = st.session_state.menu_expanded_groups[module]
             expand_icon = "▼" if is_expanded else "▶"
-
-            # CSS específico para forçar cor escura no grupo principal (se não estiver selecionado)
-            if not any_submodule_selected:
-                group_key = f"menu_group_{module}"
-                st.sidebar.markdown(
-                    f"""
-                    <style>
-                    button[data-baseweb="button"][aria-label="Expandir/Recolher {module}"] {{
-                        background-color: #424242 !important;
-                    }}
-                    button[data-baseweb="button"][aria-label="Expandir/Recolher {module}"]:hover {{
-                        background-color: #525252 !important;
-                    }}
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
 
             # Criar botão do grupo
             clicked = st.sidebar.button(
@@ -274,7 +294,8 @@ def menu():
                     button_key = f"submenu_{module}_{submodule}".replace(" ", "_")
 
                     # Criar botão do submódulo (com indentação visual)
-                    # A cor clara já é aplicada pelo CSS global
+                    # Sub-menus são secundários e ficam BRANCOS pelo CSS global
+                    # Menus principais têm CSS inline que sobrescreve para cinza
                     sub_clicked = st.sidebar.button(
                         f"  {subconfig['icon']} {submodule}",
                         key=button_key,
