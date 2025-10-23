@@ -142,3 +142,137 @@ Isso mantém a consistência visual com os demais espaçamentos entre as seçõe
   - Linhas 1521-1522: Adicionado espaçamento antes da seção de download
 
 ---
+
+### ⏰ 23:45 - Correção de Cálculo de Totais na Métrica de Produtos
+
+#### 🎯 O que foi pedido:
+Corrigir discrepância nos totais de produtos:
+- **Métrica de Produtos** mostrava: 1.653 unidades (1.027 equipamentos + 626 acessórios)
+- **Painel Produtos Detalhados** mostrava: 199 produtos
+
+#### 🔍 Análise do Problema:
+
+**Causa Raiz Identificada:**
+A função `_render_metrics_produtos()` estava usando `get_produtos_detalhados()` que retorna produtos detalhados por venda (podendo ter duplicatas do mesmo produto em diferentes vendas), enquanto o `Painel Produtos Detalhados` usa `get_produtos_agregados()` que agrupa produtos únicos.
+
+**Diferença dos Métodos:**
+1. **get_produtos_detalhados()**: Retorna cada produto por venda (pode duplicar produtos)
+2. **get_produtos_agregados()**: Agrupa produtos únicos e soma quantidades
+
+**Valores Corretos:**
+- **199**: Número de produtos ÚNICOS vendidos
+- **1.653**: Total de ITENS vendidos (soma de todas as quantidades)
+
+Ambos os valores estão corretos, mas estavam sendo calculados de formas diferentes.
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Modificação no Repository (`repositories_vendas.py`):**
+- Adicionado campo `p."NomeGrupo"` na query do `get_produtos_agregados()` (linha 230)
+- Incluído `NomeGrupo` no groupby para manter a informação do grupo de cada produto (linha 316)
+- Atualizado retorno para incluir coluna `NomeGrupo` (linha 333)
+
+**2. Modificação na Métrica de Produtos (`app.py`):**
+- Alterado de `get_produtos_detalhados()` para `get_produtos_agregados()` (linha 536)
+- Alterado verificação de coluna de `"Quantidade"` para `"TotalQuantidade"` (linha 541)
+- Corrigido conversão numérica para usar `"TotalQuantidade"` (linha 557)
+- Corrigido cálculo de totais para usar `"TotalQuantidade"` (linhas 563 e 566)
+
+**3. Resultado:**
+Agora ambos os painéis usam o mesmo método (`get_produtos_agregados()`) e os totais batem:
+- **📦 Métrica de Produtos**: Mostra % de equipamentos vs acessórios baseado no total de itens vendidos
+- **📦 Produtos Detalhados**: Mostra 199 produtos únicos e quantidade total de itens
+
+#### 📁 Arquivos Alterados:
+- `/media/areco/Backup/Oficial/Projetos/sgr/infrastructure/database/repositories_vendas.py`:
+  - Linha 230: Adicionado `p."NomeGrupo"` na query
+  - Linha 316: Incluído `NomeGrupo` no groupby
+  - Linha 333: Adicionado `NomeGrupo` no retorno
+
+- `/media/areco/Backup/Oficial/Projetos/sgr/app.py`:
+  - Linha 536: Alterado para `get_produtos_agregados()`
+  - Linha 541: Corrigido verificação de coluna
+  - Linhas 557, 563, 566: Corrigido para usar `TotalQuantidade`
+
+---
+
+### ⏰ 00:00 - Padronização de Formatações de Exibição
+
+#### 🎯 O que foi pedido:
+Verificação geral e padronização de todos os formatos de exibição:
+- **Moeda**: R$ xxx.xxx,xx (ponto para milhares, vírgula para decimais)
+- **Quantidade**: xxx.xxx.xxx (inteiro, sem casas decimais, com ponto para milhares)
+- **Datas**: dd/mm/yyyy (sem hora)
+
+#### 🔍 Problemas Encontrados:
+
+**1. Formatação de Moeda Incorreta:**
+Várias métricas estavam usando padrão incorreto:
+```python
+# ❌ INCORRETO
+f"R$ {value:,.2f}".replace(",", ".").replace(".", ",", 1).replace(".", ".")
+
+# ✅ CORRETO
+f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+```
+
+**Explicação do padrão correto:**
+- `value:,.2f` → formato americano: 1,234.56
+- `.replace(",", "X")` → temporário: 1X234.56
+- `.replace(".", ",")` → vírgula decimal: 1X234,56
+- `.replace("X", ".")` → ponto milhares: 1.234,56 (formato brasileiro)
+
+**2. Formatação de Quantidade com Decimais:**
+Quantidades estavam sendo exibidas com 2 casas decimais quando deveriam ser inteiros:
+```python
+# ❌ INCORRETO
+f"{totals['total_quantidade']:,.2f}".replace(",", ".")
+
+# ✅ CORRETO
+f"{int(totals['total_quantidade']):,}".replace(",", ".")
+```
+
+**3. Formatação de Quantidade sem Separador de Milhares:**
+Cards de métricas de produtos não tinham separador:
+```python
+# ❌ INCORRETO
+{int(total_equipamentos)} unidades
+
+# ✅ CORRETO
+{qtd_equipamentos_fmt} unidades  # onde qtd = f"{int(valor):,}".replace(",", ".")
+```
+
+#### 🔧 Correções Aplicadas:
+
+**1. Métricas de Produtos (app.py):**
+- Linha 583-584: Adicionada formatação de quantidades com separador
+- Linha 619: Corrigido card Equipamentos para usar quantidade formatada
+- Linha 642: Corrigido card Acessórios para usar quantidade formatada
+
+**2. Métricas de Vendas (app.py):**
+- Linha 446: Corrigido Total de Vendas para inteiro com separador
+
+**3. Painel Produtos Detalhados (app.py):**
+- Linha 2689: Corrigida Quantidade Total de decimal para inteiro
+- Linha 2705: Corrigida formatação de moeda (Valor Desconto)
+- Linha 2718: Corrigida formatação de moeda (valores monetários)
+- Linha 2089: Corrigida formatação de moeda (métricas prioritárias)
+
+**4. Datas (já estavam corretas):**
+- Função `format_date()` (linha 1870): Já formatava corretamente como dd/mm/yyyy
+- Remove automaticamente horários se presentes na string
+
+#### 📊 Resumo das Correções:
+
+| Tipo | Locais Corrigidos | Status |
+|------|------------------|--------|
+| Moeda | 4 locais | ✅ Corrigido |
+| Quantidade | 4 locais | ✅ Corrigido |
+| Datas | N/A | ✅ Já correto |
+
+#### 📁 Arquivos Alterados:
+- `/media/areco/Backup/Oficial/Projetos/sgr/app.py`:
+  - Linhas 446, 583-584, 619, 642: Formatação de quantidade
+  - Linhas 2089, 2689, 2705, 2718: Formatação de moeda
+
+---

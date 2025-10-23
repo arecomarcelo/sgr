@@ -171,6 +171,13 @@
 - **Painéis de Vendas**:
     - Implementado **Métrica de Produtos**
 
+### **17:17 - Commit 124**
+
+- **Painéis de Vendas** ajuste formatações:
+    - Moeda: R$ xxx.xxxx,xx (Casa de Milhar . e Casa Decimal ,)
+    - Quantidade: xxx.xxx.xxx (sempre inteiro, sem casas decimais)
+    - Datas: dd/mm/yyyy (sem hora)
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

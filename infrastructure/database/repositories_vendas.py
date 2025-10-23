@@ -224,9 +224,10 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
         try:
             # Query simples para obter os dados brutos - agregação será feita no Python
             query = """
-                SELECT 
+                SELECT
                     vp."Nome",
                     p."CodigoExpedicao",
+                    p."NomeGrupo",
                     vp."Quantidade",
                     vp."ValorCusto",
                     vp."ValorVenda",
@@ -312,7 +313,7 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
 
             # Agregar por produto
             result = (
-                df_raw.groupby(['Nome', 'CodigoExpedicao'])
+                df_raw.groupby(['Nome', 'CodigoExpedicao', 'NomeGrupo'])
                 .agg(
                     {
                         'Quantidade': 'sum',
@@ -329,6 +330,7 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
             result.columns = [
                 'Nome',
                 'CodigoExpedicao',
+                'NomeGrupo',
                 'TotalQuantidade',
                 'TotalValorCusto',
                 'TotalValorVenda',

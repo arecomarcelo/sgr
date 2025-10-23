@@ -443,7 +443,7 @@ def _render_metrics_cards(metrics):
 
     with col4:
         total_quantidade = metrics.get("total_quantidade", 0)
-        quantidade_formatada = f"{total_quantidade:,}".replace(",", ".")
+        quantidade_formatada = f"{int(total_quantidade):,}".replace(",", ".")
         st.markdown(
             f"""
         <div style='
@@ -532,13 +532,13 @@ def _render_metrics_produtos():
 
         venda_ids = df_vendas["ID_Gestao"].tolist()
 
-        # Buscar produtos detalhados (com NomeGrupo)
-        df_produtos = vendas_service.get_produtos_detalhados(venda_ids=venda_ids)
+        # Buscar produtos agregados (com NomeGrupo e TotalQuantidade)
+        df_produtos = vendas_service.get_produtos_agregados(venda_ids=venda_ids)
 
         if (
             df_produtos.empty
             or "NomeGrupo" not in df_produtos.columns
-            or "Quantidade" not in df_produtos.columns
+            or "TotalQuantidade" not in df_produtos.columns
         ):
             logger.warning(
                 "Colunas necessárias não encontradas no dataframe de produtos"
@@ -553,17 +553,17 @@ def _render_metrics_produtos():
             lambda x: "Acessório" if x and x in grupos_acessorios else "Equipamento"
         )
 
-        # Garantir que Quantidade seja numérica
-        df_produtos["Quantidade"] = pd.to_numeric(
-            df_produtos["Quantidade"], errors='coerce'
+        # Garantir que TotalQuantidade seja numérica
+        df_produtos["TotalQuantidade"] = pd.to_numeric(
+            df_produtos["TotalQuantidade"], errors='coerce'
         ).fillna(0)
 
         # Calcular totais por tipo (somar quantidades)
         total_equipamentos = df_produtos[df_produtos["Tipo"] == "Equipamento"][
-            "Quantidade"
+            "TotalQuantidade"
         ].sum()
         total_acessorios = df_produtos[df_produtos["Tipo"] == "Acessório"][
-            "Quantidade"
+            "TotalQuantidade"
         ].sum()
         total_produtos = total_equipamentos + total_acessorios
 
@@ -578,6 +578,10 @@ def _render_metrics_produtos():
         perc_acessorios = (
             (total_acessorios / total_produtos * 100) if total_produtos > 0 else 0
         )
+
+        # Formatar quantidades (inteiro com separador de milhares)
+        qtd_equipamentos_fmt = f"{int(total_equipamentos):,}".replace(",", ".")
+        qtd_acessorios_fmt = f"{int(total_acessorios):,}".replace(",", ".")
 
         # Renderizar título
         st.markdown("<br>", unsafe_allow_html=True)
@@ -612,7 +616,7 @@ def _render_metrics_produtos():
             '>
                 <div style='font-size: 0.9rem; color: #1E88E5; margin-bottom: 8px; font-weight: 600;'>🏋️ Equipamentos</div>
                 <div style='font-size: 1.2rem; font-weight: 700; color: #1E88E5;'>{perc_equipamentos:.1f}%</div>
-                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{int(total_equipamentos)} unidades</div>
+                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{qtd_equipamentos_fmt} unidades</div>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -635,7 +639,7 @@ def _render_metrics_produtos():
             '>
                 <div style='font-size: 0.9rem; color: #1E88E5; margin-bottom: 8px; font-weight: 600;'>🔧 Acessórios</div>
                 <div style='font-size: 1.2rem; font-weight: 700; color: #1E88E5;'>{perc_acessorios:.1f}%</div>
-                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{int(total_acessorios)} unidades</div>
+                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{qtd_acessorios_fmt} unidades</div>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -2082,9 +2086,9 @@ def _render_advanced_sales_grid(df_display, df_original):
                         value = totals[priority_col]
                         st.metric(
                             f"{icon} {col_name}",
-                            f"R$ {value:,.2f}".replace(",", ".")
-                            .replace(".", ",", 1)
-                            .replace(".", "."),
+                            f"R$ {value:,.2f}".replace(",", "X")
+                            .replace(".", ",")
+                            .replace("X", "."),
                         )
                     col_idx += 1
 
@@ -2682,7 +2686,7 @@ def _render_advanced_products_grid(df_display):
                 with cols[1]:
                     st.metric(
                         "📦 Quantidade Total",
-                        f"{totals['total_quantidade']:,.2f}".replace(",", "."),
+                        f"{int(totals['total_quantidade']):,}".replace(",", "."),
                     )
 
             # Exibir valores monetários (usando apenas cols[2] para não ocupar espaço dos botões)
@@ -2698,9 +2702,9 @@ def _render_advanced_products_grid(df_display):
                         value = totals["total_valor_desconto"]
                         st.metric(
                             "💳 Valor Desconto",
-                            f"R$ {value:,.2f}".replace(",", ".")
-                            .replace(".", ",", 1)
-                            .replace(".", "."),
+                            f"R$ {value:,.2f}".replace(",", "X")
+                            .replace(".", ",")
+                            .replace("X", "."),
                         )
                     else:
                         # Pegar o primeiro valor monetário encontrado
@@ -2713,9 +2717,9 @@ def _render_advanced_products_grid(df_display):
                                 )
                                 st.metric(
                                     f"💰 {col_name}",
-                                    f"R$ {value:,.2f}".replace(",", ".")
-                                    .replace(".", ",", 1)
-                                    .replace(".", "."),
+                                    f"R$ {value:,.2f}".replace(",", "X")
+                                    .replace(".", ",")
+                                    .replace("X", "."),
                                 )
                                 break
 
