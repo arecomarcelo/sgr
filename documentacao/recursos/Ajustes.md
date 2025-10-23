@@ -159,6 +159,18 @@
 
 - Ajustes Ordenação e Filtros **Painéis de Vendas**
 
+**23/10/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **16:40 - Commit 123**
+
+- **Painéis de Vendas**:
+    - Implementado **Métrica de Produtos**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

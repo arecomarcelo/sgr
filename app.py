@@ -514,6 +514,138 @@ def _render_metrics_cards(metrics):
         )
 
 
+def _render_metrics_produtos():
+    """Renderiza métricas de produtos (Equipamentos vs Acessórios) em cards"""
+    try:
+        # Verificar se há dados de vendas
+        if "df_vendas" not in st.session_state or st.session_state["df_vendas"] is None:
+            return
+
+        df_vendas = st.session_state["df_vendas"]
+        if df_vendas.empty:
+            return
+
+        # Obter IDs das vendas filtradas
+        if "ID_Gestao" not in df_vendas.columns:
+            logger.warning("Campo ID_Gestao não encontrado no dataframe de vendas")
+            return
+
+        venda_ids = df_vendas["ID_Gestao"].tolist()
+
+        # Buscar produtos detalhados (com NomeGrupo)
+        df_produtos = vendas_service.get_produtos_detalhados(venda_ids=venda_ids)
+
+        if (
+            df_produtos.empty
+            or "NomeGrupo" not in df_produtos.columns
+            or "Quantidade" not in df_produtos.columns
+        ):
+            logger.warning(
+                "Colunas necessárias não encontradas no dataframe de produtos"
+            )
+            return
+
+        # Classificar produtos por tipo
+        grupos_acessorios = ["PEÇA DE REPOSIÇÃO", "ACESSÓRIOS"]
+
+        # Contar quantidades - tratar valores None no NomeGrupo
+        df_produtos["Tipo"] = df_produtos["NomeGrupo"].apply(
+            lambda x: "Acessório" if x and x in grupos_acessorios else "Equipamento"
+        )
+
+        # Garantir que Quantidade seja numérica
+        df_produtos["Quantidade"] = pd.to_numeric(
+            df_produtos["Quantidade"], errors='coerce'
+        ).fillna(0)
+
+        # Calcular totais por tipo (somar quantidades)
+        total_equipamentos = df_produtos[df_produtos["Tipo"] == "Equipamento"][
+            "Quantidade"
+        ].sum()
+        total_acessorios = df_produtos[df_produtos["Tipo"] == "Acessório"][
+            "Quantidade"
+        ].sum()
+        total_produtos = total_equipamentos + total_acessorios
+
+        # Evitar divisão por zero
+        if total_produtos == 0:
+            return
+
+        # Calcular percentuais
+        perc_equipamentos = (
+            (total_equipamentos / total_produtos * 100) if total_produtos > 0 else 0
+        )
+        perc_acessorios = (
+            (total_acessorios / total_produtos * 100) if total_produtos > 0 else 0
+        )
+
+        # Renderizar título
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style='text-align: center; margin-bottom: 15px;'>
+                <h4 style='color: #1E88E5; font-family: Roboto, sans-serif; margin: 0;'>
+                    📦 Métrica de Produtos
+                </h4>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Renderizar cards
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown(
+                f"""
+            <div style='
+                background: #ffffff;
+                border-radius: 10px;
+                padding: 16px;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+                font-family: Roboto, sans-serif;
+                min-height: 90px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            '>
+                <div style='font-size: 0.9rem; color: #1E88E5; margin-bottom: 8px; font-weight: 600;'>🏋️ Equipamentos</div>
+                <div style='font-size: 1.2rem; font-weight: 700; color: #1E88E5;'>{perc_equipamentos:.1f}%</div>
+                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{int(total_equipamentos)} unidades</div>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+        with col2:
+            st.markdown(
+                f"""
+            <div style='
+                background: #ffffff;
+                border-radius: 10px;
+                padding: 16px;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+                font-family: Roboto, sans-serif;
+                min-height: 90px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            '>
+                <div style='font-size: 0.9rem; color: #1E88E5; margin-bottom: 8px; font-weight: 600;'>🔧 Acessórios</div>
+                <div style='font-size: 1.2rem; font-weight: 700; color: #1E88E5;'>{perc_acessorios:.1f}%</div>
+                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{int(total_acessorios)} unidades</div>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+    except Exception as e:
+        logger.error(f"Erro ao renderizar métricas de produtos: {str(e)}")
+        # Não exibir erro para o usuário, apenas não mostrar as métricas
+
+
 def _render_gauge_meta():
     """Renderiza gauge de meta de vendas do mês atual - Estilo circular com tons de azul"""
     try:
@@ -1206,6 +1338,12 @@ def _render_filters_and_metrics():
         st.session_state.get("df_vendas") is not None
         and not st.session_state["df_vendas"].empty
     ):
+        # Renderizar gauge de meta PRIMEIRO (sempre com dados do mês atual)
+        _render_gauge_meta()
+
+        # Espaçamento entre Meta de Vendas e Métricas de Vendas
+        st.markdown("<br><br>", unsafe_allow_html=True)
+
         # Container para métricas e botões de exportação
         with st.container():
             # Título e botões na mesma linha
@@ -1267,8 +1405,8 @@ def _render_filters_and_metrics():
         # Renderizar os cards de métricas
         _render_metrics_cards(st.session_state.get("metricas", {}))
 
-        # Renderizar gauge de meta (sempre com dados do mês atual)
-        _render_gauge_meta()
+        # Renderizar métricas de produtos (Equipamentos vs Acessórios)
+        _render_metrics_produtos()
 
 
 def _load_initial_data():
@@ -1394,6 +1532,9 @@ def _apply_filters(filters):
 
 def _render_download_section():
     """Renderiza seção de download dos dados"""
+    # Espaçamento antes da seção de download
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
     st.subheader("📥 Download dos Dados")
 
     # Verificar se há dados disponíveis
@@ -1679,109 +1820,6 @@ def _render_data_grid():
         return
 
     st.subheader("📋 Vendas Detalhadas")
-
-    # DEBUG: Mostrar informações sobre os filtros aplicados
-    with st.expander("🔍 Debug - Informações dos Filtros Aplicados", expanded=True):
-        # AVISO: Verificar se filtros foram aplicados
-        tem_filtro = bool(
-            st.session_state.get("data_inicio_filtro")
-            or st.session_state.get("data_fim_filtro")
-            or st.session_state.get("vendedores_filtro")
-            or st.session_state.get("situacoes_filtro")
-        )
-
-        if not tem_filtro:
-            st.error(
-                "⚠️ **ATENÇÃO:** Nenhum filtro aplicado! Exibindo dados do mês atual."
-            )
-            st.warning(
-                "👉 Para aplicar filtros, preencha os campos no 'Painel Filtros' e clique em '🔍 Aplicar Filtros'"
-            )
-        else:
-            st.success("✅ Filtros aplicados com sucesso!")
-
-        st.markdown("---")
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total de Registros", len(df_vendas))
-        with col2:
-            vendedores_unicos = (
-                df_vendas["VendedorNome"].nunique()
-                if "VendedorNome" in df_vendas.columns
-                else 0
-            )
-            st.metric("Vendedores Únicos", vendedores_unicos)
-        with col3:
-            if "Data" in df_vendas.columns:
-                try:
-                    datas = pd.to_datetime(df_vendas["Data"], errors='coerce')
-                    data_min = (
-                        datas.min().strftime('%d/%m/%Y')
-                        if not pd.isna(datas.min())
-                        else "N/A"
-                    )
-                    data_max = (
-                        datas.max().strftime('%d/%m/%Y')
-                        if not pd.isna(datas.max())
-                        else "N/A"
-                    )
-                    st.metric("Período", f"{data_min} a {data_max}")
-                except:
-                    st.metric("Período", "Erro ao processar")
-
-        st.markdown("---")
-
-        # Mostrar filtros da sessão
-        st.markdown("**Filtros Aplicados:**")
-        filtros_info = []
-        if st.session_state.get("data_inicio_filtro"):
-            filtros_info.append(
-                f"📅 Data Início: {st.session_state.get('data_inicio_filtro')}"
-            )
-        if st.session_state.get("data_fim_filtro"):
-            filtros_info.append(
-                f"📅 Data Fim: {st.session_state.get('data_fim_filtro')}"
-            )
-        if st.session_state.get("vendedores_filtro"):
-            vendedores = st.session_state.get("vendedores_filtro")
-            filtros_info.append(f"👤 Vendedores: {', '.join(vendedores)}")
-        if st.session_state.get("situacoes_filtro"):
-            situacoes = st.session_state.get("situacoes_filtro")
-            filtros_info.append(f"📊 Situações: {', '.join(situacoes)}")
-
-        if filtros_info:
-            for info in filtros_info:
-                st.text(info)
-        else:
-            st.info("ℹ️ Nenhum filtro aplicado - Exibindo dados do mês atual")
-
-        st.markdown("---")
-
-        # Mostrar vendedores presentes nos dados
-        if "VendedorNome" in df_vendas.columns:
-            vendedores_presentes = df_vendas["VendedorNome"].unique().tolist()
-            st.markdown("**Vendedores nos Dados Carregados:**")
-            st.code(", ".join(sorted(vendedores_presentes)))
-
-            # VERIFICAÇÃO: Comparar vendedores nos dados com vendedores filtrados
-            if st.session_state.get("vendedores_filtro"):
-                vendedores_filtrados = st.session_state.get("vendedores_filtro")
-                vendedores_nao_esperados = [
-                    v for v in vendedores_presentes if v not in vendedores_filtrados
-                ]
-                if vendedores_nao_esperados:
-                    st.error(
-                        f"❌ **ERRO CRÍTICO:** Há vendedores nos dados que NÃO estão no filtro!"
-                    )
-                    st.error(
-                        f"Vendedores não esperados: {', '.join(vendedores_nao_esperados)}"
-                    )
-                    st.error(
-                        "🔧 **AÇÃO NECESSÁRIA:** O serviço get_vendas_filtradas() não está funcionando corretamente!"
-                    )
-                else:
-                    st.success("✅ Vendedores nos dados correspondem ao filtro aplicado")
 
     # Preparar dados para exibição
     df_display = df_vendas[
