@@ -9,6 +9,7 @@ O **Relatório de Vendas SGR** é uma ferramenta completa e interativa para aná
 ✅ **Filtros Inteligentes** - Sistema avançado de filtros personalizáveis
 ✅ **Rankings Dinâmicos** - Vendedores e Produtos mais performáticos
 ✅ **Métricas em Tempo Real** - Acompanhamento instantâneo de resultados
+✅ **Análise de Mix de Produtos** - Composição Equipamentos vs Acessórios
 ✅ **Análises Avançadas** - Insights aprofundados de performance
 ✅ **Exportação de Dados** - Relatórios em formato Excel/CSV
 
@@ -241,6 +242,105 @@ Esta seção apresenta os **KPIs (Key Performance Indicators)** mais importantes
 > - Margem < 20%: Atenção, lucratividade baixa
 > - Margem 20-40%: Saudável para varejo
 > - Margem > 40%: Excelente rentabilidade
+
+---
+
+#### 📦 Terceira Linha - Métrica de Produtos
+
+> **Nova Funcionalidade!** Análise de composição de vendas por tipo de produto
+
+Esta seção apresenta a **distribuição de vendas entre Equipamentos e Acessórios**, permitindo análise estratégica do mix de produtos.
+
+##### 🏋️ **Equipamentos**
+
+- **O que é**: Valor total de vendas de equipamentos fitness
+- **Classificação**: Todos os produtos **exceto** grupos "PEÇA DE REPOSIÇÃO" e "ACESSÓRIOS"
+- **Grupos incluídos**: CARDIO, INFINITY FREE WEIGHT, NEW BLACK, GOLD, NEW PREMIUM, UNIQUE, INFINITY, ENERGY, PRODUTOS SEM GRUPO
+- **Formato**: Percentual (%) + Valor monetário (R$)
+- **Exemplo**:
+  - **90.3%** - Representa 90,3% do faturamento total
+  - **R$ 11.725.890,25** - Valor absoluto vendido em equipamentos
+- **Importância**: Mostra participação dos produtos principais no faturamento
+
+##### 🔧 **Acessórios**
+
+- **O que é**: Valor total de vendas de acessórios e peças
+- **Classificação**: Produtos dos grupos "PEÇA DE REPOSIÇÃO" e "ACESSÓRIOS"
+- **Formato**: Percentual (%) + Valor monetário (R$)
+- **Exemplo**:
+  - **9.7%** - Representa 9,7% do faturamento total
+  - **R$ 1.255.562,18** - Valor absoluto vendido em acessórios
+- **Importância**: Mostra participação de produtos complementares
+
+---
+
+##### 🎯 **Cálculo Inteligente - Valor Proporcional**
+
+> **Tecnologia Avançada**: O sistema utiliza cálculo proporcional para garantir precisão absoluta
+
+**Como funciona**:
+
+1. **Para cada produto de cada venda**:
+   - Calcula a proporção do produto dentro daquela venda específica
+   - Exemplo: Produto representa 80% do valor dos produtos da venda
+
+2. **Aplica ao valor real da venda**:
+   - Multiplica a proporção pelo `ValorTotal` da venda
+   - Isso respeita descontos/acréscimos aplicados no nível da venda
+
+3. **Garante precisão**:
+   - ✅ **Equipamentos + Acessórios = Valor Total** (sempre)
+   - ✅ Reflete valores reais faturados
+   - ✅ Considera todos os ajustes comerciais
+
+**Exemplo Prático**:
+
+```
+Venda com ValorTotal = R$ 1.000,00
+
+Produtos registrados:
+- Equipamento A: R$ 800,00
+- Acessório B: R$ 300,00
+- Soma produtos: R$ 1.100,00 (antes dos descontos da venda)
+
+Cálculo proporcional:
+- Proporção Equipamento: 800 ÷ 1.100 = 72,73%
+- Proporção Acessório: 300 ÷ 1.100 = 27,27%
+
+Valores ajustados:
+- Equipamento A ajustado: 1.000 × 0,7273 = R$ 727,30
+- Acessório B ajustado: 1.000 × 0,2727 = R$ 272,70
+- Soma final: R$ 1.000,00 ✅ (bate exatamente com ValorTotal)
+```
+
+---
+
+##### 📊 **Como Interpretar os Resultados**
+
+**Análise de Mix de Produtos**:
+
+| Cenário | Interpretação | Ação Recomendada |
+|---------|---------------|------------------|
+| **Equipamentos > 85%** | ✅ Foco em produtos principais | Continue estratégia, cross-sell acessórios |
+| **Equipamentos 70-85%** | ✅ Mix equilibrado | Excelente, mantenha equilíbrio |
+| **Equipamentos < 70%** | ⚠️ Alta venda de acessórios | Verifique estoque de equipamentos |
+| **Acessórios > 30%** | ⚠️ Possível falta de equipamentos | Revisar disponibilidade de produtos principais |
+| **Acessórios < 5%** | ⚠️ Baixa venda complementar | Incentive cross-selling |
+
+**Estratégias Comerciais**:
+
+1. **🎯 Cross-Selling**: Se acessórios < 10%, treine equipe para oferecer complementos
+2. **📦 Gestão de Estoque**: Mantenha proporção de estoque similar à proporção de vendas
+3. **💰 Margem**: Acessórios geralmente têm margem maior, balanceie o mix
+4. **🎁 Combos**: Crie pacotes que equilibrem equipamentos + acessórios
+
+**Análise Temporal**:
+
+- **Tendência crescente de equipamentos**: Mercado aquecido, investimento em fitness
+- **Tendência crescente de acessórios**: Clientes comprando complementos (bom sinal de satisfação)
+- **Variação sazonal**: Normal ter mais acessórios próximo a datas comemorativas
+
+> 💡 **Dica Estratégica**: Use esta métrica mensalmente para ajustar mix de produtos, negociações com fornecedores e estratégias de marketing!
 
 ---
 
@@ -608,6 +708,10 @@ O sistema agrupa as vendas por período (dia, semana ou mês) mostrando:
 | **Pipeline** | Funil de vendas em andamento | Vendas em processo |
 | **Upselling** | Venda de produto superior/adicional | Combo ou upgrade |
 | **Mix de Produtos** | Variedade de produtos vendidos | Portfólio comercial |
+| **Equipamentos** | Produtos fitness principais | Esteiras, musculação, etc |
+| **Acessórios** | Produtos complementares e peças | Peças de reposição, complementos |
+| **Cálculo Proporcional** | Distribuição de valor por proporção | Ajuste de valores por produto |
+| **Valor Proporcional** | Valor ajustado respeitando total da venda | Produto com desconto proporcional |
 | **Sazonalidade** | Variação por período do ano | Vendas de natal |
 | **Health Check** | Verificação de saúde do sistema | Sistema funcionando? |
 
@@ -659,6 +763,42 @@ O sistema agrupa as vendas por período (dia, semana ou mês) mostrando:
 
 ---
 
+### 📦 Caso 4: Análise de Mix de Produtos
+
+**Objetivo**: Avaliar composição de vendas e ajustar estratégia comercial
+
+**Passo a Passo**:
+1. Use "📅 Dados do Mês Atual"
+2. Visualize as métricas **🏋️ Equipamentos** e **🔧 Acessórios**
+3. Anote os percentuais e valores
+4. Compare com mês anterior (use filtro personalizado)
+5. **Análise**:
+   - Se Acessórios < 5%: Treinar equipe em cross-selling
+   - Se Acessórios > 30%: Verificar disponibilidade de equipamentos
+   - Se Equipamentos < 70%: Revisar estoque de produtos principais
+6. **Ação**:
+   - Ajustar mix de estoque baseado na proporção de vendas
+   - Criar combos que equilibrem equipamentos + acessórios
+   - Negociar com fornecedores baseado no volume de cada categoria
+
+**Exemplo Prático**:
+```
+Resultado encontrado:
+- 🏋️ Equipamentos: 92,5% (R$ 845.230,00)
+- 🔧 Acessórios: 7,5% (R$ 68.560,00)
+
+Análise:
+✅ Boa participação de equipamentos
+⚠️ Acessórios abaixo de 10%
+
+Ação:
+- Treinar vendedores para oferecer acessórios
+- Criar displays de acessórios nas vitrines
+- Oferecer desconto em combo equipamento + acessório
+```
+
+---
+
 ## 📞 Suporte e Contato
 
 ### 🆘 Quando Buscar Suporte?
@@ -697,6 +837,7 @@ Use este checklist para garantir uso eficiente do sistema:
 - [ ] Verificar vendas do dia anterior
 - [ ] Analisar performance acumulada do mês
 - [ ] Verificar ranking de vendedores
+- [ ] Conferir mix de produtos (Equipamentos vs Acessórios)
 
 ### 🌆 Tarde (15h-16h)
 - [ ] Atualizar dados novamente
@@ -739,6 +880,7 @@ Ao finalizar este manual, você estará apto a:
 |--------|------|------------|
 | **1.0** | Setembro 2025 | Versão inicial do manual |
 | **2.0** | Outubro 2025 | ✨ Adicionado Ranking de Vendedores<br/>✨ Adicionado Ranking de Produtos<br/>📝 Seção de filtros expandida<br/>🎯 Casos de uso práticos<br/>📊 Interpretação de métricas<br/>🎓 Checklist de utilização |
+| **2.1** | 30 Outubro 2025 | ✨ **Nova Métrica de Produtos**<br/>🏋️ Card de Equipamentos com % e valor<br/>🔧 Card de Acessórios com % e valor<br/>🎯 Cálculo inteligente por valor proporcional<br/>✅ Garantia de soma exata com Valor Total<br/>📊 Guia completo de interpretação de mix<br/>🎨 Tamanhos de fonte padronizados nos cards |
 
 ---
 

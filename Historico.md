@@ -2,6 +2,65 @@
 
 ## 📅 30/10/2025
 
+### ⏰ 15:45 - Atualização Completa do Manual do Relatório de Vendas
+
+#### 🎯 O que foi pedido:
+Fazer verificação geral e atualizar o Manual do Relatório de Vendas para refletir todas as alterações realizadas no dia (métricas de produtos, cálculo proporcional e ajustes visuais).
+
+#### 🔧 Detalhamento da Solução:
+
+**Seções Adicionadas/Atualizadas:**
+
+1. **Nova Seção: "📦 Terceira Linha - Métrica de Produtos"** (após Margem Média)
+   - Descrição completa dos cards 🏋️ Equipamentos e 🔧 Acessórios
+   - Explicação da classificação de grupos
+   - Formato e exemplos de visualização
+
+2. **Subseção: "🎯 Cálculo Inteligente - Valor Proporcional"**
+   - Explicação detalhada do algoritmo proporcional
+   - Exemplo prático passo a passo
+   - Garantia de precisão (soma = valor total)
+
+3. **Subseção: "📊 Como Interpretar os Resultados"**
+   - Tabela de análise de mix de produtos
+   - Estratégias comerciais baseadas nos percentuais
+   - Análise temporal e sazonalidade
+   - Dicas estratégicas para gestão
+
+4. **Novo Caso de Uso: "📦 Caso 4 - Análise de Mix de Produtos"**
+   - Objetivo e passo a passo completo
+   - Análise com exemplo prático real
+   - Ações recomendadas baseadas em cenários
+
+5. **Atualização do Glossário de Termos Técnicos**
+   - Adicionados 4 novos termos:
+     - Equipamentos
+     - Acessórios
+     - Cálculo Proporcional
+     - Valor Proporcional
+
+6. **Atualização de Checklist de Utilização Diária**
+   - Item adicionado: "Conferir mix de produtos (Equipamentos vs Acessórios)"
+
+7. **Atualização de Principais Recursos**
+   - Item adicionado: "✅ Análise de Mix de Produtos - Composição Equipamentos vs Acessórios"
+
+8. **Histórico de Atualizações**
+   - Nova versão **2.1** (30 Outubro 2025)
+   - Listadas todas as melhorias implementadas
+
+**Resultado:**
+- ✅ Manual completamente atualizado e sincronizado com o sistema
+- ✅ Documentação técnica do cálculo proporcional incluída
+- ✅ Guias práticos de interpretação e uso estratégico
+- ✅ Casos de uso reais para aplicação imediata
+- ✅ Glossário expandido com novos conceitos
+
+#### 📁 Arquivos Alterados:
+- `/media/areco/Backup/Oficial/Projetos/sgr/documentacao/Manual_Relatorio_Vendas.md` (múltiplas seções atualizadas)
+
+---
+
 ### ⏰ 15:15 - Ajuste de Tamanho de Fonte nos Cards de Produtos
 
 #### 🎯 O que foi pedido:

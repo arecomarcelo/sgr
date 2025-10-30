@@ -191,6 +191,11 @@
     - Formatação **Valores**
     - Ajuste nos **Cálculos** por **Valor** e não mais por **Quantidade**
 
+### **11:31 - Commit 126**
+
+- **Painéis de Vendas**:
+    - **Atualização do Manual**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
