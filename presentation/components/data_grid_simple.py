@@ -1,6 +1,7 @@
 """
 Componente simples de grid de dados para vendas
 """
+
 import io
 from datetime import datetime
 from typing import Any, Dict, Optional

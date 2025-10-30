@@ -2,6 +2,7 @@
 Interfaces para repositórios
 Define contratos para implementação de repositórios
 """
+
 from abc import ABC, abstractmethod
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional

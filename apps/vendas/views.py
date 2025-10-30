@@ -2,6 +2,7 @@
 SGR - Módulo de Vendas
 Compatível com o sistema principal de login e menu
 """
+
 import io
 import logging
 import os
@@ -295,12 +296,12 @@ class VendasControllerIntegrado:
                 if isinstance(val, (int, float)):
                     return float(val)
                 # Converter para string e limpar
-                val_str = str(val).replace('R$', '').strip()
+                val_str = str(val).replace("R$", "").strip()
 
                 # Se tem vírgula, é formato brasileiro (1.500,00)
-                if ',' in val_str:
+                if "," in val_str:
                     # Remover pontos (separador de milhares) e trocar vírgula por ponto
-                    val_clean = val_str.replace('.', '').replace(',', '.')
+                    val_clean = val_str.replace(".", "").replace(",", ".")
                 else:
                     # Formato americano ou já limpo (1500.00 ou 1500)
                     val_clean = val_str
@@ -483,7 +484,7 @@ class VendasControllerIntegrado:
 
                 try:
                     # Obter IDs das vendas filtradas
-                    venda_ids = df['Id'].tolist() if 'Id' in df.columns else None
+                    venda_ids = df["Id"].tolist() if "Id" in df.columns else None
 
                     if venda_ids:
                         produtos_df = self.vendas_service.get_produtos_agregados(
@@ -492,14 +493,14 @@ class VendasControllerIntegrado:
 
                         if not produtos_df.empty:
                             # Ordenar por valor total e pegar top 10
-                            produtos_top = produtos_df.nlargest(10, 'ValorTotal')
+                            produtos_top = produtos_df.nlargest(10, "ValorTotal")
 
                             col1, col2 = st.columns(2)
 
                             with col1:
                                 st.dataframe(
                                     produtos_top[
-                                        ['ProdutoNome', 'Quantidade', 'ValorTotal']
+                                        ["ProdutoNome", "Quantidade", "ValorTotal"]
                                     ],
                                     use_container_width=True,
                                 )
@@ -507,7 +508,7 @@ class VendasControllerIntegrado:
                             with col2:
                                 st.metric(
                                     "Produto Mais Vendido",
-                                    produtos_top.iloc[0]['ProdutoNome'],
+                                    produtos_top.iloc[0]["ProdutoNome"],
                                 )
                                 valor_formatado = f"R$ {produtos_top.iloc[0]['ValorTotal']:,.2f}".replace(
                                     ",", "."

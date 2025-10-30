@@ -11,7 +11,7 @@ class ManualHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=os.getcwd(), **kwargs)
 
     def do_GET(self):
-        if self.path == '/manual' or self.path == '/manual/':
+        if self.path == "/manual" or self.path == "/manual/":
             self.send_manual()
         else:
             super().do_GET()
@@ -29,9 +29,9 @@ class ManualHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Enviar resposta
             self.send_response(200)
-            self.send_header('Content-type', 'text/html; charset=utf-8')
+            self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(html_content.encode('utf-8'))
+            self.wfile.write(html_content.encode("utf-8"))
 
         except Exception as e:
             self.send_error(500, f"Erro ao carregar manual: {str(e)}")
@@ -45,7 +45,7 @@ class ManualHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             html = markdown.markdown(
                 markdown_content,
-                extensions=['tables', 'fenced_code', 'toc', 'codehilite'],
+                extensions=["tables", "fenced_code", "toc", "codehilite"],
             )
         except ImportError:
             html = self.basic_markdown_to_html(markdown_content)
@@ -340,15 +340,15 @@ class ManualHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         Conversão básica de markdown para HTML
         """
         # Substituições básicas
-        content = content.replace('\n# ', '\n<h1>')
-        content = content.replace('\n## ', '\n<h2>')
-        content = content.replace('\n### ', '\n<h3>')
-        content = content.replace('\n#### ', '\n<h4>')
-        content = content.replace('**', '<strong>').replace('**', '</strong>')
-        content = content.replace('*', '<em>').replace('*', '</em>')
-        content = content.replace('`', '<code>').replace('`', '</code>')
-        content = content.replace('\n', '<br>')
-        content = content.replace('---', '<hr>')
+        content = content.replace("\n# ", "\n<h1>")
+        content = content.replace("\n## ", "\n<h2>")
+        content = content.replace("\n### ", "\n<h3>")
+        content = content.replace("\n#### ", "\n<h4>")
+        content = content.replace("**", "<strong>").replace("**", "</strong>")
+        content = content.replace("*", "<em>").replace("*", "</em>")
+        content = content.replace("`", "<code>").replace("`", "</code>")
+        content = content.replace("\n", "<br>")
+        content = content.replace("---", "<hr>")
 
         return content
 
@@ -388,7 +388,7 @@ def open_manual_in_browser():
     time.sleep(1)
 
     # Abrir no navegador
-    webbrowser.open('http://localhost:8888/manual')
+    webbrowser.open("http://localhost:8888/manual")
 
 
 if __name__ == "__main__":

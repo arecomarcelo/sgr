@@ -2,6 +2,7 @@
 Container de Injeção de Dependência simplificado para Vendas
 Gerencia a criação e configuração das dependências da aplicação
 """
+
 import logging
 from typing import Any, Dict
 

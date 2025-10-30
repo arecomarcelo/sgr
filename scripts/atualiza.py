@@ -1,6 +1,7 @@
 """
 Script para atualizar a biblioteca streamlit-aggrid e suas dependências
 """
+
 import os
 import subprocess
 import sys

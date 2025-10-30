@@ -2,6 +2,7 @@
 Modelos Django para SGR
 Modelos existentes - NÃO criar migrações (tabelas já existem no banco)
 """
+
 from django.db import models
 
 

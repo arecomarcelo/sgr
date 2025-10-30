@@ -11,7 +11,7 @@ def convert_markdown_to_html(markdown_content):
         import markdown
 
         html = markdown.markdown(
-            markdown_content, extensions=['tables', 'fenced_code', 'toc']
+            markdown_content, extensions=["tables", "fenced_code", "toc"]
         )
     except ImportError:
         # Fallback básico se não tiver a biblioteca
@@ -27,27 +27,27 @@ def basic_markdown_to_html(content):
     import re
 
     # Títulos
-    content = re.sub(r'^# (.*)', r'<h1>\1</h1>', content, flags=re.MULTILINE)
-    content = re.sub(r'^## (.*)', r'<h2>\1</h2>', content, flags=re.MULTILINE)
-    content = re.sub(r'^### (.*)', r'<h3>\1</h3>', content, flags=re.MULTILINE)
-    content = re.sub(r'^#### (.*)', r'<h4>\1</h4>', content, flags=re.MULTILINE)
+    content = re.sub(r"^# (.*)", r"<h1>\1</h1>", content, flags=re.MULTILINE)
+    content = re.sub(r"^## (.*)", r"<h2>\1</h2>", content, flags=re.MULTILINE)
+    content = re.sub(r"^### (.*)", r"<h3>\1</h3>", content, flags=re.MULTILINE)
+    content = re.sub(r"^#### (.*)", r"<h4>\1</h4>", content, flags=re.MULTILINE)
 
     # Negrito e itálico
-    content = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', content)
-    content = re.sub(r'\*(.*?)\*', r'<em>\1</em>', content)
+    content = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", content)
+    content = re.sub(r"\*(.*?)\*", r"<em>\1</em>", content)
 
     # Código inline
-    content = re.sub(r'`(.*?)`', r'<code>\1</code>', content)
+    content = re.sub(r"`(.*?)`", r"<code>\1</code>", content)
 
     # Links
-    content = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', content)
+    content = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', content)
 
     # Separadores
-    content = re.sub(r'^---$', '<hr>', content, flags=re.MULTILINE)
+    content = re.sub(r"^---$", "<hr>", content, flags=re.MULTILINE)
 
     # Quebras de linha
-    content = content.replace('\n\n', '</p><p>').replace('\n', '<br>')
-    content = f'<p>{content}</p>'
+    content = content.replace("\n\n", "</p><p>").replace("\n", "<br>")
+    content = f"<p>{content}</p>"
 
     return content
 

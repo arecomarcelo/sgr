@@ -2,6 +2,7 @@
 Tratamento centralizado de erros para a aplicação SGR
 Implementa decorators e handlers para captura e tratamento de exceções
 """
+
 import functools
 import logging
 import traceback

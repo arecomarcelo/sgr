@@ -1,5 +1,131 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 30/10/2025
+
+### ⏰ 15:15 - Ajuste de Tamanho de Fonte nos Cards de Produtos
+
+#### 🎯 O que foi pedido:
+Ajustar o tamanho da fonte dos valores monetários nos cards de Equipamentos e Acessórios para ficarem do mesmo tamanho dos percentuais.
+
+#### 🔧 Detalhamento da Solução:
+Alteradas as linhas 647 e 670 do arquivo `app.py`:
+
+**Antes:**
+- Percentual: `font-size: 1.2rem`
+- Valor monetário: `font-size: 0.8rem` (menor)
+
+**Depois:**
+- Percentual: `font-size: 1.2rem`
+- Valor monetário: `font-size: 1.2rem` (igualado)
+
+**Resultado:**
+- ✅ Valores monetários agora têm o mesmo tamanho dos percentuais
+- ✅ Melhor legibilidade e consistência visual
+- ✅ Layout mais harmônico nos cards
+
+#### 📁 Arquivos Alterados:
+- `/media/areco/Backup/Oficial/Projetos/sgr/app.py` (linhas 647 e 670)
+
+---
+
+### ⏰ 15:00 - Correção de Discrepância entre Valor de Produtos e Valor Total de Vendas
+
+#### 🎯 O que foi pedido:
+Corrigir discrepância identificada onde a soma dos valores de Equipamentos + Acessórios (R$ 14.369.839,72) não batia com o Valor Total das vendas (R$ 12.981.452,43), gerando diferença de aproximadamente R$ 1.388.387,29.
+
+#### 🔧 Detalhamento da Solução:
+
+**Problema Identificado:**
+- O cálculo anterior somava o campo `ValorTotal` da tabela `VendaProdutos`
+- Porém, o `ValorTotal` da tabela `Vendas` pode ter descontos/acréscimos aplicados no nível da venda
+- Isso gerava inconsistência entre a soma dos produtos e o valor real da venda
+
+**Solução Implementada:**
+Alterada a função `_render_metrics_produtos()` para usar **cálculo proporcional**:
+
+1. **Busca produtos detalhados** ao invés de agregados (linha 536)
+   - Necessário campo `Venda_ID` para fazer join com vendas
+
+2. **Cria dicionário de vendas** (linha 548)
+   - Mapeia `ID_Gestao` → `ValorTotal` real da venda
+
+3. **Função `calcular_valor_proporcional()`** (linhas 562-584)
+   - Para cada produto:
+     - Calcula soma de produtos daquela venda
+     - Calcula proporção do produto: `valor_produto / soma_produtos`
+     - Aplica proporção ao `ValorTotal` real da venda: `valor_venda * proporção`
+   - Resultado: valor proporcional que respeita o total da venda
+
+4. **Cálculo dos totais** (linhas 590-592)
+   - Usa campo `ValorProporcional` ao invés de `TotalValorTotal`
+   - Soma valores proporcionais por tipo (Equipamento/Acessório)
+
+**Exemplo do cálculo:**
+- Venda com ValorTotal = R$ 1.000,00
+- Produto A (Equipamento) = R$ 800,00 nos produtos
+- Produto B (Acessório) = R$ 300,00 nos produtos
+- Soma produtos = R$ 1.100,00 (maior que valor da venda!)
+
+**Com o novo cálculo proporcional:**
+- Proporção A = 800/1100 = 72,73%
+- Proporção B = 300/1100 = 27,27%
+- Valor A proporcional = 1000 * 0,7273 = R$ 727,30
+- Valor B proporcional = 1000 * 0,2727 = R$ 272,70
+- Soma = R$ 1.000,00 ✅ (bate com ValorTotal da venda)
+
+**Resultado:**
+- ✅ Soma de Equipamentos + Acessórios agora bate exatamente com Valor Total
+- ✅ Percentuais mantêm a proporção correta entre tipos de produto
+- ✅ Respeita descontos/acréscimos aplicados no nível da venda
+
+#### 📁 Arquivos Alterados:
+- `/media/areco/Backup/Oficial/Projetos/sgr/app.py` (linhas 517-612 - função `_render_metrics_produtos()`)
+
+---
+
+### ⏰ 14:30 - Ajuste de Métricas de Produtos (Valor ao invés de Quantidade)
+
+#### 🎯 O que foi pedido:
+Ajustar os cálculos das métricas de Equipamentos e Acessórios para serem baseados em **valor monetário** ao invés de **quantidade de produtos vendidos**.
+
+#### 🔧 Detalhamento da Solução:
+Alterada a função `_render_metrics_produtos()` no arquivo `app.py` para realizar os seguintes ajustes:
+
+**Mudanças implementadas:**
+1. **Campo utilizado**: Alterado de `TotalQuantidade` para `TotalValorTotal`
+   - Linha 541: Validação de coluna mudada para `TotalValorTotal`
+   - Linhas 557-559: Conversão de valores numéricos para `TotalValorTotal`
+
+2. **Cálculo dos totais** (linhas 562-568):
+   - Alteradas variáveis de `total_equipamentos` para `valor_equipamentos`
+   - Alteradas variáveis de `total_acessorios` para `valor_acessorios`
+   - Soma agora é baseada em valores monetários ao invés de quantidades
+
+3. **Percentuais** (linhas 575-580):
+   - Mantida a lógica de cálculo, mas agora baseada em valor total
+   - Percentual de Equipamentos = (valor_equipamentos / valor_total) * 100
+   - Percentual de Acessórios = (valor_acessorios / valor_total) * 100
+
+4. **Formatação da exibição** (linhas 583-592):
+   - Alterada de formatação de quantidade (unidades) para **formatação monetária** (R$)
+   - Padrão brasileiro: R$ 1.234.567,89
+   - Linhas 627 e 650: Cards agora exibem valores monetários ao invés de "unidades"
+
+5. **Atualização de comentários**:
+   - Linha 518: Docstring atualizada para refletir "baseado em valor"
+   - Linha 535: Comentário atualizado para mencionar `TotalValorTotal`
+   - Linha 561: Comentário atualizado para "somar valores"
+
+**Resultado:**
+- ✅ Cards de Equipamentos e Acessórios agora mostram percentual baseado em **valor vendido**
+- ✅ Exibição mostra valores monetários formatados (ex: R$ 150.000,00)
+- ✅ Mantida a classificação por grupos (PEÇA DE REPOSIÇÃO e ACESSÓRIOS = Acessórios; demais = Equipamentos)
+
+#### 📁 Arquivos Alterados:
+- `/media/areco/Backup/Oficial/Projetos/sgr/app.py` (linhas 517-658 - função `_render_metrics_produtos()`)
+
+---
+
 ## 📅 23/10/2025
 
 ### ⏰ 22:30 - Remoção de Painéis de Debug

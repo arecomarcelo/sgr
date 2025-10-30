@@ -2,6 +2,7 @@
 Serviço de dados refatorado para SGR
 Implementa lógica de negócio com injeção de dependências
 """
+
 import logging
 from abc import ABC, abstractmethod
 from typing import List

@@ -2,6 +2,7 @@
 Sistema de temas e estilos para SGR
 Centraliza configurações de aparência da aplicação
 """
+
 from enum import Enum
 from typing import Any, Dict
 

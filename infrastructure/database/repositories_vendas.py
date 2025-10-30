@@ -1,6 +1,7 @@
 """
 Repositórios específicos para Vendas usando Django ORM com SQL bruto
 """
+
 import logging
 from datetime import date, datetime, time
 from typing import Any, Dict, List, Optional
@@ -194,7 +195,7 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
             # Excluir grupos específicos se solicitado
             if excluir_grupos:
                 query += """ AND (p."NomeGrupo" IS NULL OR p."NomeGrupo" NOT IN (%s, %s, %s))"""
-                params.extend(['PRODUTOS SEM GRUPO', 'PEÇA DE REPOSIÇÃO', 'ACESSÓRIOS'])
+                params.extend(["PRODUTOS SEM GRUPO", "PEÇA DE REPOSIÇÃO", "ACESSÓRIOS"])
 
             query += ' ORDER BY v."Data" DESC, vp."Nome"'
 
@@ -280,7 +281,7 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
             # Limpar e converter valores
             def clean_value(val):
                 """Limpa valores que podem estar no formato ('10.00',)"""
-                if not val or str(val).strip() == '':
+                if not val or str(val).strip() == "":
                     return 0.0
 
                 # Converter para string e limpar
@@ -301,11 +302,11 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
 
             # Aplicar limpeza aos campos numéricos
             numeric_columns = [
-                'Quantidade',
-                'ValorCusto',
-                'ValorVenda',
-                'ValorDesconto',
-                'ValorTotal',
+                "Quantidade",
+                "ValorCusto",
+                "ValorVenda",
+                "ValorDesconto",
+                "ValorTotal",
             ]
             for col in numeric_columns:
                 if col in df_raw.columns:
@@ -313,14 +314,14 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
 
             # Agregar por produto
             result = (
-                df_raw.groupby(['Nome', 'CodigoExpedicao', 'NomeGrupo'])
+                df_raw.groupby(["Nome", "CodigoExpedicao", "NomeGrupo"])
                 .agg(
                     {
-                        'Quantidade': 'sum',
-                        'ValorCusto': 'sum',
-                        'ValorVenda': 'sum',
-                        'ValorDesconto': 'sum',
-                        'ValorTotal': 'sum',
+                        "Quantidade": "sum",
+                        "ValorCusto": "sum",
+                        "ValorVenda": "sum",
+                        "ValorDesconto": "sum",
+                        "ValorTotal": "sum",
                     }
                 )
                 .reset_index()
@@ -328,18 +329,18 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
 
             # Renomear colunas
             result.columns = [
-                'Nome',
-                'CodigoExpedicao',
-                'NomeGrupo',
-                'TotalQuantidade',
-                'TotalValorCusto',
-                'TotalValorVenda',
-                'TotalValorDesconto',
-                'TotalValorTotal',
+                "Nome",
+                "CodigoExpedicao",
+                "NomeGrupo",
+                "TotalQuantidade",
+                "TotalValorCusto",
+                "TotalValorVenda",
+                "TotalValorDesconto",
+                "TotalValorTotal",
             ]
 
             # Ordenar por valor total decrescente
-            result = result.sort_values('TotalValorTotal', ascending=False)
+            result = result.sort_values("TotalValorTotal", ascending=False)
 
             logger.info(f"Retrieved {len(result)} aggregated product records")
             return result
@@ -496,7 +497,7 @@ class VendaConfiguracaoRepository(BaseRepository):
             )
 
             with connection.cursor() as cursor:
-                cursor.execute(query, ['Meta'])
+                cursor.execute(query, ["Meta"])
                 result = cursor.fetchone()
 
                 if result and result[0]:

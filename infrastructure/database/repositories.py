@@ -2,6 +2,7 @@
 Implementações concretas dos repositórios usando Django ORM - SGR
 Migração para usar os modelos Django existentes
 """
+
 import logging
 from datetime import date, datetime, time
 from typing import Any, Dict, List, Optional

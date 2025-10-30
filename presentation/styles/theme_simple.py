@@ -1,6 +1,7 @@
 """
 Sistema de tema simples para SGR
 """
+
 import streamlit as st
 
 

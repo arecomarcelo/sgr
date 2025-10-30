@@ -2,6 +2,7 @@
 Sistema de exceções customizadas para SGR
 Implementa hierarquia de exceções específicas do domínio
 """
+
 from typing import Any, Dict, Optional
 
 

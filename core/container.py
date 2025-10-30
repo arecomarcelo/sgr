@@ -2,6 +2,7 @@
 Container de Injeção de Dependências para SGR
 Implementa padrão Dependency Injection Container para gerenciar dependências
 """
+
 import inspect
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional, Type

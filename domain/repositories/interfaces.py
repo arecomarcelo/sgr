@@ -2,6 +2,7 @@
 Interfaces dos repositórios para SGR
 Define contratos para acesso a dados seguindo padrão Repository
 """
+
 from abc import ABC, abstractmethod
 from datetime import date
 from typing import Any, Dict, List, Optional

@@ -2,6 +2,7 @@
 Configurações centralizadas da aplicação SGR
 Implementa padrão Singleton para configurações globais
 """
+
 import os
 from dataclasses import dataclass
 from typing import Optional

@@ -2,6 +2,7 @@
 Componentes de formulários reutilizáveis para SGR
 Implementa padrão Component para elementos de formulário
 """
+
 from abc import ABC, abstractmethod
 from datetime import date, datetime
 from enum import Enum

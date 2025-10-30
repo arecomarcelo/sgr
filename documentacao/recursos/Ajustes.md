@@ -178,6 +178,19 @@
     - Quantidade: xxx.xxx.xxx (sempre inteiro, sem casas decimais)
     - Datas: dd/mm/yyyy (sem hora)
 
+**30/10/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **11:17 - Commit 125**
+
+- **Painéis de Vendas** ajuste:
+    - Formatação **Valores**
+    - Ajuste nos **Cálculos** por **Valor** e não mais por **Quantidade**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

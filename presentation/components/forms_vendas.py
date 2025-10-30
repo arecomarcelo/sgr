@@ -2,6 +2,7 @@
 Componentes de formulário específicos para Vendas
 Formulários simples e reutilizáveis para filtros de vendas
 """
+
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
 

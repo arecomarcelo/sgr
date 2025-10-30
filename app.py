@@ -142,7 +142,7 @@ def _convert_markdown_to_html(markdown_content):
     try:
         import markdown
 
-        html = markdown.markdown(markdown_content, extensions=['tables', 'fenced_code'])
+        html = markdown.markdown(markdown_content, extensions=["tables", "fenced_code"])
         return f"""
         <div style="
             font-family: 'Roboto', Arial, sans-serif;
@@ -168,14 +168,14 @@ def _basic_markdown_to_html(content):
     Conversão básica de markdown para HTML
     """
     # Substituições básicas para formatação
-    content = content.replace('\n# ', '\n<h1>')
-    content = content.replace('\n## ', '\n<h2>')
-    content = content.replace('\n### ', '\n<h3>')
-    content = content.replace('\n#### ', '\n<h4>')
-    content = content.replace('\n', '<br>')
-    content = content.replace('**', '<strong>').replace('**', '</strong>')
-    content = content.replace('*', '<em>').replace('*', '</em>')
-    content = content.replace('`', '<code>').replace('`', '</code>')
+    content = content.replace("\n# ", "\n<h1>")
+    content = content.replace("\n## ", "\n<h2>")
+    content = content.replace("\n### ", "\n<h3>")
+    content = content.replace("\n#### ", "\n<h4>")
+    content = content.replace("\n", "<br>")
+    content = content.replace("**", "<strong>").replace("**", "</strong>")
+    content = content.replace("*", "<em>").replace("*", "</em>")
+    content = content.replace("`", "<code>").replace("`", "</code>")
 
     return f"""
     <div style="
@@ -515,7 +515,7 @@ def _render_metrics_cards(metrics):
 
 
 def _render_metrics_produtos():
-    """Renderiza métricas de produtos (Equipamentos vs Acessórios) em cards"""
+    """Renderiza métricas de produtos (Equipamentos vs Acessórios) em cards - baseado em valor proporcional"""
     try:
         # Verificar se há dados de vendas
         if "df_vendas" not in st.session_state or st.session_state["df_vendas"] is None:
@@ -532,56 +532,96 @@ def _render_metrics_produtos():
 
         venda_ids = df_vendas["ID_Gestao"].tolist()
 
-        # Buscar produtos agregados (com NomeGrupo e TotalQuantidade)
-        df_produtos = vendas_service.get_produtos_agregados(venda_ids=venda_ids)
+        # Buscar produtos detalhados (para calcular proporção por venda)
+        df_produtos = vendas_service.get_produtos_detalhados(venda_ids=venda_ids)
 
-        if (
-            df_produtos.empty
-            or "NomeGrupo" not in df_produtos.columns
-            or "TotalQuantidade" not in df_produtos.columns
-        ):
+        if df_produtos.empty or "NomeGrupo" not in df_produtos.columns:
             logger.warning(
                 "Colunas necessárias não encontradas no dataframe de produtos"
             )
             return
 
+        # Verificar se há campo Venda_ID para fazer o join
+        if "Venda_ID" not in df_produtos.columns:
+            logger.warning("Campo Venda_ID não encontrado no dataframe de produtos")
+            return
+
+        # Criar dicionário com ValorTotal de cada venda
+        vendas_dict = df_vendas.set_index("ID_Gestao")["ValorTotal"].to_dict()
+
         # Classificar produtos por tipo
         grupos_acessorios = ["PEÇA DE REPOSIÇÃO", "ACESSÓRIOS"]
-
-        # Contar quantidades - tratar valores None no NomeGrupo
         df_produtos["Tipo"] = df_produtos["NomeGrupo"].apply(
             lambda x: "Acessório" if x and x in grupos_acessorios else "Equipamento"
         )
 
-        # Garantir que TotalQuantidade seja numérica
-        df_produtos["TotalQuantidade"] = pd.to_numeric(
-            df_produtos["TotalQuantidade"], errors='coerce'
+        # Garantir que ValorTotal seja numérico
+        df_produtos["ValorTotal"] = pd.to_numeric(
+            df_produtos["ValorTotal"], errors="coerce"
         ).fillna(0)
 
-        # Calcular totais por tipo (somar quantidades)
-        total_equipamentos = df_produtos[df_produtos["Tipo"] == "Equipamento"][
-            "TotalQuantidade"
+        # Para cada produto, calcular sua proporção dentro da venda e aplicar ao ValorTotal da venda
+        def calcular_valor_proporcional(row):
+            """Calcula valor proporcional do produto baseado no ValorTotal da venda"""
+            venda_id = row["Venda_ID"]
+            valor_produto = row["ValorTotal"]
+
+            # Obter ValorTotal da venda
+            valor_venda = vendas_dict.get(venda_id, 0)
+
+            if valor_venda == 0:
+                return 0
+
+            # Calcular soma de produtos desta venda
+            produtos_venda = df_produtos[df_produtos["Venda_ID"] == venda_id]
+            soma_produtos = produtos_venda["ValorTotal"].sum()
+
+            if soma_produtos == 0:
+                return 0
+
+            # Calcular proporção e aplicar ao valor real da venda
+            proporcao = valor_produto / soma_produtos
+            valor_proporcional = valor_venda * proporcao
+
+            return valor_proporcional
+
+        # Aplicar cálculo proporcional
+        df_produtos["ValorProporcional"] = df_produtos.apply(
+            calcular_valor_proporcional, axis=1
+        )
+
+        # Calcular totais por tipo usando valores proporcionais
+        valor_equipamentos = df_produtos[df_produtos["Tipo"] == "Equipamento"][
+            "ValorProporcional"
         ].sum()
-        total_acessorios = df_produtos[df_produtos["Tipo"] == "Acessório"][
-            "TotalQuantidade"
+        valor_acessorios = df_produtos[df_produtos["Tipo"] == "Acessório"][
+            "ValorProporcional"
         ].sum()
-        total_produtos = total_equipamentos + total_acessorios
+        valor_total = valor_equipamentos + valor_acessorios
 
         # Evitar divisão por zero
-        if total_produtos == 0:
+        if valor_total == 0:
             return
 
         # Calcular percentuais
         perc_equipamentos = (
-            (total_equipamentos / total_produtos * 100) if total_produtos > 0 else 0
+            (valor_equipamentos / valor_total * 100) if valor_total > 0 else 0
         )
         perc_acessorios = (
-            (total_acessorios / total_produtos * 100) if total_produtos > 0 else 0
+            (valor_acessorios / valor_total * 100) if valor_total > 0 else 0
         )
 
-        # Formatar quantidades (inteiro com separador de milhares)
-        qtd_equipamentos_fmt = f"{int(total_equipamentos):,}".replace(",", ".")
-        qtd_acessorios_fmt = f"{int(total_acessorios):,}".replace(",", ".")
+        # Formatar valores monetários (padrão brasileiro)
+        valor_equipamentos_fmt = (
+            f"R$ {valor_equipamentos:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
+        valor_acessorios_fmt = (
+            f"R$ {valor_acessorios:,.2f}".replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
+        )
 
         # Renderizar título
         st.markdown("<br>", unsafe_allow_html=True)
@@ -616,7 +656,7 @@ def _render_metrics_produtos():
             '>
                 <div style='font-size: 0.9rem; color: #1E88E5; margin-bottom: 8px; font-weight: 600;'>🏋️ Equipamentos</div>
                 <div style='font-size: 1.2rem; font-weight: 700; color: #1E88E5;'>{perc_equipamentos:.1f}%</div>
-                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{qtd_equipamentos_fmt} unidades</div>
+                <div style='font-size: 1.2rem; color: #6b7280; margin-top: 4px;'>{valor_equipamentos_fmt}</div>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -639,7 +679,7 @@ def _render_metrics_produtos():
             '>
                 <div style='font-size: 0.9rem; color: #1E88E5; margin-bottom: 8px; font-weight: 600;'>🔧 Acessórios</div>
                 <div style='font-size: 1.2rem; font-weight: 700; color: #1E88E5;'>{perc_acessorios:.1f}%</div>
-                <div style='font-size: 0.8rem; color: #6b7280; margin-top: 4px;'>{qtd_acessorios_fmt} unidades</div>
+                <div style='font-size: 1.2rem; color: #6b7280; margin-top: 4px;'>{valor_acessorios_fmt}</div>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -714,17 +754,17 @@ def _render_gauge_meta():
             data=[
                 go.Pie(
                     values=[percentual, percentual_restante],
-                    labels=['Atingido', 'Restante'],
+                    labels=["Atingido", "Restante"],
                     hole=0.7,  # Tamanho do buraco central (donut)
                     marker=dict(
                         colors=[
                             cor_gauge,
-                            '#e0e0e0',
+                            "#e0e0e0",
                         ],  # Azul para atingido, cinza claro para restante
-                        line=dict(color='#ffffff', width=3),
+                        line=dict(color="#ffffff", width=3),
                     ),
-                    textinfo='none',  # Não mostrar texto nas fatias
-                    hoverinfo='label+percent',
+                    textinfo="none",  # Não mostrar texto nas fatias
+                    hoverinfo="label+percent",
                     showlegend=False,
                 )
             ]
@@ -746,7 +786,7 @@ def _render_gauge_meta():
             text="da Meta",
             x=0.5,
             y=0.42,
-            font=dict(size=16, color='#6b7280', family="Roboto"),
+            font=dict(size=16, color="#6b7280", family="Roboto"),
             showarrow=False,
             xref="paper",
             yref="paper",
@@ -994,9 +1034,11 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
         for _, row in vendas_por_vendedor.iterrows():
             vendas_dict[row["VendedorNome"]] = {
                 "total_valor": float(row["total_valor"]),
-                "percentual": (float(row["total_valor"]) / total_geral * 100)
-                if total_geral > 0
-                else 0,
+                "percentual": (
+                    (float(row["total_valor"]) / total_geral * 100)
+                    if total_geral > 0
+                    else 0
+                ),
             }
 
     # Preparar dados completos dos vendedores
@@ -1134,14 +1176,14 @@ def _criar_gauge_vendedor(meta, realizado):
             data=[
                 go.Pie(
                     values=[percentual, percentual_restante],
-                    labels=['Atingido', 'Restante'],
+                    labels=["Atingido", "Restante"],
                     hole=0.65,
                     marker=dict(
-                        colors=[cor_gauge, '#e0e0e0'],
-                        line=dict(color='#ffffff', width=1),
+                        colors=[cor_gauge, "#e0e0e0"],
+                        line=dict(color="#ffffff", width=1),
                     ),
-                    textinfo='none',
-                    hoverinfo='label+percent',
+                    textinfo="none",
+                    hoverinfo="label+percent",
                     showlegend=False,
                 )
             ]
@@ -1192,12 +1234,12 @@ def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
 
         # Criar gauge do vendedor
         gauge_b64 = _criar_gauge_vendedor(
-            vendedor.get('meta', 0), vendedor.get('realizado', 0)
+            vendedor.get("meta", 0), vendedor.get("realizado", 0)
         )
         gauge_html = (
             f'<img src="{gauge_b64}" style="width: 60px; height: 60px; margin-left: 8px;">'
             if gauge_b64
-            else ''
+            else ""
         )
 
         if image_b64:
@@ -1489,7 +1531,7 @@ def _apply_filters(filters):
                     logger.info(f"Vendedores únicos nos dados: {vendedores_unicos}")
                 if "Data" in df_vendas.columns:
                     try:
-                        datas = pd.to_datetime(df_vendas["Data"], errors='coerce')
+                        datas = pd.to_datetime(df_vendas["Data"], errors="coerce")
                         logger.info(f"Data mínima: {datas.min()}")
                         logger.info(f"Data máxima: {datas.max()}")
                     except:
@@ -1773,7 +1815,7 @@ def _render_manual_fullscreen():
         st.markdown(
             '<div class="manual-header">'
             '<h1 class="manual-title">📖 Manual do Relatório de Vendas</h1>'
-            '</div>',
+            "</div>",
             unsafe_allow_html=True,
         )
 
@@ -1845,12 +1887,12 @@ def _render_data_grid():
         if isinstance(val, (int, float)):
             return float(val)
         # Converter para string e limpar
-        val_str = str(val).replace('R$', '').strip()
+        val_str = str(val).replace("R$", "").strip()
 
         # Se tem vírgula, é formato brasileiro (1.500,00)
-        if ',' in val_str:
+        if "," in val_str:
             # Remover pontos (separador de milhares) e trocar vírgula por ponto
-            val_clean = val_str.replace('.', '').replace(',', '.')
+            val_clean = val_str.replace(".", "").replace(",", ".")
         else:
             # Formato americano ou já limpo (1500.00 ou 1500)
             val_clean = val_str
@@ -1874,7 +1916,7 @@ def _render_data_grid():
         try:
             if isinstance(val, str):
                 # Se já é string, tentar parsear
-                if '/' in val:
+                if "/" in val:
                     # Formato brasileiro dd/mm/yyyy ou dd/mm/yyyy HH:MM
                     parts = val.split()[
                         0
@@ -1883,11 +1925,11 @@ def _render_data_grid():
                 else:
                     # Formato ISO ou outro, converter para datetime
                     dt = pd.to_datetime(val)
-                    return dt.strftime('%d/%m/%Y')
+                    return dt.strftime("%d/%m/%Y")
             elif isinstance(val, (datetime, pd.Timestamp)):
-                return val.strftime('%d/%m/%Y')
+                return val.strftime("%d/%m/%Y")
             elif isinstance(val, date):
-                return val.strftime('%d/%m/%Y')
+                return val.strftime("%d/%m/%Y")
             else:
                 return str(val)
         except:
@@ -1914,44 +1956,44 @@ def _render_data_grid():
         # Mapear vendas filtradas de volta ao df original para pegar os IDs
         # Criar chave única para matching
         df_vendas_with_key = df_vendas.copy()
-        df_vendas_with_key['_match_key'] = (
-            df_vendas_with_key['ClienteNome'].astype(str)
-            + '|'
-            + df_vendas_with_key['VendedorNome'].astype(str)
-            + '|'
-            + df_vendas_with_key['ValorTotal'].astype(str)
-            + '|'
-            + df_vendas_with_key['Data'].astype(str)
+        df_vendas_with_key["_match_key"] = (
+            df_vendas_with_key["ClienteNome"].astype(str)
+            + "|"
+            + df_vendas_with_key["VendedorNome"].astype(str)
+            + "|"
+            + df_vendas_with_key["ValorTotal"].astype(str)
+            + "|"
+            + df_vendas_with_key["Data"].astype(str)
         )
 
         df_filtered_with_key = df_filtered.copy()
-        df_filtered_with_key['_match_key'] = (
-            df_filtered_with_key['Cliente'].astype(str)
-            + '|'
-            + df_filtered_with_key['Vendedor'].astype(str)
-            + '|'
-            + df_filtered_with_key['Valor Total']
+        df_filtered_with_key["_match_key"] = (
+            df_filtered_with_key["Cliente"].astype(str)
+            + "|"
+            + df_filtered_with_key["Vendedor"].astype(str)
+            + "|"
+            + df_filtered_with_key["Valor Total"]
             .apply(lambda x: str(x) if isinstance(x, (int, float)) else str(x))
             .astype(str)
-            + '|'
-            + df_filtered_with_key['Data'].astype(str)
+            + "|"
+            + df_filtered_with_key["Data"].astype(str)
         )
 
         # Encontrar IDs das vendas filtradas
         vendas_filtradas = df_vendas_with_key[
-            df_vendas_with_key['_match_key'].isin(df_filtered_with_key['_match_key'])
+            df_vendas_with_key["_match_key"].isin(df_filtered_with_key["_match_key"])
         ]
 
-        if 'Id' in vendas_filtradas.columns:
-            ids_vendas_filtradas = vendas_filtradas['Id'].tolist()
-        elif 'ID_Gestao' in vendas_filtradas.columns:
-            ids_vendas_filtradas = vendas_filtradas['ID_Gestao'].tolist()
+        if "Id" in vendas_filtradas.columns:
+            ids_vendas_filtradas = vendas_filtradas["Id"].tolist()
+        elif "ID_Gestao" in vendas_filtradas.columns:
+            ids_vendas_filtradas = vendas_filtradas["ID_Gestao"].tolist()
         else:
             ids_vendas_filtradas = None
 
-        st.session_state['ids_vendas_grid_filtradas'] = ids_vendas_filtradas
+        st.session_state["ids_vendas_grid_filtradas"] = ids_vendas_filtradas
     else:
-        st.session_state['ids_vendas_grid_filtradas'] = None
+        st.session_state["ids_vendas_grid_filtradas"] = None
 
 
 def _render_advanced_sales_grid(df_display, df_original):
@@ -2038,7 +2080,7 @@ def _render_advanced_sales_grid(df_display, df_original):
                 try:
                     # Valores já são numéricos, apenas somar
                     totals[f"total_{col.lower().replace(' ', '_')}"] = (
-                        pd.to_numeric(data[col], errors='coerce').fillna(0).sum()
+                        pd.to_numeric(data[col], errors="coerce").fillna(0).sum()
                     )
                 except:
                     totals[f"total_{col.lower().replace(' ', '_')}"] = 0
@@ -2338,13 +2380,13 @@ def _get_ranking_produtos(
             # Converter para datetime se necessário
             if data_inicio and not isinstance(data_inicio, datetime):
                 if isinstance(data_inicio, str):
-                    data_inicio = datetime.strptime(str(data_inicio), '%Y-%m-%d')
+                    data_inicio = datetime.strptime(str(data_inicio), "%Y-%m-%d")
                 elif isinstance(data_inicio, date):
                     data_inicio = datetime.combine(data_inicio, datetime.min.time())
 
             if data_fim and not isinstance(data_fim, datetime):
                 if isinstance(data_fim, str):
-                    data_fim = datetime.strptime(str(data_fim), '%Y-%m-%d')
+                    data_fim = datetime.strptime(str(data_fim), "%Y-%m-%d")
                 elif isinstance(data_fim, date):
                     data_fim = datetime.combine(data_fim, datetime.min.time())
 
@@ -2380,10 +2422,10 @@ def _get_ranking_produtos(
 
         # Verificar qual coluna de nome do produto existe
         nome_coluna = None
-        if 'Nome' in df_produtos.columns:
-            nome_coluna = 'Nome'
-        elif 'ProdutoNome' in df_produtos.columns:
-            nome_coluna = 'ProdutoNome'
+        if "Nome" in df_produtos.columns:
+            nome_coluna = "Nome"
+        elif "ProdutoNome" in df_produtos.columns:
+            nome_coluna = "ProdutoNome"
         else:
             logger.error(
                 f"DEBUG Ranking - Nenhuma coluna de nome de produto encontrada. Colunas disponíveis: {df_produtos.columns.tolist()}"
@@ -2397,23 +2439,23 @@ def _get_ranking_produtos(
         ranking = (
             df_produtos.groupby(nome_coluna)
             .agg(
-                TotalQuantidade=('Quantidade', 'sum'),
+                TotalQuantidade=("Quantidade", "sum"),
                 NumeroVendas=(
-                    'Venda_ID',
-                    'nunique',
+                    "Venda_ID",
+                    "nunique",
                 ),  # Contar vendas DISTINTAS por produto
             )
             .reset_index()
         )
 
         # Renomear coluna para padrão
-        ranking.rename(columns={nome_coluna: 'ProdutoNome'}, inplace=True)
+        ranking.rename(columns={nome_coluna: "ProdutoNome"}, inplace=True)
 
         logger.info(f"DEBUG Ranking - ranking shape após groupby: {ranking.shape}")
         logger.info(f"DEBUG Ranking - ranking head:\n{ranking.head()}")
 
         # Ordenar por quantidade total vendida (decrescente)
-        ranking = ranking.sort_values('TotalQuantidade', ascending=False)
+        ranking = ranking.sort_values("TotalQuantidade", ascending=False)
 
         # Limitar ao top_n
         ranking = ranking.head(top_n)
@@ -2652,7 +2694,7 @@ def _render_advanced_products_grid(df_display):
             try:
                 # Valores já são numéricos, apenas somar
                 totals["total_quantidade"] = (
-                    pd.to_numeric(data["Quantidade"], errors='coerce').fillna(0).sum()
+                    pd.to_numeric(data["Quantidade"], errors="coerce").fillna(0).sum()
                 )
             except:
                 totals["total_quantidade"] = 0
@@ -2663,7 +2705,7 @@ def _render_advanced_products_grid(df_display):
                 try:
                     # Valores já são numéricos, apenas somar
                     totals[f"total_{col.lower().replace(' ', '_')}"] = (
-                        pd.to_numeric(data[col], errors='coerce').fillna(0).sum()
+                        pd.to_numeric(data[col], errors="coerce").fillna(0).sum()
                     )
                 except:
                     totals[f"total_{col.lower().replace(' ', '_')}"] = 0
@@ -2829,7 +2871,7 @@ def _render_produtos_detalhados():
         loading = LoadingHelper.show_loading("Carregando produtos...")
 
         # Verificar se há IDs de vendas filtradas na grid AgGrid
-        ids_vendas_grid_filtradas = st.session_state.get('ids_vendas_grid_filtradas')
+        ids_vendas_grid_filtradas = st.session_state.get("ids_vendas_grid_filtradas")
 
         # Determinar quais IDs de vendas usar
         if ids_vendas_grid_filtradas is not None and len(ids_vendas_grid_filtradas) > 0:
@@ -2837,10 +2879,10 @@ def _render_produtos_detalhados():
             venda_ids = ids_vendas_grid_filtradas
         else:
             # Usar TODOS os IDs do df_vendas (que já está filtrado pelos filtros principais)
-            if 'Id' in df_vendas.columns:
-                venda_ids = df_vendas['Id'].tolist()
-            elif 'ID_Gestao' in df_vendas.columns:
-                venda_ids = df_vendas['ID_Gestao'].tolist()
+            if "Id" in df_vendas.columns:
+                venda_ids = df_vendas["Id"].tolist()
+            elif "ID_Gestao" in df_vendas.columns:
+                venda_ids = df_vendas["ID_Gestao"].tolist()
             else:
                 venda_ids = None
 
@@ -2880,13 +2922,13 @@ def _render_produtos_detalhados():
         for col in valor_columns:
             if col in df_display.columns:
                 df_display[col] = pd.to_numeric(
-                    df_display[col], errors='coerce'
+                    df_display[col], errors="coerce"
                 ).fillna(0)
 
         # Garantir que quantidade seja float (sem formatação - a grid do AgGrid fará a formatação visual)
         if "Quantidade" in df_display.columns:
             df_display["Quantidade"] = pd.to_numeric(
-                df_display["Quantidade"], errors='coerce'
+                df_display["Quantidade"], errors="coerce"
             ).fillna(0)
 
         # Renderizar grid avançada com AgGrid

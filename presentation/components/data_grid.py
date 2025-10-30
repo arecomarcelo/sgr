@@ -2,6 +2,7 @@
 Componentes reutilizáveis de grade de dados para SGR
 Implementa padrão Component para elementos de UI
 """
+
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
@@ -215,9 +216,9 @@ class StandardDataGrid(GridComponentInterface):
         if self.selection_mode != SelectionMode.DISABLED:
             gb.configure_selection(
                 selection_mode=self.selection_mode.value,
-                use_checkbox=True
-                if self.selection_mode == SelectionMode.MULTIPLE
-                else False,
+                use_checkbox=(
+                    True if self.selection_mode == SelectionMode.MULTIPLE else False
+                ),
             )
 
         # Configurações padrão de coluna

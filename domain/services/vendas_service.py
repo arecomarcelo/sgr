@@ -2,6 +2,7 @@
 Serviço de domínio para Vendas
 Implementa a lógica de negócios para análise de vendas
 """
+
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -511,7 +512,7 @@ class VendasService:
 
         def clean_numeric_value(val):
             """Limpa valores numéricos que podem estar no formato ('10.00',) ou vazios"""
-            if not val or str(val).strip() == '' or str(val) == 'None':
+            if not val or str(val).strip() == "" or str(val) == "None":
                 return 0.0
 
             # Converter para string e limpar
@@ -521,7 +522,7 @@ class VendasService:
                 val_str.replace("(", "")
                 .replace(")", "")
                 .replace("'", "")
-                .replace('"', '')
+                .replace('"', "")
                 .replace(",", ".")
             )
             val_str = val_str.strip()

@@ -2,6 +2,7 @@
 Factory para criação de repositórios - SGR
 Implementa padrão Factory para instanciar repositórios
 """
+
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Dict, Optional, Type
