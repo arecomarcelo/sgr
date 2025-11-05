@@ -196,6 +196,19 @@
 - **Painéis de Vendas**:
     - **Atualização do Manual**
 
+**05/11/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **16:55 - Commit 126**
+
+- Implementado app **Comex**
+    - Dasboard de **Pprodutos Vendidos**
+- Ajustado **Funcionamento dos Menus**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

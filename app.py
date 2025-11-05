@@ -33,6 +33,7 @@ from apps.auth.modules import menu
 from apps.auth.views import login_screen
 from apps.boletos.views import main as boletos_main
 from apps.clientes.views import main as clientes_main
+from apps.comex.views import main as comex_main
 from apps.estoque.views import main as estoque_main
 from apps.extratos.views import main as extratos_main
 from apps.vendas.views import main as vendas_main
@@ -2972,6 +2973,8 @@ def main():
                 vendas_main(key="vendas")
         elif st.session_state.current_module == "Relatório de Clientes":
             clientes_main(key="clientes")
+        elif st.session_state.current_module == "Comex Produtos":
+            comex_main(key="comex")
 
 
 if __name__ == "__main__":

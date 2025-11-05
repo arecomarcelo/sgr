@@ -195,6 +195,18 @@ def menu():
                 },
             },
         },
+        "Comex": {
+            "permission": "view_venda",
+            "icon": "🌐",
+            "type": "group",
+            "submenu": {
+                "Vendas": {
+                    "permission": "view_venda",
+                    "icon": "📦",
+                    "original_name": "Comex Produtos",
+                },
+            },
+        },
     }
 
     # Inicializar estado de expansão dos grupos
@@ -205,25 +217,19 @@ def menu():
     selected_module = None
     current_module = st.session_state.get("current_module", "")
 
-    # ACCORDION: Primeiro, identificar qual grupo deve estar expandido
-    # baseado no módulo selecionado atualmente
-    active_group = None
-    for module, config in module_config.items():
-        if config.get("type") == "group":
-            for submodule, subconfig in config.get("submenu", {}).items():
-                if current_module == subconfig["original_name"]:
-                    active_group = module
-                    break
-        if active_group:
-            break
-
-    # Se há um grupo ativo, garantir que apenas ele esteja expandido (accordion)
-    if active_group:
-        for group_name in module_config.keys():
-            if module_config[group_name].get("type") == "group":
-                st.session_state.menu_expanded_groups[group_name] = (
-                    group_name == active_group
-                )
+    # ACCORDION: Identificar qual grupo deve estar expandido inicialmente
+    # baseado no módulo selecionado atualmente (apenas na primeira vez)
+    if not st.session_state.menu_expanded_groups:
+        active_group = None
+        for module, config in module_config.items():
+            if config.get("type") == "group":
+                for submodule, subconfig in config.get("submenu", {}).items():
+                    if current_module == subconfig["original_name"]:
+                        active_group = module
+                        st.session_state.menu_expanded_groups[module] = True
+                        break
+            if active_group:
+                break
 
     for module, config in module_config.items():
         # Verificar permissão para o módulo principal
@@ -265,11 +271,10 @@ def menu():
                 # Comportamento accordion: ao expandir um grupo, recolher todos os outros
                 new_state = not st.session_state.menu_expanded_groups[module]
 
-                if new_state:  # Se vai expandir este grupo
-                    # Recolher todos os outros grupos primeiro
-                    for group_name in st.session_state.menu_expanded_groups:
-                        if group_name != module:
-                            st.session_state.menu_expanded_groups[group_name] = False
+                # Recolher todos os outros grupos primeiro (comportamento accordion)
+                for group_name in st.session_state.menu_expanded_groups:
+                    if group_name != module:
+                        st.session_state.menu_expanded_groups[group_name] = False
 
                 # Aplicar o toggle no grupo clicado
                 st.session_state.menu_expanded_groups[module] = new_state
