@@ -209,6 +209,10 @@
     - Dasboard de **Pprodutos Vendidos**
 - Ajustado **Funcionamento dos Menus**
 
+### **17:09 - Commit 127**
+
+- Ajuste de **Permissões** para visualizar **Comex**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

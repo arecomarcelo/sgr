@@ -3,6 +3,91 @@
 
 ## 📅 05/11/2025
 
+### 🕐 11:00 - AJUSTE: Permissão do Menu Comex
+
+**O que foi pedido:**
+Alterar a permissão do módulo Comex de `view_venda` para `view_comex`, sem alterar a permissão do módulo Vendas/Geral.
+
+**📝 Detalhamento da Solução ou Implementação:**
+
+**Alteração de Permissão:**
+
+**ANTES:**
+```python
+"Comex": {
+    "permission": "view_venda",  # ← Mesma permissão de Vendas
+    "icon": "🌐",
+    "type": "group",
+    "submenu": {
+        "Vendas": {
+            "permission": "view_venda",
+            "icon": "📦",
+            "original_name": "Comex Produtos",
+        },
+    },
+},
+```
+
+**DEPOIS:**
+```python
+"Comex": {
+    "permission": "view_comex",  # ← Nova permissão específica
+    "icon": "🌐",
+    "type": "group",
+    "submenu": {
+        "Vendas": {
+            "permission": "view_comex",  # ← Submenu também usa view_comex
+            "icon": "📦",
+            "original_name": "Comex Produtos",
+        },
+    },
+},
+```
+
+**Vendas/Geral (NÃO ALTERADO):**
+```python
+"Vendas": {
+    "permission": "view_venda",  # ← Mantido
+    "icon": "📊",
+    "type": "group",
+    "submenu": {
+        "Geral": {
+            "permission": "view_venda",  # ← Mantido
+            "icon": "📈",
+            "original_name": "Relatório de Vendas",
+        },
+    },
+},
+```
+
+**🔐 Controle de Acesso Agora:**
+
+| Módulo | Permissão Necessária |
+|--------|---------------------|
+| Vendas → Geral | `view_venda` |
+| Comex → Vendas | `view_comex` |
+
+**Regra de Acesso:**
+- Usuário com **`view_venda`**: Acessa apenas Vendas/Geral
+- Usuário com **`view_comex`**: Acessa apenas Comex/Vendas
+- Usuário com **ambas**: Acessa ambos os módulos
+- Usuário **`admin`**: Acessa tudo (sempre)
+
+**📁 Arquivos Alterados:**
+- ✅ `/apps/auth/modules.py` - Linhas 198-209 (permissão do Comex)
+
+**🎯 Benefícios:**
+- 🔐 Controle de acesso separado entre Vendas e Comex
+- 👥 Possibilidade de dar acesso específico ao Comex sem dar acesso a Vendas
+- 🎯 Maior granularidade nas permissões de usuários
+
+**⚠️ Ação Necessária no Banco:**
+Para que usuários acessem o Comex, é necessário:
+1. Criar a permissão `view_comex` no Django (se não existir)
+2. Associar a permissão aos usuários/grupos que devem acessar o Comex
+
+---
+
 ### 🕐 10:45 - CORREÇÃO: Navegação do Menu Lateral Travada
 
 **O que foi pedido:**

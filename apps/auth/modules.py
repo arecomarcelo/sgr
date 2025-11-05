@@ -196,12 +196,12 @@ def menu():
             },
         },
         "Comex": {
-            "permission": "view_venda",
+            "permission": "view_comex",
             "icon": "🌐",
             "type": "group",
             "submenu": {
                 "Vendas": {
-                    "permission": "view_venda",
+                    "permission": "view_comex",
                     "icon": "📦",
                     "original_name": "Comex Produtos",
                 },
