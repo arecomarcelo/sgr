@@ -213,6 +213,18 @@
 
 - Ajuste de **Permissões** para visualizar **Comex**
 
+**12/11/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **16:00 - Commit 128**
+
+- Implementada app **SAC**
+    - Dashboard **Ordem de Serviço**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

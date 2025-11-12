@@ -13,6 +13,7 @@ class Clientes(models.Model):
     ]
 
     class Meta:
+        app_label = "core"
         db_table = "Clientes"
         ordering = [
             "RazaoSocial",
@@ -27,13 +28,13 @@ class Clientes(models.Model):
         max_length=2, choices=TIPO_PESSOA_CHOICES, default="PF"
     )
 
-    PessoaTipo = models.ForeignKey(
-        PessoaTipos,
-        on_delete=models.CASCADE,
-        related_name="tipopessoa_cliente",
-        verbose_name=("Pessoa Tipo"),
-        null=True,
-    )
+    # PessoaTipo = models.ForeignKey(
+    #     PessoaTipos,
+    #     on_delete=models.CASCADE,
+    #     related_name="tipopessoa_cliente",
+    #     verbose_name=("Pessoa Tipo"),
+    #     null=True,
+    # )
 
     Nome = models.CharField(max_length=100, blank=True, null=True)
     RazaoSocial = models.CharField(max_length=100, blank=True, null=True)
@@ -58,6 +59,7 @@ class Clientes(models.Model):
 
 class Bancos(models.Model):
     class Meta:
+        app_label = "core"
         db_table = "Bancos"
         ordering = [
             "descricao",
@@ -73,6 +75,7 @@ class Bancos(models.Model):
 
 class CentroCustos(models.Model):
     class Meta:
+        app_label = "core"
         db_table = "CentroCustos"
         ordering = [
             "descricao",
@@ -87,6 +90,7 @@ class CentroCustos(models.Model):
 
 class Empresas(models.Model):
     class Meta:
+        app_label = "core"
         db_table = "Empresas"
         ordering = [
             "nome",
@@ -102,6 +106,7 @@ class Empresas(models.Model):
 
 class Extratos(models.Model):
     class Meta:
+        app_label = "core"
         db_table = "Extratos"
         ordering = ["banco", "-data"]
         verbose_name = "Extrato"
@@ -141,6 +146,7 @@ class Extratos(models.Model):
 
 class Produtos(models.Model):
     class Meta:
+        app_label = "core"
         db_table = "Produtos"
         ordering = [
             "Nome",
@@ -206,6 +212,7 @@ class Produtos(models.Model):
 
 class BoletosEnviados(models.Model):
     class Meta:
+        app_label = "core"
         db_table = "BoletosEnviados"
         ordering = ["-DataHoraEnvio"]
         verbose_name = "Boleto Enviado"
@@ -243,3 +250,70 @@ class BoletosEnviados(models.Model):
 
     def __str__(self):
         return f"{self.Boleto} - {self.Vencimento}"
+
+
+class OS(models.Model):
+    """
+    Modelo para gerenciar OS's do Gestão.
+    """
+
+    class Meta:
+        app_label = "core"
+        db_table = "OS"
+        ordering = [
+            "ID_Gestao",
+        ]
+        verbose_name = "OS"
+        verbose_name_plural = "OS"
+
+    ID_Gestao = models.CharField(max_length=100)
+    Data = models.DateField(verbose_name="Data Entrada")
+    ClienteNome = models.CharField(max_length=100, verbose_name="Nome Cliente")
+    SituacaoNome = models.CharField(max_length=100, verbose_name="Situação OS")
+
+    def __str__(self):
+        return f"OS {self.ID_Gestao} - {self.ClienteNome}"
+
+
+class OS_Produtos(models.Model):
+    """
+    Modelo para gerenciar Produtos das OS's do Gestão.
+    """
+
+    class Meta:
+        app_label = "core"
+        db_table = "OS_Produtos"
+        ordering = [
+            "OS",
+        ]
+        verbose_name = "OS Produtos"
+        verbose_name_plural = "OS Produtos"
+
+    OS = models.ForeignKey(OS, on_delete=models.CASCADE, verbose_name="OS")
+    Nome = models.CharField(max_length=100, verbose_name="Nome Produto")
+    SiglaUnidade = models.CharField(max_length=10, verbose_name="Sigla da Unidade")
+    Quantidade = models.IntegerField()
+    ValorVenda = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Valor Venda"
+    )
+    TipoDesconto = models.CharField(max_length=10, verbose_name="Tipo Desconto")
+    Desconto = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Valor Desconto",
+        blank=True,
+        null=True,
+    )
+    DescontoPorcentagem = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Percentual Desconto",
+        blank=True,
+        null=True,
+    )
+    ValorTotal = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Valor Total OS"
+    )
+
+    def __str__(self):
+        return f"{self.Nome} - OS {self.OS.ID_Gestao}"

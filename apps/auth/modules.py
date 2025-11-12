@@ -207,6 +207,18 @@ def menu():
                 },
             },
         },
+        "SAC": {
+            "permission": "view_os",
+            "icon": "🛠️",
+            "type": "group",
+            "submenu": {
+                "Ordem de Serviço": {
+                    "permission": "view_os",
+                    "icon": "📋",
+                    "original_name": "Ordem de Serviço",
+                },
+            },
+        },
     }
 
     # Inicializar estado de expansão dos grupos

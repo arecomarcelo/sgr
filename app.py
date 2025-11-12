@@ -36,6 +36,7 @@ from apps.clientes.views import main as clientes_main
 from apps.comex.views import main as comex_main
 from apps.estoque.views import main as estoque_main
 from apps.extratos.views import main as extratos_main
+from apps.sac.views import main as sac_main
 from apps.vendas.views import main as vendas_main
 
 # Importações após a configuração da página
@@ -2975,6 +2976,8 @@ def main():
             clientes_main(key="clientes")
         elif st.session_state.current_module == "Comex Produtos":
             comex_main(key="comex")
+        elif st.session_state.current_module == "Ordem de Serviço":
+            sac_main(key="sac")
 
 
 if __name__ == "__main__":

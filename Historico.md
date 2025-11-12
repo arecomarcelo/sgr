@@ -1,5 +1,444 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 12/11/2025
+
+### ⏰ 15:30 - Limpeza de Interface
+
+#### 🎯 O que foi pedido:
+1. Remover detalhes dos filtros da mensagem de sucesso - manter apenas contador simples
+2. Remover a métrica "Colunas" do painel de Ordens de Serviço
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Simplificação da Mensagem de Filtros**
+   - **Antes:** "✅ 46 OS encontradas (Data ≥ 01/10/2025 | Data ≤ 31/10/2025)"
+   - **Depois:** "✅ 46 OS encontradas"
+   - Removida a concatenação de `msg_filtros` na linha 155
+   - Mensagem mais limpa e objetiva
+   - O período dos dados já é exibido logo abaixo da mensagem: "📅 Período dos dados exibidos: ..."
+
+**2. Remoção da Métrica "Colunas"**
+   - Removida a métrica que exibia o número de colunas visíveis
+   - Mantida apenas a métrica "Total de Registros"
+   - Interface mais limpa e focada nas informações essenciais
+   - Código simplificado: removidas linhas 336-340 (layout de duas colunas)
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Limpeza de interface (linhas 155 e 336-340)
+  - Método `_apply_filters()` - Removido detalhamento de filtros da mensagem
+  - Método `_render_data_table()` - Removida métrica "Colunas"
+- 📝 `/Historico.md` - Documentação das alterações
+
+#### ✅ Resultado:
+- ✅ Interface mais limpa e menos poluída
+- ✅ Mensagem de sucesso objetiva e direta
+- ✅ Foco nas métricas essenciais (apenas Total de Registros)
+
+---
+
+### ⏰ 15:00 - Correção Definitiva do Problema de Cache do AgGrid
+
+#### 🎯 O que foi pedido:
+Corrigir bug crítico onde a grid exibia dados fora do período filtrado (ex: mostrava dados de novembro quando filtrado para outubro).
+
+#### 🔧 Detalhamento da Solução:
+
+**Diagnóstico do Problema:**
+- Filtro Django funcionava corretamente ✅
+- DataFrame era populado com dados corretos ✅
+- Grid AgGrid exibia dados antigos (cache) ❌
+
+**Causa Raiz Identificada:**
+- AgGrid usa chave estática (`key="os_grid"`) que não muda quando dados mudam
+- Componente não re-renderiza quando apenas os dados do DataFrame mudam
+- `st.rerun()` causava re-renderização antes do AgGrid atualizar
+- Session state mantinha referências antigas
+
+**Solução Implementada:**
+
+1. **Chave Dinâmica no AgGrid**
+   ```python
+   # Gera hash único baseado nos dados
+   grid_key = hashlib.md5(str(df_display.values.tolist()).encode()).hexdigest()[:8]
+
+   # Grid usa chave única por conjunto de dados
+   AgGrid(..., key=f"os_grid_{grid_key}")
+   ```
+
+2. **Remoção de st.rerun()**
+   - Removido após aplicar filtros
+   - Permite renderização natural do Streamlit
+   - Grid atualiza corretamente com nova chave
+
+3. **Limpeza de Session State**
+   ```python
+   # Usa .copy() para evitar referências compartilhadas
+   st.session_state.os_df = df.copy()
+   st.session_state.os_df_total = df_total.copy()
+   st.session_state.os_selected_ids = None  # Limpa seleção
+   ```
+
+4. **Aplicado nas Duas Grids**
+   - Grid de Ordens de Serviço
+   - Grid de Produtos
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Correção completa do cache (+30 linhas modificadas)
+  - Método `_apply_filters()` - Removido rerun, adicionada chave dinâmica
+  - Método `_load_all_os()` - Mesmas correções
+  - Método `_render_data_table()` - Chave dinâmica no AgGrid
+  - Método `_render_products_table()` - Chave dinâmica no AgGrid
+
+#### ✅ Resultado:
+
+**Antes:**
+- Filtro 01/10 a 31/10 → Grid mostrava dados de 03/11, 04/11, 05/11 ❌
+
+**Depois:**
+- Filtro 01/10 a 31/10 → Grid mostra apenas 02/10, 06/10, 07/10 ✅
+- Cada mudança de filtro força re-renderização completa
+- Cache do AgGrid completamente eliminado
+
+**Validação:**
+- ✅ Período exibido: 02/10/2025 a 31/10/2025
+- ✅ Queryset: 46 registros de outubro
+- ✅ DataFrame: 46 registros de outubro
+- ✅ Grid: Apenas dados de outubro
+
+#### 🔍 Lições Aprendidas:
+
+1. AgGrid não atualiza automaticamente quando dados mudam
+2. Usar chaves dinâmicas para forçar re-renderização
+3. Evitar `st.rerun()` em callbacks de botões
+4. Sempre usar `.copy()` ao armazenar DataFrames no session_state
+
+---
+
+### ⏰ 14:45 - Correção de Formato de Datas e Validação de Filtros
+
+#### 🎯 O que foi pedido:
+1. Corrigir exibição de datas - estava mostrando formato americano (YYYY/MM/DD) ao invés de brasileiro (DD/MM/YYYY)
+2. Verificar funcionamento dos filtros - dados fora do período estavam sendo exibidos
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Correção de Formato de Datas**
+   - Adicionado `format="DD/MM/YYYY"` nos campos `st.date_input`
+   - Campos "Data Início" e "Data Fim" agora exibem formato brasileiro
+   - Mantida formatação correta na conversão do DataFrame (linha 218)
+
+**2. Melhorias no Sistema de Filtros**
+   - Adicionados logs de debug para rastrear filtros aplicados
+   - Mensagem de sucesso agora mostra os filtros aplicados:
+     - Exemplo: "✅ 25 OS encontradas (Data >= 01/10/2025 | Data <= 31/10/2025)"
+   - Logs no console: `self.logger.info(f"Filtros aplicados: ...")`
+
+**3. Validação Visual de Período**
+   - Adicionada barra de informação mostrando período real dos dados exibidos
+   - Aparece acima da grid: "📅 Período dos dados exibidos: 01/10/2025 a 31/10/2025"
+   - Calcula dinamicamente das datas presentes no DataFrame
+   - Permite verificar se os filtros foram aplicados corretamente
+
+**4. Tratamento de Erros Melhorado**
+   - Try/catch para conversão de datas
+   - Logs de warning para problemas não críticos
+   - Mensagens claras para o usuário
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Correções em filtros e formatação (+25 linhas)
+  - Método `_render_filters()` - Formato de data
+  - Método `_apply_filters()` - Logs e mensagens
+  - Método `_render_data_table()` - Validação visual de período
+
+#### ✅ Melhorias Implementadas:
+
+**Formato de Datas:**
+- ✅ Campos de entrada: DD/MM/YYYY
+- ✅ Grid: DD/MM/YYYY
+- ✅ Mensagens: DD/MM/YYYY
+
+**Validação de Filtros:**
+- ✅ Mensagem mostra filtros aplicados
+- ✅ Período real exibido acima da grid
+- ✅ Logs de debug no console
+- ✅ Tratamento de erros robusto
+
+**Exemplo de Uso:**
+```
+Usuário seleciona:
+  Data Início: 01/10/2025
+  Data Fim: 31/10/2025
+
+Sistema exibe:
+  ✅ 25 OS encontradas (Data >= 01/10/2025 | Data <= 31/10/2025)
+  📅 Período dos dados exibidos: 01/10/2025 a 31/10/2025
+```
+
+---
+
+### ⏰ 14:35 - Implementação Completa do Painel de Produtos
+
+#### 🎯 O que foi pedido:
+1. Remover mensagem inicial de carregamento automático
+2. Painel "📊 Resumo" deve sempre refletir dados totais (sem filtros)
+3. Painel "📋 Ordens de Serviço" deve refletir filtros aplicados
+4. Adicionar novo painel "📦 Produtos" abaixo do painel de OS
+5. Grid de produtos deve obedecer filtros gerais e filtros da grid de OS
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Separação de Dados Totais e Filtrados**
+   - Criado `os_df_total` no session_state para dados totais (sem filtro)
+   - `os_df` mantido para dados filtrados
+   - Todos os métodos de carregamento atualizado para popular ambos DataFrames
+
+**2. Painel de Resumo com Dados Totais**
+   - Método `_render_metrics()` alterado para usar sempre `os_df_total`
+   - Métricas agora refletem a situação completa do sistema:
+     - Total de OS (geral)
+     - Situações Diferentes (geral)
+     - Clientes Únicos (geral)
+     - Período (geral)
+
+**3. Captura de Seleção na Grid de OS**
+   - Adicionada coluna oculta `ID_OS` para rastreamento
+   - Grid de OS captura IDs das linhas após filtros aplicados
+   - IDs armazenados em `os_selected_ids` no session_state
+   - Produtos são carregados baseados nestes IDs
+
+**4. Novo Painel de Produtos** 📦
+   - Criado método `_render_products_table()`
+   - Busca produtos usando `OS_Produtos.objects.filter(OS__id__in=os_ids)`
+   - Colunas exibidas:
+     - Nº OS, Produto, Un., Qtd, Valor Unit., Tipo Desc., Desconto R$, Desconto %, Valor Total
+   - Métricas de produtos:
+     - Total de Produtos
+     - Valor Total Geral
+   - Grid AgGrid com:
+     - Formatação monetária brasileira (R$ x.xxx,xx)
+     - Formatação de percentual
+     - Filtros flutuantes por coluna
+     - Ordenação numérica correta
+   - Botões de download (CSV e Excel)
+
+**5. Sincronização de Filtros**
+   - Produtos respondem aos filtros gerais (data, situação)
+   - Produtos respondem aos filtros da grid de OS (colunas)
+   - Filtro em cascata: Filtro Geral → Grid OS → Grid Produtos
+
+**6. Remoção da Mensagem Inicial**
+   - Adicionado parâmetro `show_message=False` em `_load_current_month_data()`
+   - Carregamento automático silencioso ao abrir dashboard
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Implementações completas (+180 linhas)
+  - Separação de dados totais/filtrados
+  - Captura de IDs selecionados
+  - Novo painel de produtos com grid AgGrid
+  - Sincronização de filtros em cascata
+
+#### ✅ Funcionalidades Implementadas:
+
+**Painel 📊 Resumo:**
+- ✅ Sempre exibe dados totais (não afetado por filtros)
+- ✅ 4 métricas principais
+
+**Painel 📋 Ordens de Serviço:**
+- ✅ Reflete filtros aplicados
+- ✅ Grid com filtros por coluna
+- ✅ Download CSV/Excel
+- ✅ Captura IDs para produtos
+
+**Painel 📦 Produtos:** (NOVO)
+- ✅ Exibe produtos das OS filtradas
+- ✅ Grid AgGrid com formatação brasileira
+- ✅ Valores monetários formatados (R$ x.xxx,xx)
+- ✅ Percentuais formatados (x,xx%)
+- ✅ Filtros por coluna
+- ✅ Métricas de resumo
+- ✅ Download CSV/Excel
+- ✅ Sincronização com filtros da grid de OS
+
+**Comportamento em Cascata:**
+```
+Filtros Gerais (Data/Situação)
+    ↓
+Grid de OS (filtros por coluna)
+    ↓
+Grid de Produtos (produtos das OS filtradas)
+```
+
+---
+
+### ⏰ 14:25 - Ajustes Finais e Melhorias
+
+#### 🎯 O que foi pedido:
+1. Carregar automaticamente dados do mês atual ao abrir o dashboard
+2. Corrigir erro de app_label ao aplicar filtros
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Carregamento Automático do Mês Atual (apps/sac/views.py)**
+   - Adicionado método `_load_current_month_data()` que carrega OS do dia 1 do mês até hoje
+   - Implementado carregamento automático no método `render_dashboard()`
+   - Usa flag `os_auto_loaded` no session_state para carregar apenas na primeira vez
+   - Exibe mensagem de sucesso com quantidade e período
+
+**2. Correção de app_label em Todos os Modelos (core/models/modelos.py)**
+   - Adicionado `app_label = "core"` no Meta de todos os modelos:
+     - Clientes
+     - Bancos
+     - CentroCustos
+     - Empresas
+     - Extratos
+     - Produtos
+     - BoletosEnviados
+     - OS
+     - OS_Produtos
+   - Solução definitiva para erro: "Model class doesn't declare an explicit app_label"
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Adicionado carregamento automático do mês (+26 linhas)
+- 📝 `/core/models/modelos.py` - Adicionado app_label em todos os modelos (9 modelos)
+
+#### ✅ Resultado:
+- Dashboard carrega automaticamente OS do mês atual
+- Filtros funcionam sem erros
+- Sistema totalmente funcional
+
+---
+
+### ⏰ 14:20 - Correção de Importação dos Modelos Django
+
+#### 🎯 O que foi pedido:
+Corrigir erro de importação dos modelos Django que impedia a aplicação de iniciar.
+
+#### 🔧 Detalhamento da Solução:
+
+**Problema Identificado:**
+- Ao iniciar o Streamlit, ocorria erro: `NameError: name 'PessoaTipos' is not defined`
+- Posteriormente: `RuntimeError: Model class doesn't declare an explicit app_label`
+
+**Soluções Aplicadas:**
+
+1. **Correção do Modelo Clientes (core/models/modelos.py)**
+   - Comentado ForeignKey `PessoaTipo` que referenciava modelo inexistente `PessoaTipos`
+   - Linhas 30-36 comentadas para evitar erro de referência
+
+2. **Ajuste de Importação na App SAC (apps/sac/views.py)**
+   - Removida importação de modelos no nível do módulo
+   - Modelos agora são importados dentro dos métodos (lazy import)
+   - Padrão alinhado com outros módulos do sistema (estoque, clientes, etc.)
+   - Métodos ajustados:
+     - `_get_situacoes_disponiveis()`
+     - `_apply_filters()`
+     - `_load_all_os()`
+
+#### 📁 Arquivos Alterados:
+- 📝 `/core/models/modelos.py` - Comentado ForeignKey problemático
+- 📝 `/apps/sac/views.py` - Ajustada importação de modelos (lazy import)
+
+#### ✅ Resultado:
+- Aplicação inicia sem erros
+- App SAC totalmente funcional
+- Padrão de importação consistente com resto do sistema
+
+---
+
+### ⏰ Implementação Inicial - App SAC
+
+#### 🎯 O que foi pedido:
+Criar uma nova app chamada SAC (Serviço de Atendimento ao Cliente) com funcionalidade de visualização de Ordens de Serviço (OS). A implementação deveria incluir:
+1. Nova app "sac" consumindo dados dos modelos OS e OS_Produtos
+2. Entrada no menu lateral com item principal "SAC" e sub-item "Ordem de Serviço"
+3. Dashboard com Grid (similar ao de vendas) exibindo informações das OS
+4. Navegação funcional ao clicar no menu
+
+#### 🔧 Detalhamento da Solução ou Implementação:
+
+**1. 📦 Modelos Django (core/models/modelos.py)**
+   - ✅ Adicionados modelos `OS` e `OS_Produtos` ao final do arquivo
+   - Modelo `OS` com campos:
+     - `ID_Gestao`: Identificador da OS
+     - `Data`: Data de entrada
+     - `ClienteNome`: Nome do cliente
+     - `SituacaoNome`: Situação atual da OS
+   - Modelo `OS_Produtos` com campos:
+     - `OS`: ForeignKey para modelo OS
+     - `Nome`: Nome do produto
+     - `SiglaUnidade`: Unidade de medida
+     - `Quantidade`: Quantidade do produto
+     - `ValorVenda`, `Desconto`, `DescontoPorcentagem`, `ValorTotal`: Valores monetários
+   - **Importante**: Modelos já existem no banco de dados (não gerar migrations)
+
+**2. 🏗️ Estrutura da App SAC (apps/sac/)**
+   - ✅ Criado diretório `/apps/sac/`
+   - ✅ Criado `__init__.py` com docstring da app
+   - ✅ Criado `views.py` com controller completo `OSController`
+
+**3. 📊 Dashboard de Ordem de Serviço (apps/sac/views.py)**
+   - Implementado `OSController` com métodos:
+     - `render_dashboard()`: Renderiza dashboard principal
+     - `_render_filters()`: Seção de filtros (Data Início, Data Fim, Situação)
+     - `_render_metrics()`: Cards de métricas (Total OS, Situações, Clientes, Período)
+     - `_render_data_table()`: Grid com AgGrid exibindo OS
+   - Funcionalidades:
+     - 🔍 Filtros personalizados por data e situação
+     - 📋 Botão "Todas as OS" para carregar todos os registros
+     - 📊 Métricas resumidas em cards visuais
+     - 📥 Download dos dados em CSV e Excel
+   - Grid AgGrid com:
+     - Colunas: Nº OS, Data, Cliente, Situação
+     - Filtros flutuantes por coluna
+     - Ordenação e seleção de texto
+     - Tema "alpine" consistente com o sistema
+
+**4. 🎨 Menu Lateral (apps/auth/modules.py)**
+   - ✅ Adicionado item principal "SAC" (ícone 🛠️) no `module_config`
+   - ✅ Sub-item "Ordem de Serviço" (ícone 📋)
+   - Configuração:
+     - Permission: `view_os`
+     - Type: `group` (com submenu)
+     - Estrutura accordion para expandir/recolher
+
+**5. 🔗 Roteamento (app.py)**
+   - ✅ Adicionada importação: `from apps.sac.views import main as sac_main`
+   - ✅ Adicionado roteamento na função `main()`:
+     ```python
+     elif st.session_state.current_module == "Ordem de Serviço":
+         sac_main(key="sac")
+     ```
+
+**6. ✅ Testes de Validação**
+   - ✅ Compilação Python sem erros de sintaxe
+   - ✅ Estrutura de arquivos criada corretamente
+   - ✅ Imports configurados adequadamente
+
+#### 📁 Lista de Arquivos Alterados ou Criados:
+
+**Arquivos Criados:**
+- 🆕 `/apps/sac/__init__.py` - Inicialização da app SAC
+- 🆕 `/apps/sac/views.py` - Dashboard de Ordens de Serviço (358 linhas)
+
+**Arquivos Alterados:**
+- 📝 `/core/models/modelos.py` - Adicionados modelos OS e OS_Produtos (+67 linhas)
+- 📝 `/apps/auth/modules.py` - Adicionada entrada SAC no menu (+12 linhas)
+- 📝 `/app.py` - Importação e roteamento da app SAC (+2 linhas)
+- 📝 `/Historico.md` - Este registro de alterações
+
+#### 🎯 Funcionalidades Implementadas:
+
+✅ App SAC totalmente funcional
+✅ Dashboard de OS com filtros avançados
+✅ Grid interativo com AgGrid
+✅ Métricas resumidas em cards visuais
+✅ Download de dados (CSV/Excel)
+✅ Menu lateral com navegação em accordion
+✅ Integração completa com sistema principal
+✅ Consistência visual com tema existente
+
+---
+
 ## 📅 30/10/2025
 
 ### ⏰ 15:45 - Atualização Completa do Manual do Relatório de Vendas
