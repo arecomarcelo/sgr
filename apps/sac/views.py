@@ -11,6 +11,8 @@ import pandas as pd
 import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder
 
+from infrastructure.database.repositories_sac import SacAtualizacaoRepository
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,6 +21,7 @@ class OSController:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.atualizacao_repository = SacAtualizacaoRepository()
 
     def render_dashboard(self):
         """Renderiza dashboard principal de OS"""
@@ -44,6 +47,7 @@ class OSController:
                 self._load_current_month_data(show_message=False)
 
             # Renderizar seções
+            self._render_update_info()
             self._render_filters()
             self._render_metrics()
             self._render_data_table()
@@ -52,6 +56,61 @@ class OSController:
         except Exception as e:
             self.logger.error(f"Erro no dashboard de OS: {str(e)}")
             st.error(f"❌ Erro ao carregar dashboard: {str(e)}")
+
+    def _render_update_info(self):
+        """Renderiza informações de atualização do RPA de SAC"""
+        try:
+            with st.expander("🔄 Informações de Atualização", expanded=True):
+                info = self._get_informacoes_atualizacao()
+
+                col1, col2, col3, col4 = st.columns(4)
+
+                with col1:
+                    st.metric("Data", info.get("data", "N/A"))
+                with col2:
+                    st.metric("Hora", info.get("hora", "N/A"))
+                with col3:
+                    st.metric("Período", info.get("periodo", "N/A"))
+                with col4:
+                    st.metric("Inseridos", info.get("inseridos", 0))
+
+        except Exception as e:
+            self.logger.warning(
+                f"Erro ao carregar informações de atualização: {str(e)}"
+            )
+
+    def _get_informacoes_atualizacao(self):
+        """Obtém informações da última atualização do RPA de SAC"""
+        try:
+            df = self.atualizacao_repository.get_ultima_atualizacao()
+
+            if df.empty:
+                return {
+                    "data": "N/A",
+                    "hora": "N/A",
+                    "periodo": "N/A",
+                    "inseridos": 0,
+                    "atualizados": 0,
+                }
+
+            registro = df.iloc[0]
+            return {
+                "data": registro.get("Data", "N/A"),
+                "hora": registro.get("Hora", "N/A"),
+                "periodo": registro.get("Periodo", "N/A"),
+                "inseridos": registro.get("Inseridos", 0),
+                "atualizados": registro.get("Atualizados", 0),
+            }
+
+        except Exception as e:
+            self.logger.error(f"Erro ao obter informações de atualização: {str(e)}")
+            return {
+                "data": "N/A",
+                "hora": "N/A",
+                "periodo": "N/A",
+                "inseridos": 0,
+                "atualizados": 0,
+            }
 
     def _render_filters(self):
         """Renderiza seção de filtros"""
@@ -320,9 +379,10 @@ class OSController:
             # Preparar dados para exibição
             df_display = df.copy()
 
-            # Renomear colunas para exibição
+            # Renomear colunas para exibição (INVERTIDO)
             column_mapping = {
-                "ID_Gestao": "Nº OS",
+                "id": "OS Código",
+                "ID_Gestao": "ID_OS",
                 "Data": "Data",
                 "ClienteNome": "Cliente",
                 "SituacaoNome": "Situação",
@@ -337,10 +397,6 @@ class OSController:
 
             # Mostrar informações do dataset
             st.metric("Total de Registros", len(df_display))
-
-            # Adicionar coluna ID para rastreamento (manter id original do df)
-            if "id" in df.columns:
-                df_display.insert(0, "ID_OS", df["id"].values)
 
             # Configurar AgGrid
             gb = GridOptionsBuilder.from_dataframe(df_display)
@@ -360,14 +416,12 @@ class OSController:
                 sortable=True,
             )
 
-            # Ocultar coluna ID_OS (usada apenas para rastreamento)
-            if "ID_OS" in df_display.columns:
-                gb.configure_column("ID_OS", hide=True)
-
             # Configuração personalizada por coluna
             for col in df_display.columns:
-                if col == "Nº OS":
-                    gb.configure_column(col, headerName="Nº OS", width=120)
+                if col == "OS Código":
+                    gb.configure_column(col, headerName="OS Código", width=120)
+                elif col == "ID_OS":
+                    gb.configure_column(col, headerName="ID_OS", width=150, hide=True)
                 elif col == "Data":
                     gb.configure_column(
                         col,
@@ -400,11 +454,11 @@ class OSController:
                 key=f"os_grid_{grid_key}",
             )
 
-            # Capturar IDs das OS filtradas na grid
+            # Capturar IDs das OS filtradas na grid (usa "OS Código" que contém o id/PK)
             if grid_response and "data" in grid_response:
                 filtered_df = pd.DataFrame(grid_response["data"])
-                if not filtered_df.empty and "ID_OS" in filtered_df.columns:
-                    st.session_state.os_selected_ids = filtered_df["ID_OS"].tolist()
+                if not filtered_df.empty and "OS Código" in filtered_df.columns:
+                    st.session_state.os_selected_ids = filtered_df["OS Código"].tolist()
                 else:
                     # Se não houver filtro aplicado, usar todos os IDs
                     if "id" in df.columns:
@@ -472,6 +526,7 @@ class OSController:
             # Converter para lista de dicionários
             produtos_data = list(
                 produtos_queryset.values(
+                    "OS__id",
                     "OS__ID_Gestao",
                     "Nome",
                     "SiglaUnidade",
@@ -491,9 +546,10 @@ class OSController:
             # Converter para DataFrame
             df_produtos = pd.DataFrame(produtos_data)
 
-            # Renomear colunas
+            # Renomear colunas (INVERTIDO - igual grid de OS)
             column_mapping = {
-                "OS__ID_Gestao": "Nº OS",
+                "OS__id": "OS Código",
+                "OS__ID_Gestao": "ID_OS",
                 "Nome": "Produto",
                 "SiglaUnidade": "Un.",
                 "Quantidade": "Qtd",
@@ -555,8 +611,10 @@ class OSController:
 
             # Configuração personalizada por coluna
             for col in df_produtos.columns:
-                if col == "Nº OS":
-                    gb.configure_column(col, headerName="Nº OS", width=120)
+                if col == "OS Código":
+                    gb.configure_column(col, headerName="OS Código", width=120)
+                elif col == "ID_OS":
+                    gb.configure_column(col, headerName="ID_OS", width=150, hide=True)
                 elif col == "Produto":
                     gb.configure_column(col, headerName="Produto", width=250)
                 elif col == "Un.":

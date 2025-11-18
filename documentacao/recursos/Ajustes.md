@@ -225,6 +225,19 @@
 - Implementada app **SAC**
     - Dashboard **Ordem de Serviço**
 
+**18/11/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **08:55 - Commit 129**
+
+- **Dashboard SAC** ajustes:
+    - **Visualicação de OS Código**
+    - **Formatação de Campos %**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

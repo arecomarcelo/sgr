@@ -1,5 +1,491 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 18/11/2025
+
+### ⏰ 08:43 - Ocultar coluna ID_OS e ajustar grid de Produtos (SAC)
+
+#### 🎯 O que foi pedido:
+1. **Grid de OS**: Ocultar a coluna ID_OS (manter apenas OS Código visível)
+2. **Grid de Produtos**: Aplicar a mesma inversão da grid de OS (exibir OS Código ao invés de ID_OS)
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Grid de OS - Ocultar ID_OS (linha 424):**
+```python
+elif col == "ID_OS":
+    gb.configure_column(col, headerName="ID_OS", width=150, hide=True)
+```
+- ✅ Coluna ID_OS permanece no DataFrame (necessária para rastreamento)
+- ✅ Coluna ID_OS oculta na exibição (hide=True)
+- ✅ Apenas "OS Código" visível ao usuário
+
+**2. Grid de Produtos - Inversão de colunas:**
+
+**Query (linha 527-539):**
+```python
+# ANTES
+produtos_queryset.values(
+    "OS__ID_Gestao",  # Valores grandes
+    ...
+)
+
+# DEPOIS
+produtos_queryset.values(
+    "OS__id",         # Valores pequenos (PK)
+    "OS__ID_Gestao",  # Valores grandes
+    ...
+)
+```
+
+**Mapeamento (linha 550-561):**
+```python
+# ANTES
+column_mapping = {
+    "OS__ID_Gestao": "OS Código",
+    ...
+}
+
+# DEPOIS
+column_mapping = {
+    "OS__id": "OS Código",        # Valores pequenos visíveis
+    "OS__ID_Gestao": "ID_OS",     # Valores grandes ocultos
+    ...
+}
+```
+
+**Configuração AgGrid (linha 616-617):**
+```python
+elif col == "ID_OS":
+    gb.configure_column(col, headerName="ID_OS", width=150, hide=True)
+```
+
+**Resultado:**
+| Grid | Coluna | Valores | Visível? |
+|------|--------|---------|----------|
+| OS | OS Código | 959, 958, 957... | ✅ Sim |
+| OS | ID_OS | 326087049... | ❌ Não (oculta) |
+| Produtos | OS Código | 959, 958, 957... | ✅ Sim |
+| Produtos | ID_OS | 326087049... | ❌ Não (oculta) |
+
+#### 📁 Arquivos Alterados:
+- 📝 `apps/sac/views.py` - 3 alterações
+  - Linha 424: Grid OS - Ocultar coluna ID_OS (hide=True)
+  - Linha 527-561: Grid Produtos - Query e mapeamento invertidos
+  - Linha 616-617: Grid Produtos - Ocultar coluna ID_OS (hide=True)
+
+---
+
+### ⏰ 08:27 - Inversão de exibição das colunas ID_OS e OS Código (SAC)
+
+#### 🎯 O que foi pedido:
+Inverter a exibição das colunas na grid de OS. Os valores estavam sendo exibidos trocados:
+- **ID_OS** exibia valores de `id` (PK) → 959, 958, 957...
+- **OS Código** exibia valores de `ID_Gestao` → 326087049, 326139178...
+
+#### 🔧 Detalhamento da Solução:
+
+**Inversão realizada:**
+- **ID_OS** agora exibe `ID_Gestao` → valores grandes (326087049...)
+- **OS Código** agora exibe `id` (PK) → valores pequenos (959, 958...)
+
+**Alterações no código:**
+
+1. **Mapeamento de colunas (linha 383-389):**
+```python
+# ANTES
+column_mapping = {
+    "ID_Gestao": "OS Código",
+    ...
+}
+df_display.insert(0, "ID_OS", df["id"].values)
+
+# DEPOIS
+column_mapping = {
+    "id": "OS Código",
+    "ID_Gestao": "ID_OS",
+    ...
+}
+# Não precisa mais inserir ID_OS separadamente
+```
+
+2. **Configuração AgGrid (linha 419-435):**
+   - Removida lógica de ocultar coluna ID_OS
+   - Adicionada configuração para exibir ID_OS com width=150
+
+3. **Captura de IDs filtrados (linha 457-465):**
+```python
+# ANTES
+if "ID_OS" in filtered_df.columns:
+    st.session_state.os_selected_ids = filtered_df["ID_OS"].tolist()
+
+# DEPOIS
+if "OS Código" in filtered_df.columns:
+    st.session_state.os_selected_ids = filtered_df["OS Código"].tolist()
+```
+
+**Resultado:**
+| Coluna | Antes | Depois |
+|--------|-------|--------|
+| ID_OS | 959, 958, 957... (id/PK) | 326087049, 326139178... (ID_Gestao) |
+| OS Código | 326087049... (ID_Gestao) | 959, 958, 957... (id/PK) |
+
+#### 📁 Arquivos Alterados:
+- 📝 `apps/sac/views.py` - 3 alterações
+  - Linha 383-399: Mapeamento invertido de colunas
+  - Linha 419-435: Configuração AgGrid (adicionada coluna ID_OS)
+  - Linha 457-465: Captura de IDs usando coluna "OS Código"
+
+---
+
+### ⏰ 08:21 - Correção de campo para ID_Gestao nas Grids (SAC)
+
+#### 🎯 O que foi pedido:
+Corrigir erro no carregamento de dados do módulo SAC. O sistema estava tentando buscar o campo `OS_Codigo` que não existe no modelo `OS`. O campo correto é `ID_Gestao`.
+
+**Problema:**
+- Mensagem de erro: "ℹ️ Nenhum dado carregado ainda"
+- A query estava tentando buscar `OS_Codigo`, mas o campo no banco é `ID_Gestao`
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Análise do Modelo:**
+   - Verificado modelo `OS` em `core/models/modelos.py`
+   - Campo correto: `ID_Gestao` (CharField max_length=100)
+   - Campo inexistente: `OS_Codigo`
+
+**2. Correções Realizadas:**
+
+   **Grid de Ordens de Serviço:**
+   - **Query (linha 285):** `"OS_Codigo"` → `"ID_Gestao"`
+   - **Mapeamento (linha 384):** `"OS_Codigo": "OS Código"` → `"ID_Gestao": "OS Código"`
+   - Mantém exibição como "OS Código" para o usuário
+
+   **Grid de Produtos:**
+   - **Query (linha 534):** `"OS__OS_Codigo"` → `"OS__ID_Gestao"`
+   - **Mapeamento (linha 555):** `"OS__OS_Codigo": "OS Código"` → `"OS__ID_Gestao": "OS Código"`
+   - Mantém relacionamento com FK através de `OS__ID_Gestao`
+
+**Código Corrigido:**
+```python
+# Grid OS - Query (_queryset_to_dataframe)
+queryset.values(
+    "id",
+    "ID_Gestao",      # ✅ Correto (campo do banco)
+    "Data",
+    "ClienteNome",
+    "SituacaoNome",
+)
+
+# Grid OS - Mapeamento
+column_mapping = {
+    "ID_Gestao": "OS Código",  # ✅ Campo do banco → Nome exibido
+    ...
+}
+
+# Grid Produtos - Query
+produtos_queryset.values(
+    "OS__ID_Gestao",  # ✅ Correto (FK + campo)
+    "Nome",
+    ...
+)
+
+# Grid Produtos - Mapeamento
+column_mapping = {
+    "OS__ID_Gestao": "OS Código",  # ✅ FK + campo → Nome exibido
+    ...
+}
+```
+
+**3. Comportamento Mantido:**
+   - ✅ Carregamento automático do mês atual ao abrir
+   - ✅ Filtros por data e situação funcionando
+   - ✅ Exibição de métricas (total, situações, clientes, período)
+   - ✅ Grid de produtos vinculados às OS selecionadas
+   - ✅ Download CSV e Excel
+
+#### 📁 Arquivos Alterados:
+- 📝 `apps/sac/views.py` - 4 correções de campo
+  - Linha 285: Query OS - `"ID_Gestao"`
+  - Linha 384: Mapeamento OS - `"ID_Gestao": "OS Código"`
+  - Linha 534: Query Produtos - `"OS__ID_Gestao"`
+  - Linha 555: Mapeamento Produtos - `"OS__ID_Gestao": "OS Código"`
+
+---
+
+## 📅 17/11/2025
+
+### ⏰ 17:49 - Substituição de ID_Gestao por OS_Codigo nas Grids (SAC)
+
+#### 🎯 O que foi pedido:
+Exibir o campo `OS_Codigo` ao invés de `ID_Gestao` nas grids de OS e Produtos.
+
+**Exemplo:**
+- **Antes:** Exibia `326087049` (ID_Gestao)
+- **Depois:** Exibe `4298` (OS_Codigo)
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Grid de Ordens de Serviço**
+   - **Query:** Linha 285 - Alterado `"ID_Gestao"` → `"OS_Codigo"`
+   - **Mapeamento:** Linha 384 - `"OS_Codigo": "OS Código"`
+   - **Configuração Grid:** Linha 428 - headerName "OS Código"
+
+**2. Grid de Produtos**
+   - **Query:** Linha 534 - Alterado `"OS__ID_Gestao"` → `"OS__OS_Codigo"`
+   - **Mapeamento:** Linha 555 - `"OS__OS_Codigo": "OS Código"`
+   - **Configuração Grid:** Linha 617 - headerName "OS Código"
+
+**Código:**
+```python
+# Grid OS - Query
+queryset.values("id", "OS_Codigo", "Data", ...)  # Era: "ID_Gestao"
+
+# Grid OS - Mapeamento
+column_mapping = {
+    "OS_Codigo": "OS Código",  # Era: "ID_Gestao": "Nº OS"
+    ...
+}
+
+# Grid Produtos - Query
+produtos.values("OS__OS_Codigo", ...)  # Era: "OS__ID_Gestao"
+
+# Grid Produtos - Mapeamento
+column_mapping = {
+    "OS__OS_Codigo": "OS Código",  # Era: "OS__ID_Gestao": "Nº OS"
+    ...
+}
+```
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Alteração em 4 locais
+  - Linha 285: Query OS - Campo `OS_Codigo`
+  - Linha 384: Mapeamento OS - `"OS_Codigo": "OS Código"`
+  - Linha 534: Query Produtos - Campo `OS__OS_Codigo`
+  - Linha 555: Mapeamento Produtos - `"OS__OS_Codigo": "OS Código"`
+- 📝 `/Historico.md` - Documentação
+
+#### ✅ Resultado:
+- ✅ Grid de OS exibe `4298` (OS_Codigo) ao invés de `326087049` (ID_Gestao)
+- ✅ Grid de Produtos exibe `4298` (OS_Codigo) ao invés de `326087049` (ID_Gestao)
+- ✅ Campo correto sendo exibido nas duas grids
+- ✅ Coluna renomeada para "OS Código"
+
+---
+
+### ⏰ 17:34 - Remoção do Card "Atualizados" (SAC)
+
+#### 🎯 O que foi pedido:
+Remover o card "Atualizados" do painel de informações de atualização no módulo SAC.
+
+#### 🔧 Detalhamento da Solução:
+- **Arquivo:** `/apps/sac/views.py`
+- **Método:** `_render_update_info()` - Linhas 66-75
+- **Alterações:**
+  - Reduzido de 5 para 4 colunas
+  - Removido `col5` com métrica "Atualizados"
+
+**Estrutura Atual:**
+```
+🔄 Informações de Atualização
+┌─────────┬──────────┬────────────┬────────────┐
+│  Data   │   Hora   │  Período   │ Inseridos  │
+└─────────┴──────────┴────────────┴────────────┘
+```
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Linhas 66-75
+- 📝 `/Historico.md` - Documentação
+
+#### ✅ Resultado:
+- ✅ Painel mais limpo com 4 cards ao invés de 5
+- ✅ Foco nas informações mais relevantes
+
+---
+
+### ⏰ 17:32 - Ajuste: Painel de Atualização Expandido por Padrão (SAC)
+
+#### 🎯 O que foi pedido:
+Ajustar o painel "🔄 Informações de Atualização" no módulo SAC para iniciar expandido, igual ao módulo de Vendas.
+
+#### 🔧 Detalhamento da Solução:
+- **Arquivo:** `/apps/sac/views.py`
+- **Método:** `_render_update_info()` - Linha 63
+- **Alteração:** `expanded=False` → `expanded=True`
+
+#### 📁 Arquivos Alterados:
+- 📝 `/apps/sac/views.py` - Linha 63
+- 📝 `/Historico.md` - Documentação
+
+#### ✅ Resultado:
+- ✅ Painel inicia expandido, exibindo informações de atualização imediatamente
+- ✅ Comportamento consistente com módulo de Vendas
+
+---
+
+### ⏰ 17:27 - Implementação de Informações de Atualização no Módulo SAC
+
+#### 🎯 O que foi pedido:
+Implementar a seção "🔄 Informações de Atualização" no módulo SAC, buscando dados do modelo `RPA_Atualizacao` com `RPA_id = 9`.
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Criação do Repository para SAC**
+   - Novo arquivo: `infrastructure/database/repositories_sac.py`
+   - Classe: `SacAtualizacaoRepository`
+   - Métodos implementados:
+     - `get_ultima_atualizacao()` - Busca última atualização do RPA SAC
+     - `get_historico_atualizacoes()` - Busca histórico de atualizações
+     - `health_check()` - Verifica saúde da conexão
+
+**2. Query Implementada**
+   ```sql
+   SELECT "Data", "Hora", "Periodo", "Inseridos", "Atualizados"
+   FROM "RPA_Atualizacao"
+   WHERE "RPA_id" = 9
+   ORDER BY "Data" DESC, "Hora" DESC
+   LIMIT 1
+   ```
+
+**3. Modificações no OSController**
+   - Importação do `SacAtualizacaoRepository`
+   - Inicialização do repository no `__init__()`
+   - Método `_render_update_info()` - Renderiza seção de informações
+   - Método `_get_informacoes_atualizacao()` - Busca e formata dados
+   - Integrado no `render_dashboard()` antes dos filtros
+
+**4. Estrutura do Expander**
+   ```python
+   🔄 Informações de Atualização (colapsado por padrão)
+   ├── Data
+   ├── Hora
+   ├── Período
+   ├── Inseridos
+   └── Atualizados
+   ```
+
+**5. Tratamento de Erros**
+   - Valores padrão "N/A" e 0 quando não há dados
+   - Logging de erros sem quebrar a interface
+   - Expander colapsado para não poluir visualmente
+
+#### 📁 Arquivos Alterados/Criados:
+- 📝 `/infrastructure/database/repositories_sac.py` - **CRIADO** - Repository para RPA SAC
+- 📝 `/apps/sac/views.py` - Integração das informações de atualização
+  - Importações - Linha 14
+  - `__init__()` - Linha 24
+  - `_render_update_info()` - Linhas 59-81
+  - `_get_informacoes_atualizacao()` - Linhas 83-114
+  - `render_dashboard()` - Linha 50
+- 📝 `/Historico.md` - Documentação das alterações
+
+#### ✅ Resultado:
+- ✅ Módulo SAC agora exibe informações de atualização do RPA
+- ✅ Busca correta pelo RPA_id = 9 (SAC)
+- ✅ Interface consistente com módulo de Vendas
+- ✅ Estrutura reutilizável para outros módulos
+- ✅ Tratamento robusto de erros
+
+---
+
+### ⏰ 17:07 - Correção do Filtro RPA_id
+
+#### 🎯 O que foi pedido:
+Corrigir a busca para usar diretamente `RPA_id = 7` ao invés de fazer JOIN com a tabela RPA.
+
+#### 🔧 Detalhamento da Solução:
+
+**Query Corrigida**
+   ```sql
+   -- Antes (menos eficiente)
+   SELECT ra."Data", ra."Hora", ra."Periodo", ra."Inseridos", ra."Atualizados"
+   FROM "RPA_Atualizacao" ra
+   INNER JOIN "RPA" r ON ra."RPA_id" = r.id
+   WHERE r."Nome" = 'Vendas'
+   ORDER BY ra."Data" DESC, ra."Hora" DESC
+   LIMIT 1
+
+   -- Depois (mais eficiente e correto)
+   SELECT "Data", "Hora", "Periodo", "Inseridos", "Atualizados"
+   FROM "RPA_Atualizacao"
+   WHERE "RPA_id" = 7
+   ORDER BY "Data" DESC, "Hora" DESC
+   LIMIT 1
+   ```
+
+**Benefícios da Alteração:**
+   - ✅ Busca direta sem necessidade de JOIN
+   - ✅ Mais rápida e eficiente
+   - ✅ Usa o ID correto do RPA de Vendas (7)
+   - ✅ Evita possíveis problemas com nome do RPA
+
+#### 📁 Arquivos Alterados:
+- 📝 `/infrastructure/database/repositories_vendas.py` - Correção do filtro
+  - Método `get_ultima_atualizacao()` - Linhas 439-463
+  - Método `get_historico_atualizacoes()` - Linhas 465-489
+- 📝 `/Historico.md` - Documentação da correção
+
+#### ✅ Resultado:
+- ✅ Query otimizada sem JOIN desnecessário
+- ✅ Busca correta pelo RPA_id = 7
+- ✅ Informações de atualização preenchidas corretamente
+
+---
+
+### ⏰ 17:02 - Migração para Modelo RPA_Atualizacao
+
+#### 🎯 O que foi pedido:
+1. Ajustar o módulo de Vendas para buscar informações de atualização do novo modelo `RPA_Atualizacao`
+2. Substituir a busca que era feita na tabela `VendaAtualizacao` pela nova tabela `RPA_Atualizacao`
+3. Filtrar especificamente as atualizações do RPA de "Vendas"
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Novo Modelo Implementado**
+   - ✅ Modelo `RPA_Atualizacao` já criado e migrado
+   - Estrutura: Data, Hora, Periodo, Inseridos, Atualizados, RPA (ForeignKey)
+   - Tabela no banco: `RPA_Atualizacao`
+
+**2. Ajustes no Repository**
+   - **Arquivo:** `infrastructure/database/repositories_vendas.py`
+   - **Classe:** `VendaAtualizacaoRepository`
+   - **Métodos Modificados:**
+     - `get_ultima_atualizacao()` - Agora busca de `RPA_Atualizacao` com JOIN em `RPA`
+     - `get_historico_atualizacoes()` - Mesma lógica aplicada para histórico
+
+**3. Query Atualizada**
+   ```sql
+   -- Antes
+   SELECT * FROM "VendaAtualizacao" ORDER BY "Data" DESC, "Hora" DESC LIMIT 1
+
+   -- Depois
+   SELECT ra."Data", ra."Hora", ra."Periodo", ra."Inseridos", ra."Atualizados"
+   FROM "RPA_Atualizacao" ra
+   INNER JOIN "RPA" r ON ra."RPA_id" = r.id
+   WHERE r."Nome" = 'Vendas'
+   ORDER BY ra."Data" DESC, ra."Hora" DESC
+   LIMIT 1
+   ```
+
+**4. Filtro por RPA Específico**
+   - Adicionado filtro `WHERE r."Nome" = 'Vendas'`
+   - Garante que apenas atualizações do RPA de Vendas sejam exibidas
+   - Permite reutilização da estrutura para outros RPAs
+
+#### 📁 Arquivos Alterados:
+- 📝 `/infrastructure/database/repositories_vendas.py` - Migração para RPA_Atualizacao
+  - Método `get_ultima_atualizacao()` - Linhas 439-464
+  - Método `get_historico_atualizacoes()` - Linhas 466-491
+- 📝 `/Historico.md` - Documentação das alterações
+
+#### ✅ Resultado:
+- ✅ Informações de atualização agora buscadas da tabela `RPA_Atualizacao`
+- ✅ Filtro por RPA específico ("Vendas") implementado
+- ✅ Compatibilidade mantida com o código existente (mesma interface)
+- ✅ Estrutura preparada para futuros RPAs (reutilizável)
+- ✅ Nenhuma alteração necessária no service ou views (apenas no repository)
+
+---
+
 ## 📅 12/11/2025
 
 ### ⏰ 15:30 - Limpeza de Interface

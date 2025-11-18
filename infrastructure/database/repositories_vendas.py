@@ -437,9 +437,17 @@ class VendaAtualizacaoRepository(BaseRepository, VendaAtualizacaoRepositoryInter
     """Repositório para informações de atualização de vendas"""
 
     def get_ultima_atualizacao(self) -> pd.DataFrame:
-        """Obtém informações da última atualização"""
+        """Obtém informações da última atualização do RPA de Vendas (RPA_id = 7)"""
         try:
-            query = 'SELECT * FROM "VendaAtualizacao" ORDER BY "Data" DESC, "Hora" DESC LIMIT 1'
+            # Buscar a última atualização da tabela RPA_Atualizacao
+            # filtrada pelo RPA de Vendas (RPA_id = 7)
+            query = '''
+                SELECT "Data", "Hora", "Periodo", "Inseridos", "Atualizados"
+                FROM "RPA_Atualizacao"
+                WHERE "RPA_id" = 7
+                ORDER BY "Data" DESC, "Hora" DESC
+                LIMIT 1
+            '''
 
             with connection.cursor() as cursor:
                 cursor.execute(query)
@@ -455,9 +463,17 @@ class VendaAtualizacaoRepository(BaseRepository, VendaAtualizacaoRepositoryInter
             raise DatabaseError(f"Erro ao buscar informações de atualização: {str(e)}")
 
     def get_historico_atualizacoes(self, limite: int = 10) -> pd.DataFrame:
-        """Obtém histórico de atualizações"""
+        """Obtém histórico de atualizações do RPA de Vendas (RPA_id = 7)"""
         try:
-            query = 'SELECT * FROM "VendaAtualizacao" ORDER BY "Data" DESC, "Hora" DESC LIMIT %s'
+            # Buscar histórico de atualizações da tabela RPA_Atualizacao
+            # filtrada pelo RPA de Vendas (RPA_id = 7)
+            query = '''
+                SELECT "Data", "Hora", "Periodo", "Inseridos", "Atualizados"
+                FROM "RPA_Atualizacao"
+                WHERE "RPA_id" = 7
+                ORDER BY "Data" DESC, "Hora" DESC
+                LIMIT %s
+            '''
 
             with connection.cursor() as cursor:
                 cursor.execute(query, [limite])
