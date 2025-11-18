@@ -267,9 +267,19 @@ class OS(models.Model):
         verbose_name_plural = "OS"
 
     ID_Gestao = models.CharField(max_length=100)
+    OS_Codigo = models.CharField(max_length=100)
     Data = models.DateField(verbose_name="Data Entrada")
     ClienteNome = models.CharField(max_length=100, verbose_name="Nome Cliente")
     SituacaoNome = models.CharField(max_length=100, verbose_name="Situação OS")
+
+    @classmethod
+    def truncate(cls):
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f'TRUNCATE TABLE "{cls._meta.db_table}" RESTART IDENTITY CASCADE'
+            )
 
     def __str__(self):
         return f"OS {self.ID_Gestao} - {self.ClienteNome}"

@@ -281,7 +281,7 @@ class OSController:
         try:
             data = list(
                 queryset.values(
-                    "id",
+                    "OS_Codigo",
                     "ID_Gestao",
                     "Data",
                     "ClienteNome",
@@ -381,7 +381,7 @@ class OSController:
 
             # Renomear colunas para exibição (INVERTIDO)
             column_mapping = {
-                "id": "OS Código",
+                "OS_Codigo": "OS Código",
                 "ID_Gestao": "ID_OS",
                 "Data": "Data",
                 "ClienteNome": "Cliente",
@@ -454,15 +454,15 @@ class OSController:
                 key=f"os_grid_{grid_key}",
             )
 
-            # Capturar IDs das OS filtradas na grid (usa "OS Código" que contém o id/PK)
+            # Capturar OS_Codigo das OS filtradas na grid (usa "OS Código" que contém o OS_Codigo)
             if grid_response and "data" in grid_response:
                 filtered_df = pd.DataFrame(grid_response["data"])
                 if not filtered_df.empty and "OS Código" in filtered_df.columns:
                     st.session_state.os_selected_ids = filtered_df["OS Código"].tolist()
                 else:
-                    # Se não houver filtro aplicado, usar todos os IDs
-                    if "id" in df.columns:
-                        st.session_state.os_selected_ids = df["id"].tolist()
+                    # Se não houver filtro aplicado, usar todos os OS_Codigo
+                    if "OS_Codigo" in df.columns:
+                        st.session_state.os_selected_ids = df["OS_Codigo"].tolist()
 
             # Seção de download
             st.markdown("---")
@@ -521,12 +521,12 @@ class OSController:
             from core.models.modelos import OS_Produtos
 
             # Buscar produtos das OS selecionadas
-            produtos_queryset = OS_Produtos.objects.filter(OS__id__in=os_ids)
+            produtos_queryset = OS_Produtos.objects.filter(OS__OS_Codigo__in=os_ids)
 
             # Converter para lista de dicionários
             produtos_data = list(
                 produtos_queryset.values(
-                    "OS__id",
+                    "OS__OS_Codigo",
                     "OS__ID_Gestao",
                     "Nome",
                     "SiglaUnidade",
@@ -548,7 +548,7 @@ class OSController:
 
             # Renomear colunas (INVERTIDO - igual grid de OS)
             column_mapping = {
-                "OS__id": "OS Código",
+                "OS__OS_Codigo": "OS Código",
                 "OS__ID_Gestao": "ID_OS",
                 "Nome": "Produto",
                 "SiglaUnidade": "Un.",

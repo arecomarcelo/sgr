@@ -2,6 +2,124 @@
 
 ## 📅 18/11/2025
 
+### ⏰ 08:50 - Atualização de Modelo e Substituição de id por OS_Codigo (SAC)
+
+#### 🎯 O que foi pedido:
+1. Atualizar modelo `OS` adicionando o campo `OS_Codigo`
+2. Adicionar método `truncate()` ao modelo
+3. Substituir o uso de `id` (PK) por `OS_Codigo` em ambas as grids (OS e Produtos)
+4. **NÃO gerar migrations** (modelo já existe no banco)
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Atualização do Modelo OS (core/models/modelos.py):**
+```python
+class OS(models.Model):
+    ID_Gestao = models.CharField(max_length=100)
+    OS_Codigo = models.CharField(max_length=100)  # ✅ NOVO CAMPO
+    Data = models.DateField(verbose_name="Data Entrada")
+    ClienteNome = models.CharField(max_length=100, verbose_name="Nome Cliente")
+    SituacaoNome = models.CharField(max_length=100, verbose_name="Situação OS")
+
+    @classmethod
+    def truncate(cls):  # ✅ NOVO MÉTODO
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute(f'TRUNCATE TABLE "{cls._meta.db_table}" RESTART IDENTITY CASCADE')
+```
+
+**2. Alterações na Grid de OS (apps/sac/views.py):**
+
+**Query `_queryset_to_dataframe()` (linha 284):**
+```python
+# ANTES: "id"
+# DEPOIS: "OS_Codigo"
+queryset.values(
+    "OS_Codigo",  # ✅ Código da OS (valores como 4298, 4299...)
+    "ID_Gestao",  # ID do Gestão (valores como 326087049...)
+    "Data",
+    "ClienteNome",
+    "SituacaoNome",
+)
+```
+
+**Mapeamento de colunas (linha 384):**
+```python
+# ANTES: "id": "OS Código"
+# DEPOIS: "OS_Codigo": "OS Código"
+column_mapping = {
+    "OS_Codigo": "OS Código",  # Exibe código da OS
+    "ID_Gestao": "ID_OS",      # Oculto
+    ...
+}
+```
+
+**Captura de seleção (linha 464):**
+```python
+# ANTES: df["id"].tolist()
+# DEPOIS: df["OS_Codigo"].tolist()
+st.session_state.os_selected_ids = df["OS_Codigo"].tolist()
+```
+
+**3. Alterações na Grid de Produtos (apps/sac/views.py):**
+
+**Query de produtos (linha 524):**
+```python
+# ANTES: OS__id__in=os_ids
+# DEPOIS: OS__OS_Codigo__in=os_ids
+produtos_queryset = OS_Produtos.objects.filter(OS__OS_Codigo__in=os_ids)
+
+# Query values (linha 529)
+# ANTES: "OS__id"
+# DEPOIS: "OS__OS_Codigo"
+produtos_queryset.values(
+    "OS__OS_Codigo",  # ✅ Código da OS via FK
+    "OS__ID_Gestao",
+    ...
+)
+```
+
+**Mapeamento de colunas (linha 551):**
+```python
+# ANTES: "OS__id": "OS Código"
+# DEPOIS: "OS__OS_Codigo": "OS Código"
+column_mapping = {
+    "OS__OS_Codigo": "OS Código",  # Exibe código da OS
+    "OS__ID_Gestao": "ID_OS",      # Oculto
+    ...
+}
+```
+
+**Resultado:**
+| Grid | Coluna Visível | Valor Exibido | Coluna Oculta | Valor |
+|------|----------------|---------------|---------------|-------|
+| OS | OS Código | 4298, 4299... | ID_OS | 326087049... |
+| Produtos | OS Código | 4298, 4299... | ID_OS | 326087049... |
+
+#### 📁 Arquivos Alterados:
+- 📝 `core/models/modelos.py` - Modelo OS atualizado
+  - Linha 270: Adicionado campo `OS_Codigo`
+  - Linhas 275-279: Adicionado método `truncate()`
+- 📝 `apps/sac/views.py` - 5 alterações
+  - Linha 284: Query OS - `"OS_Codigo"`
+  - Linha 384: Mapeamento OS - `"OS_Codigo": "OS Código"`
+  - Linha 464: Captura de seleção - `df["OS_Codigo"]`
+  - Linha 524: Filtro Produtos - `OS__OS_Codigo__in`
+  - Linha 529: Query Produtos - `"OS__OS_Codigo"`
+  - Linha 551: Mapeamento Produtos - `"OS__OS_Codigo": "OS Código"`
+- 📝 `Historico.md` - Documentação
+
+#### ✅ Validação:
+- ✅ Modelo OS com novo campo `OS_Codigo`
+- ✅ Método `truncate()` implementado
+- ✅ Grid de OS usa `OS_Codigo` ao invés de `id`
+- ✅ Grid de Produtos usa `OS__OS_Codigo` ao invés de `OS__id`
+- ✅ Ambas as grids exibem valores corretos
+- ✅ Coluna ID_OS permanece oculta em ambas as grids
+- ✅ **Nenhuma migration gerada** (modelo já existe)
+
+---
+
 ### ⏰ 08:43 - Ocultar coluna ID_OS e ajustar grid de Produtos (SAC)
 
 #### 🎯 O que foi pedido:
