@@ -712,6 +712,10 @@ def _render_gauge_meta():
         df_mes_atual = vendas_service.venda_repository.get_vendas_filtradas(
             data_inicial=data_inicial,
             data_final=data_final,
+            situacoes_excluir=[
+                'Cancelada (sem financeiro)',
+                'Não considerar - Excluidos',
+            ],
         )
 
         # Processar dados

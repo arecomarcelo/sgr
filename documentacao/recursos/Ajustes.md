@@ -243,6 +243,20 @@
 - **Dashboard SAC** ajustes:
     - Exibição Correta **OS_Codigo**
 
+**27/11/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **15:29 - Commit 131**
+
+- Ajustes:
+  - Totalização do **Valor Total** considerando:
+    - Vendedores (Tabela)
+    - Situação, exceto: **Cancelada (sem financeiro)** e **'Não considerar - Excluidos'    
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

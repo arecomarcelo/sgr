@@ -32,6 +32,7 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
         vendedores: Optional[List[str]] = None,
         situacoes: Optional[List[str]] = None,
         situacao: Optional[str] = None,
+        situacoes_excluir: Optional[List[str]] = None,
         apenas_vendedores_ativos: bool = False,
     ) -> pd.DataFrame:
         """Obtém vendas com filtros aplicados usando SQL bruto"""
@@ -60,6 +61,12 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
                 placeholders = ",".join(["%s"] * len(situacoes))
                 query += f' AND "SituacaoNome" IN ({placeholders})'
                 params.extend(situacoes)
+
+            # Filtro para excluir situações específicas (opcional)
+            if situacoes_excluir:
+                placeholders = ",".join(["%s"] * len(situacoes_excluir))
+                query += f' AND "SituacaoNome" NOT IN ({placeholders})'
+                params.extend(situacoes_excluir)
 
             query += ' ORDER BY "Data" DESC'
 

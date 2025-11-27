@@ -30,6 +30,7 @@ class VendaRepositoryInterface(BaseRepositoryInterface):
         vendedores: Optional[List[str]] = None,
         situacoes: Optional[List[str]] = None,
         situacao: Optional[str] = None,
+        situacoes_excluir: Optional[List[str]] = None,
         apenas_vendedores_ativos: bool = False,
     ) -> pd.DataFrame:
         """Obtém vendas com filtros aplicados"""

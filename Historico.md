@@ -1,5 +1,75 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 27/11/2025
+
+### ⏰ 10:30 - Correção do Cálculo do "Realizado no Mês"
+
+#### 🎯 O que foi pedido:
+Corrigir o valor exibido no indicador "💰 Realizado no Mês" que estava mostrando R$ 20.970.373,94 quando o valor correto deveria ser R$ 20.944.270,53 (diferença de R$ 26.103,41).
+
+#### 🔧 Detalhamento da Solução:
+
+**Problema Identificado:**
+A query de cálculo do "Realizado no Mês" não estava excluindo vendas com as seguintes situações:
+- 'Cancelada (sem financeiro)'
+- 'Não considerar - Excluidos'
+
+**Solução Implementada:**
+
+**1. Atualização da Interface do Repositório (infrastructure/database/interfaces.py):**
+```python
+@abstractmethod
+def get_vendas_filtradas(
+    self,
+    data_inicial: date,
+    data_final: date,
+    vendedores: Optional[List[str]] = None,
+    situacoes: Optional[List[str]] = None,
+    situacao: Optional[str] = None,
+    situacoes_excluir: Optional[List[str]] = None,  # ✅ NOVO PARÂMETRO
+    apenas_vendedores_ativos: bool = False,
+) -> pd.DataFrame:
+```
+
+**2. Implementação no Repositório (infrastructure/database/repositories_vendas.py):**
+```python
+# Filtro para excluir situações específicas (opcional)
+if situacoes_excluir:
+    placeholders = ",".join(["%s"] * len(situacoes_excluir))
+    query += f' AND "SituacaoNome" NOT IN ({placeholders})'
+    params.extend(situacoes_excluir)
+```
+
+**3. Atualização da Chamada no app.py:**
+```python
+df_mes_atual = vendas_service.venda_repository.get_vendas_filtradas(
+    data_inicial=data_inicial,
+    data_final=data_final,
+    situacoes_excluir=['Cancelada (sem financeiro)', 'Não considerar - Excluidos'],  # ✅ NOVO FILTRO
+)
+```
+
+**Query Resultante:**
+```sql
+SELECT * FROM "Vendas"
+WHERE "Data"::DATE BETWEEN %s AND %s
+AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
+AND "SituacaoNome" NOT IN ('Cancelada (sem financeiro)', 'Não considerar - Excluidos')
+ORDER BY "Data" DESC
+```
+
+**Resultado:**
+- ❌ **Valor Anterior:** R$ 20.970.373,94 (incluindo vendas canceladas)
+- ✅ **Valor Corrigido:** R$ 20.944.270,53 (excluindo vendas canceladas)
+- 📊 **Diferença:** R$ 26.103,41 em vendas canceladas corretamente excluídas
+
+#### 📁 Arquivos Alterados:
+- 📝 `infrastructure/database/interfaces.py` - Interface VendaRepositoryInterface atualizada
+- 📝 `infrastructure/database/repositories_vendas.py` - Método get_vendas_filtradas com novo parâmetro situacoes_excluir
+- 📝 `app.py` - Chamada do método com filtro de situações a excluir
+
+---
+
 ## 📅 18/11/2025
 
 ### ⏰ 08:50 - Atualização de Modelo e Substituição de id por OS_Codigo (SAC)
