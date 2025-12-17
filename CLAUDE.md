@@ -128,6 +128,85 @@ A aplicação principal roteia para diferentes módulos baseado na seleção da 
 - Financeiro
 - Vendas
 - Relatório de Clientes
+- SAC (Serviço de Atendimento ao Cliente)
+- Comex (Comércio Exterior)
+
+## Sistema de Logging
+
+### Visão Geral
+O SGR utiliza um sistema de logging centralizado (`core/logging_config.py`) com as seguintes características:
+- **Rotação automática** de arquivos (10MB por arquivo, mantém 5 backups)
+- **Múltiplos níveis**: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- **Duplo destino**: Console (simplificado) e arquivos (detalhado)
+- **Filtros inteligentes**: Evita logs repetitivos no console
+- **Formatação padronizada**: Timestamps, níveis, módulos e funções
+
+### Arquivos de Log
+- `logs/sgr.log` - Log principal com todas as mensagens
+- `logs/sgr_errors.log` - Apenas erros (ERROR e CRITICAL)
+- Rotação automática com backups numerados (.1, .2, .3, etc)
+
+### Como Usar
+
+```python
+# Importar logger
+from core.logging_config import get_logger
+
+# Obter logger para o módulo atual
+logger = get_logger(__name__)
+
+# Registrar mensagens
+logger.debug("Informação de debug detalhada")
+logger.info("✓ Operação concluída com sucesso")
+logger.warning("⚠ Atenção: configuração não encontrada")
+logger.error("✗ Erro ao processar dados", exc_info=True)
+logger.critical("🚨 Erro crítico no sistema")
+```
+
+### Context Manager para Operações
+
+```python
+from core.logging_config import get_logger, log_operation
+
+logger = get_logger(__name__)
+
+with log_operation(logger, "Buscar vendas", "Período: 01/12 a 31/12"):
+    # Tempo de execução será logado automaticamente
+    vendas = buscar_vendas()
+```
+
+### Formatação de Logs
+
+**Console (simplificado):**
+```
+09:15:23 | INFO     | ✓ VendasService inicializado com 4 repositórios
+```
+
+**Arquivo (detalhado):**
+```
+2025-12-17 09:15:23 | INFO     | core.container_vendas | get_vendas_service | ✓ VendasService inicializado
+```
+
+### Boas Práticas
+
+**✅ FAZER:**
+- Usar logger ao invés de print() em código de produção
+- Incluir contexto relevante nas mensagens
+- Usar exc_info=True para incluir stack traces em erros
+- Usar emojis para facilitar visualização (✓, ✗, ⚠, 📊, 🔍, etc)
+
+**❌ NÃO FAZER:**
+- Logar em loops que podem gerar milhares de mensagens
+- Incluir informações sensíveis (senhas, tokens, etc)
+- Usar mensagens vagas como "ok" ou "erro"
+- Usar print() ao invés do sistema de logging
+
+### Documentação Completa
+Consulte `documentacao/LOGGING.md` para informações detalhadas sobre:
+- Configuração avançada
+- Monitoramento e análise de logs
+- Troubleshooting
+- Performance
 
 ## Diretrizes de Codificação
 

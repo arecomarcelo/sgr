@@ -43,7 +43,7 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
                 WHERE "Data"::DATE BETWEEN %s AND %s
                 AND TRIM("VendedorNome") IN (SELECT "Nome" FROM "Vendedores")
             """
-            params = [data_inicial, data_final]
+            params: List[Any] = [data_inicial, data_final]
 
             # Filtro de vendedores específicos (adicional aos critérios obrigatórios)
             if vendedores:
@@ -173,7 +173,7 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
                     vp."Nome" = REPLACE(REPLACE(p."Nome", ' CINZA', ''), ' PRETO', '')
                 WHERE 1=1
             """
-            params = []
+            params: List[Any] = []
 
             # Aplicar filtros de vendas
             if data_inicial and data_final:
@@ -202,7 +202,12 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
             # Excluir grupos específicos se solicitado
             if excluir_grupos:
                 query += """ AND (p."NomeGrupo" IS NULL OR p."NomeGrupo" NOT IN (%s, %s, %s))"""
-                params.extend(["PRODUTOS SEM GRUPO", "PEÇA DE REPOSIÇÃO", "ACESSÓRIOS"])
+                grupos_excluir: List[str] = [
+                    "PRODUTOS SEM GRUPO",
+                    "PEÇA DE REPOSIÇÃO",
+                    "ACESSÓRIOS",
+                ]
+                params.extend(grupos_excluir)
 
             query += ' ORDER BY v."Data" DESC, vp."Nome"'
 
@@ -246,7 +251,7 @@ class VendaProdutosRepository(BaseRepository, VendaProdutosRepositoryInterface):
                 LEFT JOIN "Produtos" p ON vp."Nome" = p."Nome"
                 WHERE 1=1
             """
-            params = []
+            params: List[Any] = []
 
             # Aplicar os mesmos filtros da query de produtos detalhados
             if data_inicial and data_final:
@@ -408,7 +413,7 @@ class VendaPagamentoRepository(BaseRepository, VendaPagamentoRepositoryInterface
                 SELECT * FROM "VendaPagamentos"
                 WHERE "DataVencimento"::DATE BETWEEN %s AND %s
             """
-            params = [data_inicial, data_final]
+            params: List[Any] = [data_inicial, data_final]
 
             if venda_ids:
                 placeholders = ",".join(["%s"] * len(venda_ids))

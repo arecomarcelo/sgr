@@ -37,8 +37,8 @@ def _convert_to_date(value: Any) -> Optional[date]:
     if isinstance(value, datetime):
         # É datetime, extrair date
         return value.date()
-    # Outros casos, retornar como está
-    return value
+    # Outros casos, retornar None para manter consistência de tipo
+    return None
 
 
 class VendasService:

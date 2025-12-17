@@ -63,6 +63,9 @@ class Settings:
 
     _instance: Optional["Settings"] = None
     _initialized: bool = False
+    database: DatabaseConfig
+    app: AppConfig
+    cache: CacheConfig
 
     def __new__(cls):
         if cls._instance is None:
@@ -78,7 +81,7 @@ class Settings:
 
     def is_development(self) -> bool:
         """Verifica se está em ambiente de desenvolvimento"""
-        return self.app.debug
+        return bool(self.app.debug)
 
     def is_production(self) -> bool:
         """Verifica se está em ambiente de produção"""

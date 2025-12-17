@@ -58,7 +58,7 @@ class ColorScheme:
 class StyleManager:
     """Gerenciador de estilos da aplicação"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_theme = ThemeMode.LIGHT
         self._custom_css_rules: Dict[str, str] = {}
 

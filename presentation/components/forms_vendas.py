@@ -28,7 +28,7 @@ class FilterForm:
         Returns:
             Dict com valores dos filtros
         """
-        filters = {}
+        filters: Dict[str, Any] = {}
 
         # Filtros de data
         col1, col2 = st.columns(2)
@@ -38,7 +38,7 @@ class FilterForm:
             hoje = datetime.now()
             data_inicial_default = datetime(hoje.year, hoje.month, 1).date()
 
-            filters["data_inicio"] = st.date_input(
+            data_inicio_input = st.date_input(
                 "📅 Data Inicial",
                 value=data_inicial_default,
                 max_value=datetime.now().date(),
@@ -46,10 +46,15 @@ class FilterForm:
                 key=f"{self.key_prefix}data_inicio",
                 help="Selecione a data inicial do período",
             )
+            # st.date_input pode retornar date ou tuple, garantir que é date
+            if isinstance(data_inicio_input, date):
+                filters["data_inicio"] = data_inicio_input
+            else:
+                filters["data_inicio"] = data_inicio_input[0]
 
         with col2:
             # Data final - padrão hoje
-            filters["data_fim"] = st.date_input(
+            data_fim_input = st.date_input(
                 "📅 Data Final",
                 value=datetime.now().date(),
                 max_value=datetime.now().date(),
@@ -57,6 +62,11 @@ class FilterForm:
                 key=f"{self.key_prefix}data_fim",
                 help="Selecione a data final do período",
             )
+            # st.date_input pode retornar date ou tuple, garantir que é date
+            if isinstance(data_fim_input, date):
+                filters["data_fim"] = data_fim_input
+            else:
+                filters["data_fim"] = data_fim_input[0]
 
         # Filtros de vendedor e situação
         col3, col4 = st.columns(2)

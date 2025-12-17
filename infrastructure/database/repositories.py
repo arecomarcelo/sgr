@@ -5,7 +5,7 @@ Migração para usar os modelos Django existentes
 
 import logging
 from datetime import date, datetime, time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from django.contrib.auth.models import User
 from django.db import connection
@@ -24,7 +24,8 @@ from app.models import (
     Extratos,
     Produtos,
 )
-from core.exceptions import DatabaseError, SGRException
+from core.error_handler import handle_errors
+from core.exceptions import DatabaseError, DatabaseQueryError, SGRException
 from infrastructure.database.base import BaseRepository
 from infrastructure.database.interfaces import (
     BoletoRepositoryInterface,
@@ -78,7 +79,7 @@ class DatabaseRepository(BaseRepository, DatabaseRepositoryInterface):
             logger.info(f"Fetching data from table: {table_name}")
 
             # Usar Django ORM para buscar dados
-            queryset = model.objects.all()
+            queryset = model.objects.all()  # type: ignore[attr-defined]
             result = self.to_dataframe(queryset, fields)
 
             logger.info(f"Query successful: {len(result)} rows returned")
@@ -246,7 +247,7 @@ class ClienteRepository(BaseRepository, ClienteRepositoryInterface):
 
             if cliente:
                 logger.info(f"Client found: {cliente_id}")
-                return cliente
+                return cast(Dict[str, Any], cliente)
 
             logger.warning(f"Client not found: {cliente_id}")
             return None
@@ -425,7 +426,7 @@ class BoletoRepository(BaseRepository, BoletoRepositoryInterface):
         """Busca boleto por ID usando Django ORM"""
         try:
             boleto = BoletosEnviados.objects.filter(Boleto=boleto_id).values().first()
-            return boleto
+            return cast(Optional[Dict[str, Any]], boleto)
         except Exception as e:
             logger.error(f"Error fetching boleto {boleto_id}: {str(e)}")
             return None
@@ -445,7 +446,7 @@ class BoletoRepository(BaseRepository, BoletoRepositoryInterface):
             return pd.DataFrame()
 
 
-class EstoqueRepository(BaseRepository, EstoqueRepositoryInterface):
+class EstoqueRepository(BaseRepository):
     """Repositório para operações com estoque usando Django ORM"""
 
     @handle_errors(show_details=False)
@@ -480,7 +481,7 @@ class EstoqueRepository(BaseRepository, EstoqueRepositoryInterface):
         """Busca produto por código usando Django ORM"""
         try:
             produto = Produtos.objects.filter(CodigoInterno=codigo).values().first()
-            return produto
+            return cast(Optional[Dict[str, Any]], produto)
         except Exception as e:
             logger.error(f"Error fetching product {codigo}: {str(e)}")
             return None

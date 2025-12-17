@@ -58,50 +58,10 @@ class DatabaseQueryError(DatabaseError):
         self.details["query"] = query
 
 
-class ValidationError(SGRException):
-    """Exceções de validação de dados"""
-
-    def __init__(self, field: str, message: str, value: Any = None, **kwargs):
-        super().__init__(message, **kwargs)
-        self.details.update({"field": field, "value": value})
-
-
 class BusinessLogicError(SGRException):
     """Exceções da lógica de negócio"""
 
     pass
-
-
-class AuthenticationError(SGRException):
-    """Exceções de autenticação"""
-
-    pass
-
-
-class AuthorizationError(SGRException):
-    """Exceções de autorização"""
-
-    pass
-
-
-class ConfigurationError(SGRException):
-    """Exceções de configuração"""
-
-    def __init__(self, component: str, message: str, **kwargs):
-        super().__init__(message, **kwargs)
-        self.details["component"] = component
-
-
-class DataNotFoundError(SGRException):
-    """Exceção quando dados não são encontrados"""
-
-    def __init__(self, resource: str, identifier: Any = None, **kwargs):
-        message = f"Recurso '{resource}' não encontrado"
-        if identifier:
-            message += f" (ID: {identifier})"
-
-        super().__init__(message, **kwargs)
-        self.details.update({"resource": resource, "identifier": identifier})
 
 
 class ValidationError(SGRException):

@@ -113,15 +113,15 @@ def main():
         "Isort: Erro ao organizar imports!",
     )
 
-    # Verificação de tipos com configuração de desenvolvimento (warnings são OK)
-    console.print("\n[yellow]⚙️  Executando Mypy em modo desenvolvimento...[/yellow]")
-    mypy_result = run_command(
-        "python -m mypy app.py --ignore-missing-imports --allow-untyped-defs",
-        "Mypy: Verificação do arquivo principal concluída!",
-        "Mypy: Arquivo principal tem alguns warnings (normal em desenvolvimento)",
+    # Verificação de tipos usando configuração do mypy.ini
+    console.print(
+        "\n[yellow]⚙️  Executando Mypy com configuração do projeto...[/yellow]"
     )
-    # Em modo desenvolvimento, consideramos sucesso mesmo com warnings
-    mypy_success = True
+    mypy_success = run_command(
+        "python -m mypy . --config-file=mypy.ini",
+        "Mypy: Verificação de tipos concluída sem erros!",
+        "Mypy: Erros de tipo encontrados!",
+    )
 
     console.print("\n[bold]📊 Resumo:[/bold]")
     console.print(

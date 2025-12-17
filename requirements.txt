@@ -1,3 +1,4 @@
+altair==5.5.0
 asgiref==3.8.1
 attrs==24.3.0
 autopep8==1.6.0
@@ -74,6 +75,8 @@ toml==0.10.2
 tomli==2.2.1
 toolz==1.0.0
 tornado==6.4.2
+types-Markdown==3.10.0.20251106
+types-python-dateutil==2.9.0.20251115
 types-PyYAML==6.0.12.20250822
 typing_extensions==4.12.2
 tzdata==2024.2
@@ -84,3 +87,5 @@ watchdog==6.0.0
 websocket-client==1.9.0
 xlsxwriter==3.2.9
 zipp==3.21.0
+pydantic
+email-validator

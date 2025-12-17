@@ -68,8 +68,8 @@ class DateRangeForm(FormComponent):
         self.key_prefix = key_prefix
 
         # Callbacks
-        self._on_change: Optional[Callable] = None
-        self._validation_callback: Optional[Callable] = None
+        self._on_change: Optional[Callable[[Dict[str, Any]], None]] = None
+        self._validation_callback: Optional[Callable[[Dict[str, Any]], bool]] = None
 
     def set_change_callback(self, callback: Callable[[Dict[str, Any]], None]):
         """Define callback para mudanças no formulário"""

@@ -6,7 +6,7 @@ Implementa decorators e handlers para captura e tratamento de exceções
 import functools
 import logging
 import traceback
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 import streamlit as st
 
@@ -143,11 +143,14 @@ class ErrorHandler:
 
 
 # Decorator simplificado para uso comum
-def safe_execute(func: Callable) -> Callable:
+def safe_execute(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator simplificado para execução segura"""
-    return handle_errors(
-        show_details=False, fallback_message="Operação não pôde ser concluída"
-    )(func)
+    return cast(
+        Callable[..., Any],
+        handle_errors(
+            show_details=False, fallback_message="Operação não pôde ser concluída"
+        )(func),
+    )
 
 
 # Context manager para tratamento de erros

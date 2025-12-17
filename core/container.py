@@ -17,11 +17,11 @@ class DIContainer:
     Gerencia criação e ciclo de vida dos objetos
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._services: Dict[str, Any] = {}
         self._singletons: Dict[str, Any] = {}
-        self._factories: Dict[str, Callable] = {}
-        self._bindings: Dict[Type, Type] = {}
+        self._factories: Dict[str, Callable[..., Any]] = {}
+        self._bindings: Dict[Type[Any], Type[Any]] = {}
 
     def register_singleton(
         self, service_type: Type, implementation: Type = None

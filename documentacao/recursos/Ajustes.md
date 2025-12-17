@@ -257,6 +257,18 @@
     - Vendedores (Tabela)
     - Situação, exceto: **Cancelada (sem financeiro)** e **'Não considerar - Excluidos'    
 
+**14/12/2025**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+### **hh:mm - Commit 132**
+
+- Correções Erros **mypy**
+- Ajuste **Logs Sistema**
+
 **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

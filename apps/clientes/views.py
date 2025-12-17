@@ -1,7 +1,7 @@
 import locale
 from datetime import date, datetime
 from io import BytesIO
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import openpyxl
 import pandas as pd
@@ -102,7 +102,7 @@ class ClientesReport:
             if campo in df.columns:
                 gb_clientes.configure_column(campo, **config)
 
-        return gb_clientes.build()
+        return cast(Dict[str, Any], gb_clientes.build())
 
     def format_cnpj_cpf(self, value: str) -> str:
         """Formata CNPJ ou CPF para exibição"""

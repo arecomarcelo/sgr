@@ -1,4 +1,4 @@
-#!/media/areco/Backup/Oficial/Projetos/sgr/venv/bin/python3
+#!/media/areco/Backup/Oficial/Projetos/sgr/venv/bin/python3.12
 
 ##############################################################################
 #

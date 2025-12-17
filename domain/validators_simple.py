@@ -2,6 +2,7 @@
 Validadores simples para o domínio de vendas (sem Pydantic)
 """
 
+import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional

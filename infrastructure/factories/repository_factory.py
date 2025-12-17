@@ -5,7 +5,7 @@ Implementa padrão Factory para instanciar repositórios
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, List, Optional, Type, cast
 
 from config.settings import DatabaseConfig
 from core.exceptions import ConfigurationError
@@ -119,7 +119,7 @@ class DatabaseRepositoryFactory(RepositoryFactoryInterface):
 
         try:
             # Criar instância passando configuração do banco
-            return repository_class(self.db_config.get_connection_dict())
+            return repository_class(self.db_config.get_connection_dict())  # type: ignore[call-arg]
 
         except Exception as e:
             raise ConfigurationError(
@@ -142,7 +142,7 @@ class RepositoryFactoryManager:
     Permite diferentes implementações (PostgreSQL, MySQL, etc.)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._factories: Dict[str, RepositoryFactoryInterface] = {}
         self._default_factory: Optional[str] = None
 
@@ -227,7 +227,7 @@ class RepositoryFactoryManager:
 
         # Se a factory implementa get_supported_types, usa; senão testa todos
         if hasattr(factory, "get_supported_types"):
-            return factory.get_supported_types()
+            return cast(List[RepositoryType], factory.get_supported_types())
 
         # Testa todos os tipos
         supported = []

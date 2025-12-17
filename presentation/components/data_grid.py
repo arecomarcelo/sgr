@@ -5,7 +5,7 @@ Implementa padrão Component para elementos de UI
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import pandas as pd
 import streamlit as st
@@ -195,7 +195,7 @@ class StandardDataGrid(GridComponentInterface):
             except Exception as e:
                 st.error(f"Erro no callback de seleção: {str(e)}")
 
-        return grid_response
+        return cast(Dict[str, Any], grid_response)
 
     def _build_grid_options(self, data: pd.DataFrame) -> GridOptionsBuilder:
         """Constrói as opções da grade"""
@@ -304,7 +304,7 @@ class ReportDataGrid(StandardDataGrid):
         # Aplicar formatação automática baseada em nomes de colunas
         self._auto_configure_columns(data)
 
-        return super().render(data, key)
+        return cast(Dict[str, Any], super().render(data, key))
 
     def _auto_configure_columns(self, data: pd.DataFrame):
         """Aplica configuração automática baseada nos nomes das colunas"""
@@ -325,7 +325,7 @@ class FilterableDataGrid(StandardDataGrid):
     Permite filtros personalizados na interface
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._filters: Dict[str, Any] = {}
 
@@ -423,6 +423,6 @@ class FilterableDataGrid(StandardDataGrid):
         """Renderiza grade com filtros"""
         if self._filters:
             filtered_data = self.render_filters(data)
-            return super().render(filtered_data, key)
+            return cast(Dict[str, Any], super().render(filtered_data, key))
 
-        return super().render(data, key)
+        return cast(Dict[str, Any], super().render(data, key))
