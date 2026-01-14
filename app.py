@@ -37,6 +37,7 @@ from apps.comex.views import main as comex_main
 from apps.estoque.views import main as estoque_main
 from apps.extratos.views import main as extratos_main
 from apps.sac.views import main as sac_main
+from apps.vendas.recebimentos import main as recebimentos_main
 from apps.vendas.views import main as vendas_main
 
 # Importações após a configuração da página
@@ -2976,6 +2977,8 @@ def main():
                 vendas_dashboard()  # Versão de produção com cards visuais
             else:
                 vendas_main(key="vendas")
+        elif st.session_state.current_module == "Relatório de Recebimentos":
+            recebimentos_main(key="recebimentos")
         elif st.session_state.current_module == "Relatório de Clientes":
             clientes_main(key="clientes")
         elif st.session_state.current_module == "Comex Produtos":

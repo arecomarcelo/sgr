@@ -181,6 +181,11 @@ def menu():
                     "icon": "📈",
                     "original_name": "Relatório de Vendas",
                 },
+                "Recebimentos": {
+                    "permission": "view_recebimentos",
+                    "icon": "💰",
+                    "original_name": "Relatório de Recebimentos",
+                },
             },
         },
         "Entidades": {

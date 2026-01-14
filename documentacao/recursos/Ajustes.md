@@ -269,13 +269,24 @@
 - Correções Erros **mypy**
 - Ajuste **Logs Sistema**
 
-**dd/mm/aaaa**
+## **14/01/2026**
 
 - #### ***Instalar requirements.txt***
   
 - #### Verificado: ***Executar formata.py***
   
 
-### **hh:mm - Commit nnn**
+##### **15:14 - Commit 133**
+
+- Implementado **Relatório de Recebimentos**
+
+## **dd/mm/aaaa**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **hh:mm - Commit nnn**
 
 - xxxx

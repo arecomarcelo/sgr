@@ -1,7 +1,8 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import pandas as pd
 import psycopg2
+import psycopg2.extensions
 from psycopg2 import sql
 from sqlalchemy import create_engine
 
@@ -183,7 +184,9 @@ class ClienteRepository:
     def connect(self) -> psycopg2.extensions.connection:
         """Establish database connection"""
         try:
-            conn = psycopg2.connect(**self.db_config)
+            conn = cast(
+                psycopg2.extensions.connection, psycopg2.connect(**self.db_config)
+            )
             return conn
         except Exception as e:
             raise Exception(f"Erro ao conectar ao banco de dados: {e}")

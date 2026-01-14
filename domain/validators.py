@@ -93,10 +93,8 @@ class UserCredentials(BaseModel):
 class DatabaseQueryParams(BaseModel):
     """Validador para parâmetros de consulta ao banco"""
 
-    table_name: str = Field(..., min_length=1, description="Nome da tabela")
-    fields: List[str] = Field(
-        ..., min_items=1, description="Campos a serem selecionados"
-    )
+    table_name: str = Field(min_length=1, description="Nome da tabela")
+    fields: List[str] = Field(min_length=1, description="Campos a serem selecionados")
 
     @validator("table_name")
     def validate_table_name(cls, v):
