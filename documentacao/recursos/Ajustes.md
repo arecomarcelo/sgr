@@ -280,6 +280,11 @@
 
 - Implementado **Relatório de Recebimentos**
 
+##### **16:10 - Commit 134**
+
+- **Relatório de Recebimentos**
+    - Ajuste na **Query** de Busca utilizando Tabela **VendaFormaPagamento**
+
 ## **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

@@ -403,7 +403,7 @@ class RecebimentosController:
 
             # Mesclar células para o título
             worksheet.merge_range(
-                'A1:C1', '💰 Relatório de Recebimentos - SGR', title_format
+                'A1:D1', '💰 Relatório de Recebimentos - SGR', title_format
             )
 
             # Escrever cabeçalhos com formatação
@@ -428,6 +428,9 @@ class RecebimentosController:
                     elif col_name == "Valor":
                         # Formatação monetária
                         worksheet.write(row_num + 2, col_num, value, money_format)
+                    elif col_name == "FormaPagamento":
+                        # Texto normal
+                        worksheet.write(row_num + 2, col_num, value, row_format)
                     elif col_name == "Cliente":
                         # Texto normal
                         worksheet.write(row_num + 2, col_num, value, row_format)
@@ -436,12 +439,14 @@ class RecebimentosController:
             total_row = num_rows + 2
             worksheet.write(total_row, 0, "TOTAL", total_format)
             worksheet.write(total_row, 1, df["Valor"].sum(), total_money_format)
-            worksheet.write(total_row, 2, f"{len(df)} recebimentos", total_format)
+            worksheet.write(total_row, 2, "", total_format)  # FormaPagamento vazio no total
+            worksheet.write(total_row, 3, f"{len(df)} recebimentos", total_format)
 
             # Ajustar largura das colunas
             worksheet.set_column('A:A', 15)  # Vencimento
             worksheet.set_column('B:B', 18)  # Valor
-            worksheet.set_column('C:C', 50)  # Cliente
+            worksheet.set_column('C:C', 25)  # FormaPagamento
+            worksheet.set_column('D:D', 50)  # Cliente
 
             # Congelar painéis (cabeçalho fixo)
             worksheet.freeze_panes(2, 0)
@@ -510,13 +515,11 @@ class RecebimentosController:
 
             # Configuração personalizada por coluna
             for col in df_display.columns:
-                if col == "Cliente":
-                    gb.configure_column(col, headerName="Cliente", width=300)
-                elif col == "Vencimento":
+                if col == "Vencimento":
                     gb.configure_column(
                         col,
                         headerName="Vencimento",
-                        width=150,
+                        width=130,
                     )
                 elif col == "Valor":
                     gb.configure_column(
@@ -524,8 +527,12 @@ class RecebimentosController:
                         headerName="Valor",
                         type=["numericColumn", "numberColumnFilter"],
                         valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})",
-                        width=150,
+                        width=130,
                     )
+                elif col == "FormaPagamento":
+                    gb.configure_column(col, headerName="Forma de Pagamento", width=180)
+                elif col == "Cliente":
+                    gb.configure_column(col, headerName="Cliente", width=300)
                 else:
                     gb.configure_column(col, headerName=col)
 

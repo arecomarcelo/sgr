@@ -2787,3 +2787,45 @@ Durante os testes, identificamos dependências faltantes que foram adicionadas:
 - `/media/areco/Backup/Oficial/Projetos/sgr/requirements.txt` - Adicionadas dependências pydantic e email-validator
 
 ---
+
+## 📅 14/01/2026
+
+### ⏰ 14:35 - Ajustes no Módulo de Recebimentos
+
+#### 📋 O que foi pedido:
+1. Ajustar a query de busca de Recebimentos para incluir o campo "FormaPagamento" (NomeFormaPagamento)
+2. Adicionar filtro para mostrar apenas formas de pagamento cadastradas na tabela VendaFormaPagamento
+3. Ajustar a Grid para exibir o novo campo na ordem correta (Vencimento, Valor, FormaPagamento, Cliente)
+
+#### 🛠️ Solução Implementada:
+
+**1. Query ajustada no repositório:**
+```sql
+SELECT
+    DATE(vp."DataVencimento") as "Vencimento",
+    vp."Valor",
+    vp."NomeFormaPagamento" as "FormaPagamento",
+    v."ClienteNome" as "Cliente"
+FROM "VendaPagamentos" vp
+INNER JOIN "Vendas" v ON v."ID_Gestao" = vp."Venda_ID"
+WHERE vp."NomeFormaPagamento" IN (SELECT "NomeFormaPagamento" FROM "VendaFormaPagamento")
+  AND DATE(vp."DataVencimento") >= %s
+  AND DATE(vp."DataVencimento") <= %s
+ORDER BY DATE(vp."DataVencimento"), v."ClienteNome"
+```
+
+**2. Grid ajustada:**
+- Nova coluna "Forma de Pagamento" adicionada entre Valor e Cliente
+- Largura configurada para 180px
+- Header configurado com nome amigável
+
+**3. Exportação Excel ajustada:**
+- Título expandido para 4 colunas (A1:D1)
+- Nova coluna FormaPagamento com largura de 25 caracteres
+- Linha de totais ajustada para 4 colunas
+
+#### 📁 Arquivos Alterados:
+1. `infrastructure/database/repositories_recebimentos.py` - Query atualizada
+2. `apps/vendas/recebimentos.py` - Grid e exportação Excel atualizadas
+
+---

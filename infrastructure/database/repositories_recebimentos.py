@@ -43,10 +43,12 @@ class RecebimentosRepository(BaseRepository):
                 SELECT
                     DATE(vp."DataVencimento") as "Vencimento",
                     vp."Valor",
+                    vp."NomeFormaPagamento" as "FormaPagamento",
                     v."ClienteNome" as "Cliente"
                 FROM "VendaPagamentos" vp
                 INNER JOIN "Vendas" v ON v."ID_Gestao" = vp."Venda_ID"
-                WHERE DATE(vp."DataVencimento") >= %s
+                WHERE vp."NomeFormaPagamento" IN (SELECT "NomeFormaPagamento" FROM "VendaFormaPagamento")
+                  AND DATE(vp."DataVencimento") >= %s
                   AND DATE(vp."DataVencimento") <= %s
                 ORDER BY DATE(vp."DataVencimento"), v."ClienteNome"
             """
