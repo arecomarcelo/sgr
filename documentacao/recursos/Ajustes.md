@@ -285,6 +285,19 @@
 - **Relatório de Recebimentos**
     - Ajuste na **Query** de Busca utilizando Tabela **VendaFormaPagamento**
 
+## **15/01/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **11:20 - Commit 135**
+
+- **Relatório de Recebimentos**
+    - Ajuste no **Layout dos Menus**
+    - Implementado **Manual de Usuário**
+
 ## **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

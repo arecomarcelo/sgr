@@ -1,5 +1,117 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 15/01/2026
+
+### ⏰ 11:00 - Reorganização do Menu Lateral - Novo Item Recebimentos
+
+#### 🎯 O que foi pedido:
+Reorganizar o menu lateral para melhorar a disposição e atribuição de permissões:
+1. Criar um novo item "Recebimentos" no menu lateral
+2. Mover o subitem "Recebimentos" de "Vendas" para o novo item
+3. Manter as mesmas permissões
+
+#### 🔧 Detalhamento da Solução:
+
+**Estrutura Anterior:**
+```
+📊 Vendas
+  ├── 📈 Geral
+  └── 💰 Recebimentos
+```
+
+**Estrutura Nova:**
+```
+📊 Vendas
+  └── 📈 Geral
+
+💰 Recebimentos
+  └── 📅 A Vencer
+```
+
+**Alterações no module_config:**
+- ✅ Removido "Recebimentos" do submenu de "Vendas"
+- ✅ Criado novo grupo "Recebimentos" com ícone 💰
+- ✅ Adicionado subitem "A Vencer" com ícone 📅
+- ✅ Permissão mantida: `view_recebimentos`
+- ✅ Posicionado após "Vendas" no menu
+
+#### 📝 Lista de Arquivos Alterados:
+1. `apps/auth/modules.py` (configuração do menu)
+2. `Historico.md` (documentação atualizada)
+
+---
+
+### ⏰ 10:45 - Correção de Exibição no Manual de Recebimentos
+
+#### 🎯 O que foi pedido:
+Corrigir erro de exibição na seção "Histórico de Atualizações" do Manual de Recebimentos onde os tags `<br/>` apareciam literalmente.
+
+#### 🔧 Detalhamento da Solução:
+- Substituída tabela com `<br/>` por formato de lista Markdown
+- O Streamlit não renderiza corretamente `<br/>` em tabelas Markdown
+- Formato anterior: tabela com quebras de linha HTML
+- Formato novo: título + lista de itens
+
+#### 📝 Lista de Arquivos Alterados:
+1. `documentacao/Manual_Relatorio_Recebimentos.md` (seção Histórico de Atualizações)
+2. `Historico.md` (documentação atualizada)
+
+---
+
+### ⏰ 10:30 - Implementação do Manual do Relatório de Recebimentos
+
+#### 🎯 O que foi pedido:
+Implementar o Manual do Relatório de Recebimentos seguindo o mesmo modelo e comportamento do Manual no Relatório de Vendas.
+
+#### 🔧 Detalhamento da Solução:
+
+**1. ✅ Criação do Arquivo de Documentação**
+- Criado `documentacao/Manual_Relatorio_Recebimentos.md`
+- Seguindo o mesmo padrão do `Manual_Relatorio_Vendas.md`
+- Conteúdo completo com:
+  - 📖 Visão geral do módulo
+  - 🚀 Guia de utilização passo a passo
+  - 📊 Explicação das métricas (Período, Total de Recebimentos, Valor Total)
+  - 📋 Documentação da tabela interativa
+  - 📥 Instruções de exportação (CSV e Excel formatado)
+  - 🎓 Melhores práticas e casos de uso
+  - 🚨 Solução de problemas
+  - 📞 Informações de suporte
+
+**2. ✅ Implementação do Botão "📖 Ler Manual"**
+- Adicionado botão centralizado abaixo do título do dashboard
+- Tooltip explicativo: "Clique para ler o manual completo do Relatório de Recebimentos"
+- Navegação para modo manual ao clicar
+
+**3. ✅ Implementação da Visualização em Tela Cheia**
+- Método `_render_manual_fullscreen()` adicionado ao controller
+- Header estilizado com título azul
+- Botões centralizados:
+  - 📥 Download Manual (download do arquivo .md)
+  - ⬅️ Voltar ao Dashboard (retorna ao relatório)
+- Renderização do conteúdo Markdown completo
+- Tratamento de erros com botão de retorno
+
+**4. ✅ Controle de Estado**
+- Variável `st.session_state["recebimentos_view_mode"]` para controlar visualização
+- Alternância entre "dashboard" e "manual"
+- Independente do estado do módulo de vendas
+
+#### 📝 Lista de Arquivos Alterados:
+1. `documentacao/Manual_Relatorio_Recebimentos.md` ✨ (criado)
+2. `apps/vendas/recebimentos.py` (botão e visualização do manual)
+3. `Historico.md` (documentação atualizada)
+
+#### ✅ Funcionalidades Implementadas:
+- ✅ Botão "📖 Ler Manual" abaixo do título
+- ✅ Visualização em tela cheia do manual
+- ✅ Download do manual em formato Markdown
+- ✅ Botão "Voltar ao Dashboard" para retornar
+- ✅ CSS estilizado para melhor apresentação
+- ✅ Tratamento de erros (arquivo não encontrado)
+
+---
+
 ## 📅 14/01/2026
 
 ### ⏰ 17:15 - Correção Completa de Todos os Erros Mypy do Projeto

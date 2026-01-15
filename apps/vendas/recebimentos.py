@@ -48,6 +48,11 @@ class RecebimentosController:
     def render_dashboard(self):
         """Renderiza dashboard principal de recebimentos"""
         try:
+            # Verificar se está no modo manual
+            if st.session_state.get("recebimentos_view_mode") == "manual":
+                self._render_manual_fullscreen()
+                return
+
             # Aplicar tema
             apply_theme()
 
@@ -56,6 +61,19 @@ class RecebimentosController:
                 "<h1 style='text-align: center; color: #1E88E5;'>💰 SGR - Relatório de Recebimentos</h1>",
                 unsafe_allow_html=True,
             )
+
+            # Botão Ler Manual centralizado abaixo do título
+            col1, col2, col3 = st.columns([2, 1, 2])
+            with col2:
+                if st.button(
+                    "📖 Ler Manual",
+                    type="secondary",
+                    use_container_width=True,
+                    help="Clique para ler o manual completo do Relatório de Recebimentos",
+                ):
+                    st.session_state["recebimentos_view_mode"] = "manual"
+                    st.rerun()
+
             st.markdown("---")
 
             # Verificar saúde do sistema
@@ -92,6 +110,115 @@ class RecebimentosController:
         except Exception as e:
             st.error(f"❌ Erro no health check: {str(e)}")
             return False
+
+    def _render_manual_fullscreen(self):
+        """Renderiza o manual em tela cheia"""
+        try:
+            # Aplicar tema
+            apply_theme()
+
+            # Ler arquivo do manual primeiro
+            manual_path = "documentacao/Manual_Relatorio_Recebimentos.md"
+            with open(manual_path, "r", encoding="utf-8") as file:
+                content = file.read()
+
+            # CSS para melhorar alinhamento e aparência dos botões
+            st.markdown(
+                """
+            <style>
+            .manual-header {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 2rem;
+                gap: 1rem;
+            }
+
+            .manual-title {
+                text-align: center;
+                color: #1E88E5;
+                margin: 0;
+                font-size: 2rem;
+                font-weight: 600;
+            }
+
+            .manual-buttons {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+            }
+
+            /* Alinhar botões corretamente */
+            div[data-testid="column"] .stDownloadButton,
+            div[data-testid="column"] .stButton {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-top: 0.5rem;
+            }
+
+            div[data-testid="column"] .stDownloadButton > button,
+            div[data-testid="column"] .stButton > button {
+                height: 2.5rem;
+                font-size: 0.9rem;
+                font-weight: 500;
+                border-radius: 0.5rem;
+                margin: 0;
+            }
+            </style>
+            """,
+                unsafe_allow_html=True,
+            )
+
+            # Header com layout melhorado
+            st.markdown(
+                '<div class="manual-header">'
+                '<h1 class="manual-title">📖 Manual do Relatório de Recebimentos</h1>'
+                "</div>",
+                unsafe_allow_html=True,
+            )
+
+            # Botões de ação centralizados
+            col1, col2, col3, col4, col5 = st.columns([2, 1.5, 0.5, 1.5, 2])
+
+            with col2:
+                st.download_button(
+                    label="📥 Download Manual",
+                    data=content,
+                    file_name="Manual_Relatorio_Recebimentos.md",
+                    mime="text/markdown",
+                    key="download_manual_recebimentos",
+                    use_container_width=True,
+                )
+
+            with col4:
+                if st.button(
+                    "⬅️ Voltar ao Dashboard",
+                    key="back_to_recebimentos_dashboard",
+                    use_container_width=True,
+                ):
+                    st.session_state["recebimentos_view_mode"] = "dashboard"
+                    st.rerun()
+
+            st.markdown("---")
+
+            # Exibir conteúdo do manual diretamente
+            st.markdown(content)
+
+        except FileNotFoundError:
+            st.error(
+                f"❌ Arquivo do manual não encontrado: documentacao/Manual_Relatorio_Recebimentos.md"
+            )
+            # Botão para voltar mesmo com erro
+            if st.button("⬅️ Voltar ao Dashboard", key="back_error"):
+                st.session_state["recebimentos_view_mode"] = "dashboard"
+                st.rerun()
+        except Exception as e:
+            st.error(f"❌ Erro ao carregar manual: {str(e)}")
+            # Botão para voltar mesmo com erro
+            if st.button("⬅️ Voltar ao Dashboard", key="back_error2"):
+                st.session_state["recebimentos_view_mode"] = "dashboard"
+                st.rerun()
 
     def _render_filters_and_data(self):
         """Renderiza filtros e dados"""
@@ -439,7 +566,9 @@ class RecebimentosController:
             total_row = num_rows + 2
             worksheet.write(total_row, 0, "TOTAL", total_format)
             worksheet.write(total_row, 1, df["Valor"].sum(), total_money_format)
-            worksheet.write(total_row, 2, "", total_format)  # FormaPagamento vazio no total
+            worksheet.write(
+                total_row, 2, "", total_format
+            )  # FormaPagamento vazio no total
             worksheet.write(total_row, 3, f"{len(df)} recebimentos", total_format)
 
             # Ajustar largura das colunas
