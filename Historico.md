@@ -2941,3 +2941,30 @@ ORDER BY DATE(vp."DataVencimento"), v."ClienteNome"
 2. `apps/vendas/recebimentos.py` - Grid e exportação Excel atualizadas
 
 ---
+
+## 📅 12/02/2026
+
+### ⏰ 09:03 - Adição de 2 Novos Vendedores ao Painel
+
+#### 🎯 O que foi pedido:
+Adicionar 2 novos vendedores ao painel que exibe vendedores:
+- 11 - André Souza
+- 12 - João Victor
+
+#### 🔧 Detalhamento da Solução:
+
+**1. Fotos dos vendedores:**
+- Renomeados arquivos `fotos/11` → `fotos/11.jpg` e `fotos/12` → `fotos/12.jpg` (eram JPEG sem extensão)
+
+**2. Lista de vendedores atualizada:**
+- Adicionados `André Souza` (foto: 11) e `João Victor` (foto: 12) na `vendedores_tabela`
+
+**3. Layout do painel ajustado:**
+- De 5x2 (5 colunas, 2 linhas = 10 vendedores) para 6x2 (6 colunas, 2 linhas = 12 vendedores)
+
+#### 📁 Arquivos Alterados:
+1. `app.py` - Lista de vendedores e layout do painel atualizados
+2. `fotos/11.jpg` - Foto renomeada (adicionada extensão .jpg)
+3. `fotos/12.jpg` - Foto renomeada (adicionada extensão .jpg)
+
+---

@@ -1021,6 +1021,8 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
         {"nome": "Giovana Lelis", "foto": "8"},
         {"nome": "Carlos Gabriel Carvalho Macedo", "foto": "9"},
         {"nome": "Cássio Gadagnoto", "foto": "10"},
+        {"nome": "André Souza", "foto": "11"},
+        {"nome": "João Victor", "foto": "12"},
     ]
 
     # Calcular vendas do mês atual para os gauges
@@ -1121,24 +1123,24 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
     def format_currency(value):
         return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-    # Renderizar cards dos vendedores em layout 5x2 (5 por linha, 2 linhas)
-    # Primeira linha (vendedores 1-5)
-    col1, col2, col3, col4, col5 = st.columns(5)
-    cols_linha1 = [col1, col2, col3, col4, col5]
+    # Renderizar cards dos vendedores em layout 6x2 (6 por linha, 2 linhas)
+    # Primeira linha (vendedores 1-6)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    cols_linha1 = [col1, col2, col3, col4, col5, col6]
 
-    for i in range(5):  # Primeira linha
+    for i in range(6):  # Primeira linha
         if i < len(vendedores_ordenados):
             vendedor = vendedores_ordenados[i]
             _render_card_vendedor(
                 cols_linha1[i], vendedor, get_image_base64, format_currency
             )
 
-    # Segunda linha (vendedores 6-10)
-    col6, col7, col8, col9, col10 = st.columns(5)
-    cols_linha2 = [col6, col7, col8, col9, col10]
+    # Segunda linha (vendedores 7-12)
+    col7, col8, col9, col10, col11, col12 = st.columns(6)
+    cols_linha2 = [col7, col8, col9, col10, col11, col12]
 
-    for i in range(5):  # Segunda linha
-        idx = i + 5
+    for i in range(6):  # Segunda linha
+        idx = i + 6
         if idx < len(vendedores_ordenados):
             vendedor = vendedores_ordenados[idx]
             _render_card_vendedor(

@@ -298,6 +298,17 @@
     - Ajuste no **Layout dos Menus**
     - Implementado **Manual de Usuário**
 
+## **12/02/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **09:21 - Commit 136**
+
+- Inserção Novos Vendedores: **André** e **João Victor**
+
 ## **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***
