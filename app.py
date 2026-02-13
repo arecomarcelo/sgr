@@ -1001,7 +1001,7 @@ def _calcular_vendas_mes_atual_para_gauge(vendedores_nomes):
 
 
 def _render_vendedores_com_fotos(vendas_por_vendedor):
-    """Renderiza todos os vendedores da tabela com suas fotos em cards 5x2"""
+    """Renderiza todos os vendedores da tabela com suas fotos em cards 6x2"""
     import base64
     import os
     from io import BytesIO
@@ -1025,63 +1025,65 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
         {"nome": "João Victor", "foto": "12"},
     ]
 
-    # Calcular vendas do mês atual para os gauges
-    # IMPORTANTE: Os gauges sempre usam o mês atual, independente dos filtros
-    # Realizado: 01 do mês atual até hoje
-    # Meta: 01 do mesmo mês do ano anterior até o mesmo dia
+    # Buscar nomes curtos do banco de dados
+    nomes_curtos = vendas_service.venda_repository.get_vendedores_com_nome_curto()
+
+    # Obter datas do filtro aplicado (ou calcular mês atual)
+    from dateutil.relativedelta import relativedelta
+
+    data_inicio = st.session_state.get("data_inicio_filtro")
+    data_fim = st.session_state.get("data_fim_filtro")
+
+    if not data_inicio or not data_fim:
+        hoje = datetime.now()
+        data_inicio = datetime(hoje.year, hoje.month, 1).date()
+        data_fim = hoje.date()
+
+    # Calcular ano anterior para exibição
+    ano_anterior = (data_inicio - relativedelta(years=1)).year
+
+    # Calcular vendas do mesmo período no ano anterior
     vendedores_nomes = [v["nome"] for v in vendedores_tabela]
-    vendas_realizadas_gauge, vendas_meta_gauge = _calcular_vendas_mes_atual_para_gauge(
-        vendedores_nomes
+    vendas_anteriores = _calcular_vendas_periodo_anterior(
+        data_inicio, data_fim, vendedores_nomes
     )
 
     # Criar dicionário de vendas existentes para consulta rápida
     vendas_dict = {}
-    total_geral = 0
 
     if vendas_por_vendedor is not None and not vendas_por_vendedor.empty:
-        total_geral = float(vendas_por_vendedor["total_valor"].sum())
         for _, row in vendas_por_vendedor.iterrows():
             vendas_dict[row["VendedorNome"]] = {
                 "total_valor": float(row["total_valor"]),
-                "percentual": (
-                    (float(row["total_valor"]) / total_geral * 100)
-                    if total_geral > 0
-                    else 0
-                ),
             }
 
     # Preparar dados completos dos vendedores
     vendedores_completos = []
     for vendedor in vendedores_tabela:
         nome = vendedor["nome"]
-        # Para o GAUGE:
-        # Meta = vendas do mesmo mês do ano anterior (sempre mês atual)
-        meta_vendedor = vendas_meta_gauge.get(nome, 0.0)
-        # Realizado = vendas do mês atual até hoje (sempre mês atual)
-        realizado_vendedor = vendas_realizadas_gauge.get(nome, 0.0)
+        nome_curto = nomes_curtos.get(nome, nome)
+        vendas_ant = vendas_anteriores.get(nome, 0.0)
 
         if nome in vendas_dict:
-            # Vendedor com vendas (total_valor e percentual seguem os filtros aplicados)
             vendedores_completos.append(
                 {
                     "nome": nome,
+                    "nome_curto": nome_curto,
                     "foto": vendedor["foto"],
                     "total_valor": vendas_dict[nome]["total_valor"],
-                    "percentual": vendas_dict[nome]["percentual"],
-                    "meta": meta_vendedor,
-                    "realizado": realizado_vendedor,
+                    "vendas_ano_anterior": vendas_ant,
+                    "ano_anterior": ano_anterior,
                 }
             )
         else:
-            # Vendedor sem vendas (zerado)
             vendedores_completos.append(
                 {
                     "nome": nome,
+                    "nome_curto": nome_curto,
                     "foto": vendedor["foto"],
                     "total_valor": 0.0,
-                    "percentual": 0.0,
-                    "meta": meta_vendedor,
-                    "realizado": realizado_vendedor,
+                    "vendas_ano_anterior": vendas_ant,
+                    "ano_anterior": ano_anterior,
                 }
             )
 
@@ -1231,7 +1233,7 @@ def _criar_gauge_vendedor(meta, realizado):
 
 
 def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
-    """Renderiza um card individual do vendedor"""
+    """Renderiza um card individual do vendedor com novo layout"""
     with col:
         # Buscar foto do vendedor
         foto_path_jpg = f"fotos/{vendedor['foto']}.jpg"
@@ -1241,115 +1243,64 @@ def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
         foto_path = foto_path_jpg if os.path.exists(foto_path_jpg) else foto_path_png
         image_b64 = get_image_base64(foto_path)
 
-        # Criar gauge do vendedor
-        gauge_b64 = _criar_gauge_vendedor(
-            vendedor.get("meta", 0), vendedor.get("realizado", 0)
+        # Calcular percentual: vendas atuais / vendas ano anterior
+        vendas_ant = vendedor.get("vendas_ano_anterior", 0.0)
+        percentual = (
+            (vendedor["total_valor"] / vendas_ant * 100) if vendas_ant > 0 else 0
         )
-        gauge_html = (
-            f'<img src="{gauge_b64}" style="width: 60px; height: 60px; margin-left: 8px;">'
-            if gauge_b64
-            else ""
-        )
+        ano_anterior = vendedor.get("ano_anterior", "")
 
+        # Foto ou avatar com iniciais
         if image_b64:
-            # Com foto
-            st.markdown(
-                f"""
-            <div style='
-                background: #ffffff;
-                border-radius: 15px;
-                padding: 20px;
-                text-align: center;
-                box-shadow: 0 6px 16px rgba(30, 136, 229, 0.2);
-                font-family: Roboto, sans-serif;
-                margin-bottom: 20px;
-                border: 2px solid #E3F2FD;
-            '>
-                <img src="{image_b64}" style="
-                    width: 80px;
-                    height: 80px;
-                    margin-bottom: 12px;
-                    object-fit: cover;
-                ">
-                <div style='font-size: 0.9rem; color: #1E88E5; font-weight: 600; margin-bottom: 8px;'>
-                    {vendedor['nome']}
-                </div>
-                <div style='font-size: 1.1rem; font-weight: 700; color: #1565C0; margin-bottom: 6px;'>
-                    {format_currency(vendedor['total_valor'])}
-                </div>
-                <div style='display: flex; align-items: center; justify-content: center; gap: 8px;'>
-                    <div style='
-                        background: #1E88E5;
-                        color: white;
-                        padding: 4px 12px;
-                        border-radius: 20px;
-                        font-size: 0.8rem;
-                        font-weight: 600;
-                    '>
-                        {vendedor['percentual']:.1f}%
-                    </div>
-                    {gauge_html}
-                </div>
-            </div>
-            """,
-                unsafe_allow_html=True,
-            )
+            foto_html = f'<img src="{image_b64}" style="width: 80px; height: 80px; margin-bottom: 12px; object-fit: cover;">'
         else:
-            # Sem foto - usar avatar com iniciais
             iniciais = "".join(
                 [nome[0] for nome in vendedor["nome"].split()[:2]]
             ).upper()
-            st.markdown(
-                f"""
-            <div style='
-                background: #ffffff;
-                border-radius: 15px;
-                padding: 20px;
-                text-align: center;
-                box-shadow: 0 6px 16px rgba(30, 136, 229, 0.2);
-                font-family: Roboto, sans-serif;
-                margin-bottom: 20px;
-                border: 2px solid #E3F2FD;
-            '>
-                <div style="
-                    width: 80px;
-                    height: 80px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #1E88E5, #1565C0);
-                    color: white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 24px;
-                    font-weight: 700;
-                    margin: 0 auto 12px auto;
-                    border: 3px solid #1E88E5;
-                ">
-                    {iniciais}
-                </div>
-                <div style='font-size: 0.9rem; color: #1E88E5; font-weight: 600; margin-bottom: 8px;'>
-                    {vendedor['nome']}
-                </div>
-                <div style='font-size: 1.1rem; font-weight: 700; color: #1565C0; margin-bottom: 6px;'>
-                    {format_currency(vendedor['total_valor'])}
-                </div>
-                <div style='display: flex; align-items: center; justify-content: center; gap: 8px;'>
-                    <div style='
-                        background: #1E88E5;
-                        color: white;
-                        padding: 4px 12px;
-                        border-radius: 20px;
-                        font-size: 0.8rem;
-                        font-weight: 600;
-                    '>
-                        {vendedor['percentual']:.1f}%
-                    </div>
-                    {gauge_html}
-                </div>
+            foto_html = f"""<div style="
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #1E88E5, #1565C0);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                font-weight: 700;
+                margin: 0 auto 12px auto;
+                border: 3px solid #1E88E5;
+            ">{iniciais}</div>"""
+
+        st.markdown(
+            f"""
+        <div style='
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 6px 16px rgba(30, 136, 229, 0.2);
+            font-family: Roboto, sans-serif;
+            margin-bottom: 20px;
+            border: 2px solid #E3F2FD;
+        '>
+            {foto_html}
+            <div style='font-size: 0.95rem; color: #1E88E5; font-weight: 600; margin-bottom: 8px;'>
+                {vendedor.get('nome_curto', vendedor['nome'])}
             </div>
-            """,
-                unsafe_allow_html=True,
-            )
+            <div style='font-size: 1.2rem; font-weight: 700; color: #1565C0; margin-bottom: 8px;'>
+                {format_currency(vendedor['total_valor'])}
+            </div>
+            <div style='font-size: 0.75rem; color: #555; margin-bottom: 6px;'>
+                Mês de {ano_anterior}= {format_currency(vendas_ant)}
+            </div>
+            <div style='font-size: 0.8rem; font-weight: 600; color: #333;'>
+                {percentual:.1f}% meta do mês batida
+            </div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
 
 
 def _render_filters_and_metrics():

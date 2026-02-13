@@ -309,6 +309,18 @@
 
 - Inserção Novos Vendedores: **André** e **João Victor**
 
+## **13/02/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **10:25 - Commit 137**
+
+- Ajustes **Dashboard Vendas**:
+    - Alteração layout **Ranking Vendedores**
+
 ## **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

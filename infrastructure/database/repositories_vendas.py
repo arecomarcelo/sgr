@@ -102,6 +102,27 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
             logger.error(f"Error fetching active sellers: {str(e)}")
             raise DatabaseError(f"Erro ao buscar vendedores ativos: {str(e)}")
 
+    def get_vendedores_com_nome_curto(self) -> dict:
+        """Obtém mapeamento de nome completo para nome curto dos vendedores"""
+        try:
+            query = 'SELECT "Nome", "Curto" FROM "Vendedores" ORDER BY "Nome"'
+
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                data = cursor.fetchall()
+
+                resultado = {}
+                for row in data:
+                    nome_completo = row[0]
+                    nome_curto = row[1] if row[1] else nome_completo
+                    resultado[nome_completo] = nome_curto
+
+            return resultado
+
+        except Exception as e:
+            logger.error(f"Error fetching short names: {str(e)}")
+            return {}
+
     def get_situacoes_disponiveis(self) -> pd.DataFrame:
         """Obtém situações de venda disponíveis"""
         try:

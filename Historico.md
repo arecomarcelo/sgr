@@ -1,5 +1,32 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 13/02/2026
+
+### ⏰ 10:20 - Novo Layout dos Cards do Ranking de Vendedores
+
+#### 🎯 O que foi pedido:
+Ajustar os cards do Ranking de Vendedores para um novo layout contendo:
+- Nome curto (campo "Curto" da tabela Vendedores)
+- Valor de vendas atual em destaque (azul)
+- Valor do mesmo período filtrado no ano anterior
+- Percentual: vendas atuais / vendas do ano anterior
+
+#### 🔧 Detalhamento da Solução:
+
+1. **Repositório** (`repositories_vendas.py`):
+   - ➕ Adicionado método `get_vendedores_com_nome_curto()` para buscar campo "Curto" da tabela Vendedores
+
+2. **Cards de Vendedores** (`app.py`):
+   - 🔄 `_render_vendedores_com_fotos()`: Substituído cálculo de gauge por cálculo de vendas do ano anterior no mesmo período filtrado. Adicionado busca de nomes curtos do banco
+   - 🔄 `_render_card_vendedor()`: Novo layout com nome curto, valor atual (azul), valor do ano anterior ("Mês de {ano}= R$X"), e percentual (vendas atuais / vendas ano anterior)
+   - ❌ Removido: gauge donut e badge percentual dos cards
+
+#### 📁 Arquivos Alterados:
+- `infrastructure/database/repositories_vendas.py`
+- `app.py`
+
+---
+
 ## 📅 15/01/2026
 
 ### ⏰ 11:00 - Reorganização do Menu Lateral - Novo Item Recebimentos
