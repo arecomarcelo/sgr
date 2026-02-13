@@ -321,6 +321,11 @@
 - Ajustes **Dashboard Vendas**:
     - Alteração layout **Ranking Vendedores**
 
+##### **11:49 - Commit 138**
+
+- Ajustes **Dashboard Vendas**:
+    - Alteração **Meta Individual**
+
 ## **dd/mm/aaaa**
 
 - #### ***Instalar requirements.txt***

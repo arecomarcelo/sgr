@@ -1025,8 +1025,8 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
         {"nome": "João Victor", "foto": "12"},
     ]
 
-    # Buscar nomes curtos do banco de dados
-    nomes_curtos = vendas_service.venda_repository.get_vendedores_com_nome_curto()
+    # Buscar nomes curtos e percentuais do banco de dados
+    dados_vendedores = vendas_service.venda_repository.get_vendedores_com_nome_curto()
 
     # Obter datas do filtro aplicado (ou calcular mês atual)
     from dateutil.relativedelta import relativedelta
@@ -1061,31 +1061,24 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
     vendedores_completos = []
     for vendedor in vendedores_tabela:
         nome = vendedor["nome"]
-        nome_curto = nomes_curtos.get(nome, nome)
+        dados_vend = dados_vendedores.get(nome, {})
+        nome_curto = dados_vend.get("curto", nome)
+        percentual_meta = dados_vend.get("percentual", 0.0)
         vendas_ant = vendas_anteriores.get(nome, 0.0)
 
-        if nome in vendas_dict:
-            vendedores_completos.append(
-                {
-                    "nome": nome,
-                    "nome_curto": nome_curto,
-                    "foto": vendedor["foto"],
-                    "total_valor": vendas_dict[nome]["total_valor"],
-                    "vendas_ano_anterior": vendas_ant,
-                    "ano_anterior": ano_anterior,
-                }
-            )
-        else:
-            vendedores_completos.append(
-                {
-                    "nome": nome,
-                    "nome_curto": nome_curto,
-                    "foto": vendedor["foto"],
-                    "total_valor": 0.0,
-                    "vendas_ano_anterior": vendas_ant,
-                    "ano_anterior": ano_anterior,
-                }
-            )
+        total_valor = vendas_dict[nome]["total_valor"] if nome in vendas_dict else 0.0
+
+        vendedores_completos.append(
+            {
+                "nome": nome,
+                "nome_curto": nome_curto,
+                "foto": vendedor["foto"],
+                "total_valor": total_valor,
+                "vendas_ano_anterior": vendas_ant,
+                "percentual_meta": percentual_meta,
+                "ano_anterior": ano_anterior,
+            }
+        )
 
     # Ordenar vendedores por volume de vendas (maior para menor)
     vendedores_ordenados = sorted(
@@ -1243,11 +1236,12 @@ def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
         foto_path = foto_path_jpg if os.path.exists(foto_path_jpg) else foto_path_png
         image_b64 = get_image_base64(foto_path)
 
-        # Calcular percentual: vendas atuais / vendas ano anterior
+        # Calcular percentual: vendas atuais / (vendas ano anterior + percentual crescimento)
         vendas_ant = vendedor.get("vendas_ano_anterior", 0.0)
-        percentual = (
-            (vendedor["total_valor"] / vendas_ant * 100) if vendas_ant > 0 else 0
-        )
+        percentual_meta = vendedor.get("percentual_meta", 0.0)
+        # Meta = vendas_ano_anterior * (1 + Percentual/100)
+        meta = vendas_ant * (1 + percentual_meta / 100) if vendas_ant > 0 else 0
+        percentual = (vendedor["total_valor"] / meta * 100) if meta > 0 else 0
         ano_anterior = vendedor.get("ano_anterior", "")
 
         # Foto ou avatar com iniciais

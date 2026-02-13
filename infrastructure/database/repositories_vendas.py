@@ -103,9 +103,11 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
             raise DatabaseError(f"Erro ao buscar vendedores ativos: {str(e)}")
 
     def get_vendedores_com_nome_curto(self) -> dict:
-        """Obtém mapeamento de nome completo para nome curto dos vendedores"""
+        """Obtém mapeamento de nome completo para dados do vendedor (nome curto e percentual)"""
         try:
-            query = 'SELECT "Nome", "Curto" FROM "Vendedores" ORDER BY "Nome"'
+            query = (
+                'SELECT "Nome", "Curto", "Percentual" FROM "Vendedores" ORDER BY "Nome"'
+            )
 
             with connection.cursor() as cursor:
                 cursor.execute(query)
@@ -115,7 +117,11 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
                 for row in data:
                     nome_completo = row[0]
                     nome_curto = row[1] if row[1] else nome_completo
-                    resultado[nome_completo] = nome_curto
+                    percentual = float(row[2]) if row[2] else 0.0
+                    resultado[nome_completo] = {
+                        "curto": nome_curto,
+                        "percentual": percentual,
+                    }
 
             return resultado
 

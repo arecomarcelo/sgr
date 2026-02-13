@@ -2,6 +2,33 @@
 
 ## 📅 13/02/2026
 
+### ⏰ 11:12 - Ajuste na Fórmula do % Meta Batida no Ranking de Vendedores
+
+#### 🎯 O que foi pedido:
+Ajustar o cálculo do "% meta do mês batida" nos cards do ranking para usar a fórmula:
+`vendas_atuais / (vendas_ano_anterior × (1 + Percentual/100)) × 100`
+Onde "Percentual" é um campo da tabela Vendedores que representa o crescimento esperado.
+
+#### 🔧 Detalhamento da Solução:
+
+1. **Repositório** (`repositories_vendas.py`):
+   - 🔄 Método `get_vendedores_com_nome_curto()` agora busca também o campo `"Percentual"` da tabela Vendedores
+   - Retorna dict com `{nome: {"curto": nome_curto, "percentual": valor}}`
+
+2. **Cards de Vendedores** (`app.py`):
+   - 🔄 `_render_vendedores_com_fotos()`: Passa `percentual_meta` para cada vendedor
+   - 🔄 `_render_card_vendedor()`: Nova fórmula — Meta = vendas_anterior × (1 + Percentual/100), % = vendas_atuais / Meta × 100
+
+3. **Documentação**:
+   - 🔄 Atualizado `documentacao/Ajustes Ranking Vendedores.md` com a nova fórmula e código atualizado
+
+#### 📁 Arquivos Alterados:
+- `infrastructure/database/repositories_vendas.py`
+- `app.py`
+- `documentacao/Ajustes Ranking Vendedores.md`
+
+---
+
 ### ⏰ 10:20 - Novo Layout dos Cards do Ranking de Vendedores
 
 #### 🎯 O que foi pedido:
