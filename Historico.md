@@ -1,6 +1,43 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 18/02/2026
+
+### ⏰ 10:30 - Correção: Vendas zeradas para Rocha e Diney no Ranking
+
+#### 🎯 O que foi pedido:
+Após a implementação do Commit 138, os vendedores **Rocha Jr.** e **Diney Scalabrini** passaram a exibir vendas zeradas nos cards do Ranking, mesmo possuindo vendas no mês corrente.
+
+#### 🔍 Causa Raiz Identificada:
+- A função `_render_vendedores_com_fotos` recebia como parâmetro o `vendas_por_vendedor`, que é gerado com `top_n=10`
+- Com **12 vendedores** na lista hardcoded e apenas **10** no dataset, os 2 com menor volume eram excluídos
+- O `vendas_dict` era montado apenas com os 10 primeiros → Rocha e Diney (fora do top 10) recebiam `total_valor = 0.0`
+
+#### 🔧 Detalhamento da Solução:
+- ✅ Substituída a montagem do `vendas_dict` para usar o `df_vendas` **completo** da `session_state` (sem o limite `top_n`)
+- ✅ Agrupamento direto por `VendedorNome` com soma de `ValorTotal` para **todos** os vendedores
+- ✅ Mantido fallback para `vendas_por_vendedor` caso `df_vendas` não esteja disponível na sessão
+
+#### 📁 Arquivos Alterados:
+- `app.py` — função `_render_vendedores_com_fotos`: nova lógica de montagem do `vendas_dict`
+
+---
+
 ## 📅 13/02/2026
+
+### ⏰ 12:05 - Atualização da Documentação do Ranking de Vendedores
+
+#### 🎯 O que foi pedido:
+Atualizar o arquivo `Ajustes Ranking Vendedores.md` com as alterações realizadas no Commit 138.
+
+#### 🔧 Detalhamento da Solução:
+- ✅ Substituídos todos os status `[x] Aplicado` por `✅ Aplicado` (emojis)
+- ✅ Adicionada seção **Conclusão** com tabela resumo, referência ao **Commit 138** e data **13/02/2026**
+- ✅ Tabela de resumo atualizada com emojis de status
+
+#### 📁 Arquivos Alterados:
+- `documentacao/Ajustes Ranking Vendedores.md`
+
+---
 
 ### ⏰ 11:12 - Ajuste na Fórmula do % Meta Batida no Ranking de Vendedores
 

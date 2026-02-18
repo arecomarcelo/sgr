@@ -326,7 +326,19 @@
 - Ajustes **Dashboard Vendas**:
     - Alteração **Meta Individual**
 
-## **dd/mm/aaaa**
+## **18/02/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **16:04 - Commit 139**
+
+- **Relatório de Vendas**:
+    - Ajustada a **Exibição de todos vendedores** antes exibia somente **Top 10**
+
+## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***
   

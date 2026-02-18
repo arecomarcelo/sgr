@@ -1048,10 +1048,26 @@ def _render_vendedores_com_fotos(vendas_por_vendedor):
         data_inicio, data_fim, vendedores_nomes
     )
 
-    # Criar dicionário de vendas existentes para consulta rápida
+    # Criar dicionário de vendas de TODOS os vendedores (sem limite top_n)
+    # Usa df_vendas completo da session_state para não perder vendedores fora do top 10
     vendas_dict = {}
+    df_vendas_completo = st.session_state.get("df_vendas", pd.DataFrame())
 
-    if vendas_por_vendedor is not None and not vendas_por_vendedor.empty:
+    if (
+        df_vendas_completo is not None
+        and not df_vendas_completo.empty
+        and "VendedorNome" in df_vendas_completo.columns
+        and "ValorTotal" in df_vendas_completo.columns
+    ):
+        df_agrupado = (
+            df_vendas_completo.groupby("VendedorNome")["ValorTotal"].sum().reset_index()
+        )
+        for _, row in df_agrupado.iterrows():
+            vendas_dict[row["VendedorNome"]] = {
+                "total_valor": float(row["ValorTotal"]),
+            }
+    elif vendas_por_vendedor is not None and not vendas_por_vendedor.empty:
+        # Fallback: usar vendas_por_vendedor se df_vendas não estiver disponível
         for _, row in vendas_por_vendedor.iterrows():
             vendas_dict[row["VendedorNome"]] = {
                 "total_valor": float(row["total_valor"]),
