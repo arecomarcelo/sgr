@@ -1,5 +1,338 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 20/02/2026
+
+### ⏰ 14:45 - Controle de Visibilidade dos Submenus de Vendas por Permissão
+
+#### 🎯 O que foi pedido:
+Controlar a exibição dos submenus de Vendas por permissão:
+- `view_venda` → exibe apenas **Comercial**
+- `change_venda` → exibe apenas **Pedidos**
+- Ambas → exibe os dois
+
+#### 🔧 Solução Implementada:
+1. **Config do grupo Vendas**: `permission` alterado para lista `["view_venda", "change_venda"]` — o menu Vendas aparece se o usuário tiver qualquer uma das duas permissões
+2. **Submenu Pedidos**: permissão alterada de `view_venda` para `change_venda`
+3. **Função auxiliar `_check_permission`**: criada dentro de `menu()` para suportar permissão como string ou lista (OR lógico), usada tanto no grupo principal quanto nos submenus
+
+#### 📁 Arquivos Alterados:
+- `apps/auth/modules.py` — `module_config` (Vendas), função `_check_permission`, verificações de permissão do grupo e submenus
+
+---
+
+### ⏰ 14:30 - Correção de Permissões Diretas do Usuário não Funcionando
+
+#### 🎯 O que foi pedido:
+Verificar por que a permissão `vendas.view` atribuída diretamente ao usuário não funcionava, mas ao atribuir o grupo `VendasVisualiza` (que tem essa permissão) funcionava normalmente.
+
+#### 🔍 Causa Raiz Identificada:
+A função `get_user_permissions` em `repository.py` consultava **apenas permissões via grupos** (tabela `auth_user_groups → auth_group_permissions → auth_permission`), ignorando completamente as permissões atribuídas diretamente ao usuário (tabela `auth_user_user_permissions`).
+
+#### 🔧 Solução Implementada:
+Adicionado `UNION` na query SQL para incluir **ambas** as fontes de permissão:
+1. ✅ Permissões via Grupos (`auth_user_groups → auth_group_permissions → auth_permission`)
+2. ✅ Permissões diretas do usuário (`auth_user_user_permissions → auth_permission`)
+
+#### 📁 Arquivos Alterados:
+- `repository.py` — Método `get_user_permissions` na classe `UserRepository`
+
+---
+
+### ⏰ 12:10 - Formatação Excel igual ao PDF no Relatório de Pedidos
+
+#### 🎯 O que foi pedido:
+Ajustar o Excel gerado no mesmo padrão de formatação do PDF gerado.
+
+#### 🔧 Solução Implementada:
+Criado método `_generate_excel()` na classe `PedidosController` usando `xlsxwriter` diretamente, com os mesmos elementos visuais do PDF:
+
+| Elemento | PDF (reportlab) | Excel (xlsxwriter) |
+|---|---|---|
+| Título | Paragraph "SGR - Relatório de Pedidos" | Célula merged, azul `#1E88E5`, bold, 14pt |
+| Data geração | Paragraph "Gerado em: ..." | Célula merged, itálico, cinza `#757575` |
+| Cabeçalho | Fundo `#1E88E5`, branco, bold, centralizado | Idêntico |
+| Linhas pares | Fundo branco `#FFFFFF` | Idêntico |
+| Linhas ímpares | Fundo cinza `#F5F5F5` | Idêntico |
+| Linha de total | Fundo `#E3F2FD`, bold | Idêntico |
+| ValorTotal | `R$ 1.234,56` (string) | Número + formato `"R$ "#,##0.00` (calculável) |
+| Datas | Centralizado | Centralizado |
+| Bordas | Grade cinza | `border: 1, border_color: #BDBDBD` |
+
+**Diferencial Excel vs PDF**: ValorTotal é escrito como número (`write_number`), não como string — permite somar as células no Excel. Inclui fallback para export simples sem formatação em caso de erro.
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Ação |
+|---|---|
+| ✏️ `apps/vendas/pedidos.py` | Adicionado `_generate_excel()` + atualizado `_render_data_table` |
+
+---
+
+### ⏰ 11:30 - Correção Final: Grid Relatório de Pedidos não atualizava após filtros
+
+#### 🎯 O que foi pedido:
+Após aplicar filtros no Relatório de Pedidos, o grid continuava exibindo dados antigos (não atualizados).
+
+#### 🔍 Causa Raiz (dois problemas):
+1. **`st.rerun()` capturado pelo `except Exception`**: O `st.rerun()` lança internamente `RerunException`, que é subclasse de `Exception`. Como o bloco `try/except Exception` envolvia o ponto onde `st.rerun()` deveria ser chamado, a exception era capturada silenciosamente, impedindo o rerun após carregar os dados.
+
+2. **AgGrid com key estática não atualizava**: O componente AgGrid identificado pela key `"pedidos_grid"` (estática) pode manter cache visual mesmo quando o DataFrame subjacente é alterado. Sem forçar a recriação do componente, a exibição antiga permanecia visível.
+
+#### 🔧 Solução Implementada:
+1. **Flag `_should_rerun`**: Variável booleana definida DENTRO do try/except, `st.rerun()` chamado FORA — RerunException nunca é capturada pelo except
+2. **Contador `pedidos_load_count`**: Incrementado em `_load_pedidos_data` a cada carga de dados
+3. **Key dinâmica do AgGrid**: `key=f"pedidos_grid_{pedidos_load_count}"` → nova key força recriação completa do componente com dados frescos
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Ação |
+|---|---|
+| ✏️ `apps/vendas/pedidos.py` | Corrigido (flag rerun + counter + key dinâmica AgGrid) |
+
+---
+
+### ⏰ 10:55 - Correção: Filtros Relatório de Pedidos + Reversão de alterações indevidas
+
+#### 🎯 O que foi feito:
+1. **Revertidas** as alterações feitas erroneamente no módulo Comercial (Manual):
+   - `app.py`: removido `unsafe_allow_html=True` do `st.markdown(content)` (restaurado ao original)
+   - `apps/auth/modules.py`: removido reset de `view_mode` no clique do menu (restaurado ao original)
+
+2. **Corrigidos** os filtros do Relatório de Pedidos:
+
+#### 🔍 Causa Raiz do Problema nos Filtros:
+O `st.expander("Configurar Filtros", expanded=not tem_dados)` usava lógica dinâmica. No Streamlit, o parâmetro `expanded=X` **é reforçado a cada rerun** — ele sobrescreve a interação do usuário. Quando havia dados carregados (`tem_dados=True`), o expander era forçado para `expanded=False` (fechado) a cada rerun, incluindo o rerun disparado pelo clique em "Buscar Pedidos". Isso interferia no processamento do botão interno, fazendo os filtros parecerem inoperantes.
+
+#### 🔧 Solução:
+- `expanded=True` fixo — sem lógica dinâmica. Mesmo padrão do módulo Comercial e SAC
+- Adicionado `key="btn_buscar_pedidos"` e `key="btn_mes_atual_pedidos"` nos botões para garantir identidade única entre reruns
+- Simplificada a lógica de exibição da tabela (lê `pedidos_df` direto do session_state)
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Ação |
+|---|---|
+| ✏️ `apps/vendas/pedidos.py` | Corrigido |
+| ↩️ `app.py` | Revertido |
+| ↩️ `apps/auth/modules.py` | Revertido |
+
+---
+
+### ⏰ 10:45 - Correção: Manual de Vendas exibido no lugar dos dados filtrados
+
+#### 🎯 O que foi reportado:
+Ao aplicar filtros no módulo Comercial (Relatório de Vendas), era exibido o "Histórico de Atualizações" do manual com tags `<br/>` visíveis como texto, em vez dos dados filtrados.
+
+#### 🔍 Causa Raiz (dois problemas):
+1. **`view_mode` preso em `"manual"`**: o usuário clicou em "📖 Ler Manual" → `view_mode = "manual"` fica gravado no `st.session_state`. Ao navegar para outro módulo e voltar, `vendas_dashboard()` detectava `view_mode == "manual"` e exibia o manual ao invés do dashboard com filtros
+2. **`<br/>` renderizado como texto**: `st.markdown(content)` sem `unsafe_allow_html=True` não interpretava as tags HTML dentro das células das tabelas markdown do manual
+
+#### 🔧 Solução:
+- **`apps/auth/modules.py`**: ao clicar em qualquer item do menu lateral, `st.session_state["view_mode"] = "dashboard"` é forçado antes do `st.rerun()`. Isso garante que a navegação sempre redefine o modo de visualização
+- **`app.py`**: `st.markdown(content)` → `st.markdown(content, unsafe_allow_html=True)` na função `_render_manual_fullscreen()`, corrigindo a renderização de `<br/>` nas tabelas do manual
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Ação |
+|---|---|
+| ✏️ `apps/auth/modules.py` | Corrigido |
+| ✏️ `app.py` | Corrigido |
+
+---
+
+### ⏰ 10:30 - Correção: Filtros não funcionavam
+
+#### 🎯 O que foi pedido:
+Filtros do Relatório de Pedidos não estavam sendo aplicados.
+
+#### 🔍 Causa Raiz:
+Em Streamlit, `st.rerun()` lança internamente uma `RerunException` que é subclasse de `Exception`. O código tinha um `except Exception` nos métodos `_render_filters` e `render_dashboard`, que **capturava silenciosamente essa exceção**, impedindo o rerun e quebrando o comportamento dos filtros.
+
+Além disso, o `st.rerun()` era **desnecessário**: o clique no botão já dispara um rerun automático no Streamlit. Após `_load_pedidos_data` gravar os dados em `st.session_state.pedidos_df` e retornar, a execução continua naturalmente em `_render_filters_and_data`, que já exibe a tabela com os dados atualizados.
+
+#### 🔧 Solução:
+- Removido `st.rerun()` de `_load_pedidos_data` (causava o problema)
+- Removido o padrão manual `spinner_ctx.__enter__()/__exit__()` (antipadrão)
+- `_render_filters_and_data`: expander agora recolhe automaticamente (`expanded=not tem_dados`) quando há dados, mantendo a tabela visível
+- Mensagem de sucesso exibida fora do expander, após a busca
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Ação |
+|---|---|
+| ✏️ `apps/vendas/pedidos.py` | Corrigido |
+
+---
+
+### ⏰ 10:16 - Correções no Relatório de Pedidos
+
+#### 🎯 O que foi pedido:
+1. Grid com a mesma aparência do relatório modelo (Vendas)
+2. Correção do erro ao filtrar por Prazo de Entrega: `invalid input syntax for type date: ""`
+
+#### 🔍 Detalhamento da Solução:
+- **Erro de Prazo**: campo `PrazoEntrega` pode conter strings vazias `""` no banco. Substituído `"PrazoEntrega"::DATE` por `NULLIF(TRIM("PrazoEntrega"), '')::DATE` — o `NULLIF` converte vazio em `NULL` antes do cast, evitando o erro do PostgreSQL
+- **Grid**: alinhado ao padrão do relatório de vendas (`views.py`):
+  - `cellStyle={"border": "1px solid black"}`
+  - `height=400`
+  - Coluna Data e PrazoEntrega com `type=["dateColumnFilter"]`
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Ação |
+|---|---|
+| ✏️ `apps/vendas/pedidos.py` | Corrigido |
+
+---
+
+### ⏰ 10:10 - Novo Relatório de Pedidos + Ajuste de Menu
+
+#### 🎯 O que foi pedido:
+1. Implementar novo **Relatório de Pedidos** no módulo Vendas (modelo: Relatório Comex)
+2. Filtros: Data Inicial/Final, Prazo Entrega Inicial/Final, Situação e VendedorNome
+3. Grid com colunas: Codigo, ClienteNome, VendedorNome, Data, PrazoEntrega, SituacaoNome, ValorTotal
+4. Exportação para **Excel e PDF** (sem CSV)
+5. No menu lateral (Vendas): renomear sub-item **"Geral" → "Comercial"** e criar novo sub-item **"Pedidos"**
+
+#### 🔍 Detalhamento da Implementação:
+- **Novo módulo** `apps/vendas/pedidos.py` criado com a classe `PedidosController`
+  - Consulta SQL direta na tabela `"Vendas"` com filtro obrigatório de vendedores ativos (`Vendedores`)
+  - Filtros dinâmicos: período de data, prazo de entrega (opcional), situação e vendedor
+  - Carregamento automático do mês atual na abertura
+  - Grid **AgGrid** com colunas formatadas (ValorTotal em formato brasileiro `R$ 1.234,56`)
+  - Exportação **Excel** via `xlsxwriter` (já disponível)
+  - Exportação **PDF** via `reportlab` (instalado: `reportlab==4.2.5`) com tabela formatada em paisagem A4, linha de totais e zebrado alternado
+- **`apps/auth/modules.py`**: sub-item `"Geral"` renomeado para `"Comercial"`, novo sub-item `"Pedidos"` adicionado ao grupo Vendas
+- **`app.py`**: import de `pedidos_main` adicionado + roteamento `"Relatório de Pedidos"` → `pedidos_main`
+- **`requirements.txt`**: `reportlab==4.2.5` adicionado
+
+#### 📁 Arquivos Alterados/Criados:
+| Arquivo | Ação |
+|---|---|
+| 🆕 `apps/vendas/pedidos.py` | Criado |
+| ✏️ `apps/auth/modules.py` | Alterado |
+| ✏️ `app.py` | Alterado |
+| ✏️ `requirements.txt` | Alterado |
+
+---
+
+## 📅 19/02/2026
+
+### ⏰ 17:00 - Verificação Geral: Modelos não implementados
+
+#### 🎯 O que foi pedido:
+Verificação geral da aplicação para identificar quais tabelas/modelos são referenciados no código mas **não possuem modelo Django explicitamente implementado**.
+
+#### 🔍 Detalhamento da Análise:
+
+**Modelos COM implementação Django (managed=False):**
+- ✅ `Clientes` — `app/models.py` e `core/models/modelos.py`
+- ✅ `Bancos` — `app/models.py` e `core/models/modelos.py`
+- ✅ `CentroCustos` — `app/models.py` e `core/models/modelos.py`
+- ✅ `Empresas` — `app/models.py` e `core/models/modelos.py`
+- ✅ `Extratos` — `app/models.py` e `core/models/modelos.py`
+- ✅ `Produtos` — `app/models.py` e `core/models/modelos.py`
+- ✅ `BoletosEnviados` — `app/models.py` e `core/models/modelos.py`
+- ✅ `PessoaTipos` — apenas `app/models.py`
+- ✅ `OS` — apenas `core/models/modelos.py`
+- ✅ `OS_Produtos` — apenas `core/models/modelos.py`
+
+**Tabelas referenciadas via SQL bruto SEM modelo Django:**
+- ❌ `Vendas`
+- ❌ `Vendedores`
+- ❌ `VendaProdutos`
+- ❌ `VendaPagamentos`
+- ❌ `VendaFormaPagamento`
+- ❌ `VendaConfiguracao`
+- ❌ `RPA_Atualizacao`
+
+#### 📁 Arquivos Analisados:
+- `app/models.py`
+- `core/models/modelos.py`
+- `infrastructure/database/repositories.py`
+- `infrastructure/database/repositories_vendas.py`
+- `infrastructure/database/repositories_recebimentos.py`
+- `infrastructure/database/repositories_sac.py`
+- `apps/comex/views.py`
+- `apps/sac/views.py`
+- `repository.py`
+
+---
+
+## 📅 19/02/2026
+
+### ⏰ 18:00 - Ajuste dos repositórios para usar modelos criados
+
+#### 🎯 O que foi pedido:
+Ajustar o código para utilizar os modelos Django recém-criados (`Venda`, `VendaPagamento`, `VendaProduto`). Os demais (`Vendedores`, `VendaFormaPagamento`, `VendaConfiguracao`, `RPA_Atualizacao`) sem modelo, manter SQL bruto.
+
+#### 🔧 Detalhamento da Solução:
+- Adicionado import de `Venda`, `VendaPagamento`, `VendaProduto` em `repositories_vendas.py`
+- `get_situacoes_disponiveis()` → migrado para `Venda.objects.exclude(...).values_list(...).distinct()`
+- `get_pagamentos_por_vendas()` → migrado para `VendaPagamento.objects.filter(Venda_ID__in=...).values()`
+- Métodos com JOINs a tabelas sem modelo (`Vendedores`, `RPA_Atualizacao`, `VendaFormaPagamento`, `VendaConfiguracao`) mantidos em SQL bruto
+- Validado com `python -c "from infrastructure.database.repositories_vendas import ..."` — sem erros
+
+#### 📁 Arquivos Alterados:
+- ✏️ `infrastructure/database/repositories_vendas.py`
+
+---
+
+### ⏰ 17:30 - Centralização de modelos em app/models.py
+
+#### 🎯 O que foi pedido:
+Centralizar todos os modelos Django existentes em `app/models.py`, eliminando duplicações.
+
+#### 🔧 Detalhamento da Solução:
+- Modelos que existiam apenas em `core/models/modelos.py` (`OS`, `OS_Produtos`) foram adicionados a `app/models.py` com `managed=False`
+- Versões duplicadas de `Clientes`, `Bancos`, `CentroCustos`, `Empresas`, `Extratos`, `Produtos`, `BoletosEnviados` foram consolidadas em `app/models.py`, mantendo a versão mais completa
+- `core/models/modelos.py` foi transformado em arquivo de re-exportação (`from app.models import ...`) para não quebrar imports existentes em `apps/sac/views.py`
+- Validado com `python -c "from app.models import ..."` — todos os 10 modelos importados com sucesso
+
+#### 📁 Arquivos Alterados:
+- ✏️ `app/models.py` — consolidação de todos os modelos (fonte única de verdade)
+- ✏️ `apps/sac/views.py` — imports atualizados de `core.models.modelos` → `app.models`
+- 🗑️ `core/models/modelos.py` — removido (desnecessário após centralização)
+
+---
+
+### ⏰ 14:00 - Ajuste Visual: Foto circular nos Cards do Ranking
+
+#### 🎯 O que foi pedido:
+A aparência dos cards deve ser semelhante à imagem de referência (`imagens/card.png`), mantendo cores e fontes atuais.
+
+#### 🔍 Análise da Imagem de Referência:
+- ✅ Foto do vendedor exibida em **formato circular** com borda azul
+- ✅ Nome curto em azul centralizado
+- ✅ Valor de vendas atual em destaque
+- ✅ "Mês de {ano}=" e valor do período anterior em linhas separadas
+- ✅ "% meta do mês batida" centralizado
+
+#### 🔧 Detalhamento da Solução:
+- 🔄 `_render_card_vendedor()`: Adicionado `border-radius: 50%`, `display: block`, `margin: 0 auto 12px auto` e `border: 3px solid #1E88E5` à tag `<img>` da foto
+- Foto agora exibida como círculo, consistente com o avatar de iniciais
+- Cores e fontes mantidas sem alteração
+
+#### 📁 Arquivos Alterados:
+- `app.py` — função `_render_card_vendedor`: foto com estilo circular
+
+---
+
+### ⏰ 10:15 - Ajuste de Layout: Cards do Ranking de Vendedores
+
+#### 🎯 O que foi pedido:
+Baseado no documento `Ajustes Ranking Vendedores.md`, realizar os ajustes necessários de layout e cálculos nos cards do Ranking de Vendedores, sem alterar fontes ou cores.
+
+#### 🔍 Verificação Realizada:
+- ✅ Ajuste 1 (repositório `get_vendedores_com_nome_curto()`) — já aplicado
+- ✅ Ajuste 2 (`_render_vendedores_com_fotos` — novos dados) — já aplicado
+- ✅ Ajuste 3 (`_render_card_vendedor` — novo layout) — já aplicado
+- ⚠️ Pendência visual: label "Mês de {ano}" e valor na mesma linha vs. mockup do documento que os exibe em linhas separadas
+
+#### 🔧 Detalhamento da Solução:
+- 🔄 Função `_render_card_vendedor`: Label `Mês de {ano}=` e o valor de vendas do período anterior separados em dois `<div>` distintos, mantendo mesma `font-size` (0.75rem) e cor (#555)
+- Layout resultante alinhado com o mockup do documento (`Mês de 2025=` / `R$...` em linhas separadas)
+- Cálculos sem alteração (já corretos)
+
+#### 📁 Arquivos Alterados:
+- `app.py` — função `_render_card_vendedor`: separação do label e valor do período anterior em duas linhas
+
+---
+
 ## 📅 18/02/2026
 
 ### ⏰ 10:30 - Correção: Vendas zeradas para Rocha e Diney no Ranking

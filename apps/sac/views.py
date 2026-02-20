@@ -157,7 +157,7 @@ class OSController:
     def _get_situacoes_disponiveis(self):
         """Retorna lista de situações disponíveis"""
         try:
-            from core.models.modelos import OS
+            from app.models import OS
 
             situacoes = (
                 OS.objects.values_list("SituacaoNome", flat=True)
@@ -172,7 +172,7 @@ class OSController:
     def _apply_filters(self, data_inicio, data_fim, situacoes):
         """Aplica filtros e carrega dados"""
         try:
-            from core.models.modelos import OS
+            from app.models import OS
 
             # Construir query para dados filtrados
             queryset = OS.objects.all()
@@ -223,7 +223,7 @@ class OSController:
     def _load_all_os(self):
         """Carrega todas as OS"""
         try:
-            from core.models.modelos import OS
+            from app.models import OS
 
             with st.spinner("Carregando todas as OS..."):
                 queryset = OS.objects.all()
@@ -250,7 +250,7 @@ class OSController:
         try:
             from datetime import date
 
-            from core.models.modelos import OS
+            from app.models import OS
 
             # Calcular primeiro dia do mês atual e dia atual
             hoje = date.today()
@@ -518,7 +518,7 @@ class OSController:
         st.subheader("📦 Produtos das OS")
 
         try:
-            from core.models.modelos import OS_Produtos
+            from app.models import OS_Produtos
 
             # Buscar produtos das OS selecionadas
             produtos_queryset = OS_Produtos.objects.filter(OS__OS_Codigo__in=os_ids)

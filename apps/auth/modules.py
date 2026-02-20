@@ -172,14 +172,19 @@ def menu():
             },
         },
         "Vendas": {
-            "permission": "view_venda",
+            "permission": ["view_venda", "change_venda"],
             "icon": "📊",
             "type": "group",
             "submenu": {
-                "Geral": {
+                "Comercial": {
                     "permission": "view_venda",
                     "icon": "📈",
                     "original_name": "Relatório de Vendas",
+                },
+                "Pedidos": {
+                    "permission": "change_venda",
+                    "icon": "📋",
+                    "original_name": "Relatório de Pedidos",
                 },
             },
         },
@@ -255,11 +260,20 @@ def menu():
             if active_group:
                 break
 
+    def _check_permission(permission, user_permissions, username):
+        """Verifica permissão: aceita string única ou lista de permissões (OR)."""
+        if username == "admin":
+            return True
+        if isinstance(permission, list):
+            return any(p in user_permissions for p in permission)
+        return permission in user_permissions
+
     for module, config in module_config.items():
         # Verificar permissão para o módulo principal
-        has_permission = (
-            config["permission"] in st.session_state.permissions
-            or st.session_state.username == "admin"
+        has_permission = _check_permission(
+            config["permission"],
+            st.session_state.permissions,
+            st.session_state.username,
         )
 
         if not has_permission:
@@ -308,9 +322,10 @@ def menu():
             if is_expanded:
                 for submodule, subconfig in config.get("submenu", {}).items():
                     # Verificar permissão do submódulo
-                    has_sub_permission = (
-                        subconfig["permission"] in st.session_state.permissions
-                        or st.session_state.username == "admin"
+                    has_sub_permission = _check_permission(
+                        subconfig["permission"],
+                        st.session_state.permissions,
+                        st.session_state.username,
                     )
 
                     if not has_sub_permission:

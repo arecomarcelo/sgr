@@ -10,6 +10,7 @@ from django.db import connection
 
 import pandas as pd
 
+from app.models import Venda, VendaPagamento, VendaProduto
 from core.exceptions import DatabaseError
 from infrastructure.database.base import BaseRepository
 from infrastructure.database.interfaces import (
@@ -132,15 +133,14 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
     def get_situacoes_disponiveis(self) -> pd.DataFrame:
         """Obtém situações de venda disponíveis"""
         try:
-            query = 'SELECT DISTINCT "SituacaoNome" FROM "Vendas" WHERE "SituacaoNome" IS NOT NULL ORDER BY "SituacaoNome"'
-
-            with connection.cursor() as cursor:
-                cursor.execute(query)
-                columns = [col[0] for col in cursor.description]
-                data = cursor.fetchall()
-
-                result = pd.DataFrame(data, columns=columns)
-
+            situacoes = (
+                Venda.objects.exclude(SituacaoNome__isnull=True)
+                .exclude(SituacaoNome="")
+                .values_list("SituacaoNome", flat=True)
+                .distinct()
+                .order_by("SituacaoNome")
+            )
+            result = pd.DataFrame(list(situacoes), columns=["SituacaoNome"])
             return result
 
         except Exception as e:
@@ -407,19 +407,12 @@ class VendaPagamentoRepository(BaseRepository, VendaPagamentoRepositoryInterface
             if not venda_ids:
                 return pd.DataFrame()
 
-            placeholders = ",".join(["%s"] * len(venda_ids))
-            query = f"""
-                SELECT * FROM "VendaPagamentos"
-                WHERE "Venda_ID" IN ({placeholders})
-                ORDER BY "DataVencimento"
-            """
-
-            with connection.cursor() as cursor:
-                cursor.execute(query, venda_ids)
-                columns = [col[0] for col in cursor.description]
-                data = cursor.fetchall()
-
-                result = pd.DataFrame(data, columns=columns)
+            queryset = (
+                VendaPagamento.objects.filter(Venda_ID__in=venda_ids)
+                .order_by("DataVencimento")
+                .values()
+            )
+            result = pd.DataFrame(list(queryset))
 
             logger.info(f"Retrieved {len(result)} payment records")
             return result

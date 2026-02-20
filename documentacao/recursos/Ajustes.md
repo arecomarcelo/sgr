@@ -338,6 +338,18 @@
 - **Relatório de Vendas**:
     - Ajustada a **Exibição de todos vendedores** antes exibia somente **Top 10**
 
+## **20/02/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **14:29 - Commit 140**
+
+- Implementação **Relatório de Pedidos**
+    - Permissão Necessário **venda_change**
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***

@@ -36,14 +36,21 @@ class UserRepository:
             cursor = conn.cursor()
             query = sql.SQL(
                 """
-                SELECT permission.codename 
+                SELECT permission.codename
                 FROM auth_user_groups AS ug
                 JOIN auth_group_permissions AS gp ON ug.group_id = gp.group_id
                 JOIN auth_permission AS permission ON gp.permission_id = permission.id
                 WHERE ug.user_id = %s
+
+                UNION
+
+                SELECT permission.codename
+                FROM auth_user_user_permissions AS up
+                JOIN auth_permission AS permission ON up.permission_id = permission.id
+                WHERE up.user_id = %s
             """
             )
-            cursor.execute(query, (user_id,))
+            cursor.execute(query, (user_id, user_id))
             permissions = cursor.fetchall()
             return [
                 perm[0] for perm in permissions

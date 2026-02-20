@@ -37,6 +37,7 @@ from apps.comex.views import main as comex_main
 from apps.estoque.views import main as estoque_main
 from apps.extratos.views import main as extratos_main
 from apps.sac.views import main as sac_main
+from apps.vendas.pedidos import main as pedidos_main
 from apps.vendas.recebimentos import main as recebimentos_main
 from apps.vendas.views import main as vendas_main
 
@@ -1262,7 +1263,7 @@ def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
 
         # Foto ou avatar com iniciais
         if image_b64:
-            foto_html = f'<img src="{image_b64}" style="width: 80px; height: 80px; margin-bottom: 12px; object-fit: cover;">'
+            foto_html = f'<img src="{image_b64}" style="width: 80px; height: 80px; border-radius: 50%; display: block; margin: 0 auto 12px auto; object-fit: cover; border: 3px solid #1E88E5;">'
         else:
             iniciais = "".join(
                 [nome[0] for nome in vendedor["nome"].split()[:2]]
@@ -1301,8 +1302,11 @@ def _render_card_vendedor(col, vendedor, get_image_base64, format_currency):
             <div style='font-size: 1.2rem; font-weight: 700; color: #1565C0; margin-bottom: 8px;'>
                 {format_currency(vendedor['total_valor'])}
             </div>
+            <div style='font-size: 0.75rem; color: #555; margin-bottom: 2px;'>
+                Mês de {ano_anterior}=
+            </div>
             <div style='font-size: 0.75rem; color: #555; margin-bottom: 6px;'>
-                Mês de {ano_anterior}= {format_currency(vendas_ant)}
+                {format_currency(vendas_ant)}
             </div>
             <div style='font-size: 0.8rem; font-weight: 600; color: #333;'>
                 {percentual:.1f}% meta do mês batida
@@ -2946,6 +2950,8 @@ def main():
             clientes_main(key="clientes")
         elif st.session_state.current_module == "Comex Produtos":
             comex_main(key="comex")
+        elif st.session_state.current_module == "Relatório de Pedidos":
+            pedidos_main(key="pedidos")
         elif st.session_state.current_module == "Ordem de Serviço":
             sac_main(key="sac")
 
