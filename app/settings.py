@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
-from decouple import config
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,19 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config(
-    "SECRET_KEY",
-    default="django-insecure-hly@8g(n3j9f=n+)eb7k6=bidr-!(vej3u@vnd^tk$h^-lk+ot",
-)
+SECRET_KEY = "django-insecure-hly@8g(n3j9f=n+)eb7k6=bidr-!(vej3u@vnd^tk$h^-lk+ot"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=True, cast=bool)
+DEBUG = False
 
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="",
-    cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
-)
+ALLOWED_HOSTS: list[str] = []
 
 
 # Application definition
@@ -87,11 +78,11 @@ WSGI_APPLICATION = "app.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT", cast=int),
+        "NAME": "sga",
+        "USER": "postgres",
+        "PASSWORD": "Zyxelpar100448",
+        "HOST": "195.200.1.244",
+        "PORT": 5432,
     }
 }
 

@@ -350,6 +350,16 @@
 - Implementação **Relatório de Pedidos**
     - Permissão Necessário **venda_change**
 
+## **13/03/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **09:15 - Commit 141**
+- Remoção **Configurações env**
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***

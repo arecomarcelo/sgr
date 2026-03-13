@@ -1,54 +1,103 @@
-# Sistema operacional
-*.DS_Store
-*.swp
+# =========================
+# Sistema Operacional
+# =========================
+.DS_Store
 Thumbs.db
 desktop.ini
+*.swp
+*.swo
 
-# Arquivos Python
-*.pyc
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
 *.pyo
 *.pyd
-__pycache__
-__pycache__/
-.mypy_cache/
-.pytest_cache/
+*.so
+.python-version
 
-.env
-
-# Diretórios de virtualenv
+# =========================
+# Ambientes Virtuais
+# =========================
 venv/
 env/
 .venv/
-.env/
+ENV/
 
-# Arquivos de configuração do IDE/editor
-.vscode/
-.idea/
-*.code-workspace
+# =========================
+# Variáveis de Ambiente
+# =========================
+.env
+.env.*
+!.env.example
 
-# Arquivos gerados por Django
+# =========================
+# Cache / Ferramentas Python
+# =========================
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+.cache
+htmlcov/
+
+# =========================
+# Build / Distribuição
+# =========================
+build/
+dist/
+*.egg
+*.egg-info/
+.eggs/
+
+# =========================
+# Django
+# =========================
 db.sqlite3
+db.sqlite3-journal
 media/
 staticfiles/
 *.log
 
-# Arquivos de compilação
-*.egg
-*.egg-info/
-dist/
-build/
-*.so
+# =========================
+# Jupyter Notebook
+# =========================
+.ipynb_checkpoints
 
-# Configurações de Deploy
+# =========================
+# Streamlit
+# =========================
+.streamlit/secrets.toml
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.code-workspace
+
+# =========================
+# Arquivos de Deploy / Segurança
+# =========================
+*.pem
 *.key
 *.crt
-*.pem
+*.p12
 
-# Arquivos do Git
-.git/
-.gitignore~
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+
+# =========================
+# Arquivos temporários
+# =========================
+*.tmp
+*.temp
+*.bak
 *.orig
 *.rej
-
-# Arquivos de depuração
-debug.log

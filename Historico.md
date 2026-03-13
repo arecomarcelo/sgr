@@ -1,5 +1,30 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 13/03/2026
+
+### ⏰ Configurações Hardcoded — Desabilitar uso do .env
+
+#### 🎯 O que foi pedido:
+Desabilitar a utilização do arquivo `.env` e configurar as informações de forma hardcoded nos arquivos de configuração.
+
+#### 🔧 Solução Implementada:
+- Removido o uso de `python-decouple` (`from decouple import config`) de `config/settings.py` e `app/settings.py`
+- Todos os valores antes lidos do `.env` foram substituídos por valores fixos hardcoded:
+  - **Banco de dados**: host `195.200.1.244`, porta `5432`, banco `sga`, usuário `postgres`
+  - **Django**: SECRET_KEY fixo, DEBUG=False, ALLOWED_HOSTS=[]
+  - **App**: título, cache_ttl, log_level, session_timeout com valores padrão fixos
+  - **Cache Redis**: host localhost, porta 6379
+- Mensagens de erro que referenciavam `.env` atualizadas para `config/settings.py`
+
+#### 📁 Arquivos Alterados:
+- 📝 `config/settings.py` — removido `decouple`, configurações hardcoded
+- 📝 `app/settings.py` — removido `decouple`, DB e chaves hardcoded
+- 📝 `apps/vendas/views.py` — mensagem de erro atualizada
+- 📝 `apps/vendas/recebimentos.py` — mensagem de erro atualizada
+- 📝 `apps/comex/views.py` — mensagem de erro atualizada
+
+---
+
 ## 📅 20/02/2026
 
 ### ⏰ 14:45 - Controle de Visibilidade dos Submenus de Vendas por Permissão

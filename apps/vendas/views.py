@@ -56,7 +56,7 @@ class VendasControllerIntegrado:
         except Exception as e:
             self.logger.error(f"Erro na inicialização: {str(e)}")
             st.error(f"❌ Erro na inicialização: {str(e)}")
-            st.error("Verifique a configuração do banco de dados no arquivo .env")
+            st.error("Verifique a configuração do banco de dados em config/settings.py")
             st.stop()
 
     def render_dashboard(self):
