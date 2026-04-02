@@ -286,6 +286,7 @@ class OSController:
                     "Data",
                     "ClienteNome",
                     "SituacaoNome",
+                    "Referencia",
                 )
             )
 
@@ -297,6 +298,11 @@ class OSController:
             # Formatar data
             if "Data" in df.columns:
                 df["Data"] = pd.to_datetime(df["Data"]).dt.strftime("%d/%m/%Y")
+
+            # Tratar valores nulos/vazios em Referencia
+            if "Referencia" in df.columns:
+                df["Referencia"] = df["Referencia"].fillna("").astype(str).str.strip()
+                df["Referencia"] = df["Referencia"].replace("None", "")
 
             return df
 
@@ -386,6 +392,7 @@ class OSController:
                 "Data": "Data",
                 "ClienteNome": "Cliente",
                 "SituacaoNome": "Situação",
+                "Referencia": "Referência",
             }
 
             # Selecionar apenas as colunas que existem
@@ -433,6 +440,8 @@ class OSController:
                     gb.configure_column(col, headerName="Cliente", width=250)
                 elif col == "Situação":
                     gb.configure_column(col, headerName="Situação", width=150)
+                elif col == "Referência":
+                    gb.configure_column(col, headerName="Referência", width=200)
 
             grid_options = gb.build()
 

@@ -302,6 +302,7 @@ class OS(models.Model):
     Data = models.DateField(verbose_name="Data Entrada")
     ClienteNome = models.CharField(max_length=100, verbose_name="Nome Cliente")
     SituacaoNome = models.CharField(max_length=100, verbose_name="Situação OS")
+    Referencia = models.TextField(null=True, blank=True, verbose_name="Referência OS")
 
     @classmethod
     def truncate(cls):

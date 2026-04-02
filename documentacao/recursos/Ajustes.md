@@ -360,6 +360,19 @@
 ##### **09:15 - Commit 141**
 - Remoção **Configurações env**
 
+## **02/04/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **10:19 - Commit 142**
+
+- Módulo **OS** Implementações:
+    1. Criado o Campo **Referencia**
+    2. Exibido o **Novo Campo** na **Grid**
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***

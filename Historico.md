@@ -1,5 +1,23 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 02/04/2026
+
+### ⏰ 15:00 — SAC: Exibir campo Referência na grid de OS
+
+#### 🎯 O que foi pedido:
+Após ajuste no modelo `OS` com o novo campo `Referencia`, incluir este campo na grid de Ordens de Serviço logo após a coluna "Situação", tratando valores nulos ou vazios.
+
+#### 🔧 Solução Implementada:
+- Adicionado `"Referencia"` ao `.values()` em `_queryset_to_dataframe()`
+- Tratamento de nulos: `fillna("")`, conversão para `str`, `strip()` e substituição de `"None"` por vazio
+- Adicionado ao `column_mapping` como `"Referência"` (com acento)
+- Configurada coluna no AgGrid com `width=200`, posicionada após "Situação"
+
+#### 📁 Arquivos Alterados:
+- 📝 `apps/sac/views.py`
+
+---
+
 ## 📅 13/03/2026
 
 ### ⏰ Configurações Hardcoded — Desabilitar uso do .env
