@@ -32,6 +32,7 @@ class VendaRepositoryInterface(BaseRepositoryInterface):
         situacao: Optional[str] = None,
         situacoes_excluir: Optional[List[str]] = None,
         apenas_vendedores_ativos: bool = False,
+        origens: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """Obtém vendas com filtros aplicados"""
         pass
@@ -44,6 +45,11 @@ class VendaRepositoryInterface(BaseRepositoryInterface):
     @abstractmethod
     def get_situacoes_disponiveis(self) -> pd.DataFrame:
         """Obtém situações de venda disponíveis"""
+        pass
+
+    @abstractmethod
+    def get_origens_disponiveis(self) -> pd.DataFrame:
+        """Obtém origens de venda disponíveis"""
         pass
 
 

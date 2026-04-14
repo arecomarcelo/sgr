@@ -169,9 +169,10 @@ class VendasControllerIntegrado:
             with st.spinner("Carregando opções..."):
                 vendedores = self.vendas_service.get_vendedores_ativos()
                 situacoes = self.vendas_service.get_situacoes_disponiveis()
+                origens = self.vendas_service.get_origens_disponiveis()
 
             # Renderizar filtros
-            filters = filter_form.render_filters(vendedores, situacoes)
+            filters = filter_form.render_filters(vendedores, situacoes, origens)
 
             # Botões de ação
             col1, col2 = st.columns(2)
@@ -217,6 +218,7 @@ class VendasControllerIntegrado:
                     data_fim=filters["data_fim"],
                     vendedores=filters["vendedores"] if filters["vendedores"] else None,
                     situacoes=filters["situacoes"] if filters["situacoes"] else None,
+                    origens=filters["origens"] if filters.get("origens") else None,
                 )
 
             # Calcular métricas
@@ -278,6 +280,21 @@ class VendasControllerIntegrado:
         try:
             from st_aggrid import AgGrid, GridOptionsBuilder
 
+            # Normalizar coluna Origem: busca case-insensitive e renomeia para "Origem"
+            origem_col_real = next(
+                (c for c in df.columns if c.lower() == "origem"), None
+            )
+            if origem_col_real and origem_col_real != "Origem":
+                df = df.rename(columns={origem_col_real: "Origem"})
+            elif origem_col_real is None:
+                # Coluna não existe no DF — adicionar vazia para sempre exibir na grid
+                df = df.copy()
+                df["Origem"] = ""
+                self.logger.warning(
+                    "Coluna 'Origem' não encontrada no DataFrame. "
+                    f"Colunas disponíveis: {df.columns.tolist()}"
+                )
+
             colunas_exibir = [
                 "ClienteNome",
                 "VendedorNome",
@@ -285,7 +302,10 @@ class VendasControllerIntegrado:
                 "ValorDesconto",
                 "ValorTotal",
                 "Data",
+                "Origem",
             ]
+            # Garantir que colunas obrigatórias estejam presentes
+            colunas_exibir = [c for c in colunas_exibir if c in df.columns]
             df_display = df[colunas_exibir].copy()
 
             # Função para limpar e converter valores monetários
@@ -317,15 +337,17 @@ class VendasControllerIntegrado:
                 if col in df_display.columns:
                     df_display[col] = df_display[col].apply(clean_monetary_value)
 
-            # Renomear colunas
-            df_display.columns = [
-                "Cliente",
-                "Vendedor",
-                "Valor Produtos",
-                "Desconto",
-                "Valor Total",
-                "Data",
-            ]
+            # Renomear colunas conforme as que estão presentes
+            rename_map = {
+                "ClienteNome": "Cliente",
+                "VendedorNome": "Vendedor",
+                "ValorProdutos": "Valor Produtos",
+                "ValorDesconto": "Desconto",
+                "ValorTotal": "Valor Total",
+                "Data": "Data",
+                "Origem": "Origem",
+            }
+            df_display.rename(columns=rename_map, inplace=True)
 
             # Exibir com formatação visual (mantendo valores numéricos para ordenação)
             st.subheader(f"Vendas Detalhadas ({len(df_display)} registros)")
@@ -375,21 +397,34 @@ class VendasControllerIntegrado:
                         valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})",
                         width=150,
                     )
+                elif col == "Origem":
+                    gb.configure_column(
+                        col,
+                        headerName="Origem",
+                        width=150,
+                        filter=True,
+                        floatingFilter=True,
+                        sortable=True,
+                        hide=False,
+                    )
                 else:
                     gb.configure_column(col, headerName=col)
 
             grid_options = gb.build()
+
+            # Key dinâmica: garante re-render quando colunas mudam
+            grid_key = f"vendas_grid_{'_'.join(df_display.columns.tolist())}"
 
             # Renderizar AgGrid
             grid_response = AgGrid(
                 df_display,
                 gridOptions=grid_options,
                 height=400,
-                fit_columns_on_grid_load=True,
+                fit_columns_on_grid_load=False,
                 theme="alpine",
                 allow_unsafe_jscode=True,
                 update_mode="MODEL_CHANGED",
-                key="vendas_grid",
+                key=grid_key,
             )
 
             # Seção de download

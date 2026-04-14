@@ -96,6 +96,7 @@ class VendasService:
         data_fim: datetime,
         vendedores: Optional[List[str]] = None,
         situacoes: Optional[List[str]] = None,
+        origens: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Obtém vendas com filtros aplicados
@@ -105,6 +106,7 @@ class VendasService:
             data_fim: Data final do filtro
             vendedores: Lista de vendedores (opcional)
             situacoes: Lista de situações (opcional)
+            origens: Lista de origens (opcional)
 
         Returns:
             pd.DataFrame: Dados de vendas filtrados
@@ -130,6 +132,7 @@ class VendasService:
                 data_final=filtros.data_fim,
                 vendedores=filtros.vendedores,
                 situacoes=filtros.situacoes,
+                origens=origens if origens else None,
             )
 
             return self._processar_dados_vendas(df)
@@ -364,6 +367,19 @@ class VendasService:
             return sorted(df["SituacaoNome"].unique().tolist())
         except Exception as e:
             raise BusinessLogicError(f"Erro ao obter situações: {str(e)}")
+
+    def get_origens_disponiveis(self) -> List[str]:
+        """
+        Obtém lista de origens de venda disponíveis
+
+        Returns:
+            List[str]: Lista de origens
+        """
+        try:
+            df = self.venda_repository.get_origens_disponiveis()
+            return sorted(df["Origem"].unique().tolist())
+        except Exception as e:
+            raise BusinessLogicError(f"Erro ao obter origens: {str(e)}")
 
     def _processar_dados_vendas(self, df: pd.DataFrame) -> pd.DataFrame:
         """

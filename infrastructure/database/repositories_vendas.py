@@ -35,6 +35,7 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
         situacao: Optional[str] = None,
         situacoes_excluir: Optional[List[str]] = None,
         apenas_vendedores_ativos: bool = False,
+        origens: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """Obtém vendas com filtros aplicados usando SQL bruto"""
         try:
@@ -68,6 +69,12 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
                 placeholders = ",".join(["%s"] * len(situacoes_excluir))
                 query += f' AND "SituacaoNome" NOT IN ({placeholders})'
                 params.extend(situacoes_excluir)
+
+            # Filtro de origens (opcional)
+            if origens:
+                placeholders = ",".join(["%s"] * len(origens))
+                query += f' AND "Origem" IN ({placeholders})'
+                params.extend(origens)
 
             query += ' ORDER BY "Data" DESC'
 
@@ -146,6 +153,23 @@ class VendaRepository(BaseRepository, VendaRepositoryInterface):
         except Exception as e:
             logger.error(f"Error fetching available statuses: {str(e)}")
             raise DatabaseError(f"Erro ao buscar situações disponíveis: {str(e)}")
+
+    def get_origens_disponiveis(self) -> pd.DataFrame:
+        """Obtém origens de venda disponíveis"""
+        try:
+            origens = (
+                Venda.objects.exclude(Origem__isnull=True)
+                .exclude(Origem="")
+                .values_list("Origem", flat=True)
+                .distinct()
+                .order_by("Origem")
+            )
+            result = pd.DataFrame(list(origens), columns=["Origem"])
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching available origins: {str(e)}")
+            raise DatabaseError(f"Erro ao buscar origens disponíveis: {str(e)}")
 
     def health_check(self) -> bool:
         """Verifica se a conexão está saudável"""

@@ -1,5 +1,129 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 14/04/2026
+
+### ⏰ 13:00 — Manual de Vendas: Atualização com implementação do filtro e coluna Origem
+
+#### 🎯 O que foi pedido:
+Atualizar o manual do Relatório de Vendas com a implementação da Origem.
+
+#### 🛠️ Alterações no Manual:
+- **Principais Recursos**: Mencionado filtro de Origem na lista de recursos
+- **Filtros**: Adicionada seção completa **"🏷️ Filtro de Origem"** com descrição, comportamento, tabela de exemplos e notas
+- **Botões de Ação**: Atualizada nota de localização dos botões (agora fora do expander); atualizado fluxo do "Aplicar Filtros" mencionando Origem; renomeado botão secundário para "Recarregar Dados do Mês"
+- **Colunas da Tabela**: Adicionada coluna "🏷️ Origem" com descrição e nota sobre filtro habilitado
+- **Estratégias de Filtros**: Adicionadas duas novas estratégias: "Análise por Canal de Origem" e "Comparar Canais"
+- **Solução de Problemas**: Adicionada causa Origem ao erro "Nenhum dado encontrado"; criada seção específica para "Filtro de Origem aparece vazio"
+- **Glossário**: Adicionado termo "Origem"
+
+#### 📁 Arquivos Alterados:
+- 📝 `documentacao/Manual_Relatorio_Vendas.md`
+- 📝 `Historico.md`
+
+---
+
+### ⏰ 12:00 — Dashboard de Vendas: Botão "Aplicar Filtros" some ao selecionar todas as origens
+
+#### 🎯 O que foi pedido:
+Ao selecionar todas as origens no filtro, o botão "Aplicar Filtros" desaparecia e não era possível aplicar o filtro.
+
+#### 🔍 Causa Raiz:
+Os botões estavam **dentro do `st.expander`**. Ao selecionar muitas origens, o multiselect gerava vários chips e aumentava a altura do expander, empurrando os botões para fora do viewport. O usuário precisaria rolar para encontrá-los.
+
+#### 🛠️ Solução Implementada:
+- Movidos os botões "🔍 Aplicar Filtros" e "🔄 Recarregar Dados do Mês" para **fora do expander**, logo abaixo dele
+- Adicionado `disabled=(filters is None)` no botão Aplicar para evitar cliques antes dos filtros carregarem
+- Adicionado `use_container_width=True` e `help` em ambos os botões
+- Adicionado separador `st.markdown("---")` entre os botões e as métricas
+
+#### 📁 Arquivos Alterados:
+- 📝 `app.py`
+- 📝 `Historico.md`
+
+---
+
+### ⏰ 11:30 — Dashboard de Vendas: Verificação rigorosa — Origem ainda não exibida após correção anterior
+
+#### 🎯 O que foi pedido:
+Verificação rigorosa pois Origem ainda não estava sendo exibida (filtro "No options to select" e coluna ausente na grid).
+
+#### 🔍 Causa Raiz Real (investigação das imagens):
+A correção anterior foi feita no arquivo errado (`apps/vendas/views.py`). O dashboard real em produção usa **`app.py`** (`vendas_dashboard()` → `_render_data_grid()` + `_render_filters_and_metrics()`).
+
+- **Filtro vazio**: `_render_filters_and_metrics()` chamava `filter_form.render_filters(vendedores, situacoes)` **sem passar `origens`** — o parâmetro `origens_disponiveis` defaultava para `None` → `options=[]` → "No options to select."
+- **Coluna ausente na grid**: `_render_data_grid()` construía `df_display` explicitamente **sem "Origem"** na lista de colunas e usava atribuição posicional de nomes (`df_display.columns = [...]`).
+- **Session state desatualizado**: `vendas_visible_columns` era inicializado uma vez — colunas adicionadas depois ficavam fora do default do multiselect.
+- **Apply filters**: `_apply_filters()` não passava `origens` para `get_vendas_filtradas()`.
+
+#### 🛠️ Solução Implementada:
+1. **`_render_filters_and_metrics()`**: Adicionada chamada `origens = vendas_service.get_origens_disponiveis()` e passagem para `filter_form.render_filters(vendedores, situacoes, origens)`
+2. **`_render_data_grid()`**: Substituída lista fixa por lista dinâmica com `if "Origem" in df_vendas.columns: colunas_display.append("Origem")`; substituída atribuição posicional por `rename_map` com `df_display.rename()`
+3. **`_apply_filters()`**: Adicionado `origens=filters.get("origens") if filters.get("origens") else None`
+4. **`_render_advanced_sales_grid()`**: Adicionada configuração explícita para coluna "Origem" no AgGrid (`filter=True`, `floatingFilter=True`, `hide=False`); lógica de session state corrigida para incluir novas colunas automaticamente
+
+#### 📁 Arquivos Alterados:
+- 📝 `app.py`
+- 📝 `Historico.md`
+
+---
+
+### ⏰ 10:00 — Dashboard de Vendas: Coluna Origem não exibida e filtro desabilitado
+
+#### 🎯 O que foi pedido:
+Coluna **Origem** não estava sendo exibida na grid de Vendas Detalhadas e o filtro da coluna estava desabilitado.
+
+#### 🔧 Causa Raiz:
+O `configure_column` da coluna "Origem" no AgGrid não definia explicitamente os parâmetros `filter`, `floatingFilter`, `sortable` e `hide`. O `configure_default_column` com `filter=True` e `floatingFilter=True` era **sobrescrito** pelo `configure_column` sem esses parâmetros, desabilitando o filtro e possivelmente ocultando a coluna.
+
+#### 🛠️ Solução Implementada:
+- Adicionados `filter=True`, `floatingFilter=True`, `sortable=True` e `hide=False` explicitamente na chamada `gb.configure_column` da coluna "Origem", garantindo que os valores padrão não sejam sobrescritos com `None/False`.
+
+#### 📁 Arquivos Alterados:
+- 📝 `apps/vendas/views.py`
+
+---
+
+## 📅 13/04/2026
+
+### ⏰ 14:30 — Dashboard de Vendas Geral: Correção exibição coluna Origem na Grid
+
+#### 🎯 O que foi pedido:
+Coluna Origem não estava sendo exibida na grid de Vendas Detalhadas após implementação.
+
+#### 🔧 Solução Implementada:
+- Confirmado via SQL que `Origem` existe na tabela `Vendas` com nome exato
+- Adicionada detecção **case-insensitive** da coluna no DataFrame (cobre variações de nome)
+- Fallback: se a coluna não existir no DF, é adicionada vazia com log de alerta
+- **Key dinâmica** no AgGrid (`vendas_grid_<colunas>`): evita cache de configuração antiga que ocultava a nova coluna
+- Alterado `fit_columns_on_grid_load=False`: impede que colunas extras sejam comprimidas até sumir
+
+#### 📁 Arquivos Alterados:
+- 📝 `apps/vendas/views.py`
+
+---
+
+### ⏰ 14:00 — Dashboard de Vendas Geral: Filtro Origem + Coluna Origem na Grid
+
+#### 🎯 O que foi pedido:
+1. Implementar filtro **Origem** no Dashboard de Vendas Geral, seguindo o mesmo padrão dos demais filtros (Vendedores, Situações)
+2. Adicionar coluna **Origem** na grid de Vendas Detalhadas, na última posição
+
+#### 🔧 Solução Implementada:
+- **Interface** (`interfaces.py`): adicionado parâmetro `origens` em `get_vendas_filtradas()` e método abstrato `get_origens_disponiveis()`
+- **Repository** (`repositories_vendas.py`): adicionada cláusula `AND "Origem" IN (...)` na query SQL quando `origens` é informado; implementado `get_origens_disponiveis()` via ORM Django
+- **Service** (`vendas_service.py`): adicionado parâmetro `origens` em `get_vendas_filtradas()` e método `get_origens_disponiveis()`
+- **FilterForm** (`forms_vendas.py`): adicionado parâmetro `origens_disponiveis` em `render_filters()` e widget `st.multiselect` para Origem (🏷️)
+- **Views** (`apps/vendas/views.py`): carrega origens disponíveis, passa ao form, repassa ao service; coluna `Origem` incluída na lista de colunas exibidas e configurada no AgGrid
+
+#### 📁 Arquivos Alterados:
+- 📝 `infrastructure/database/interfaces.py`
+- 📝 `infrastructure/database/repositories_vendas.py`
+- 📝 `domain/services/vendas_service.py`
+- 📝 `presentation/components/forms_vendas.py`
+- 📝 `apps/vendas/views.py`
+
+---
+
 ## 📅 02/04/2026
 
 ### ⏰ 15:00 — SAC: Exibir campo Referência na grid de OS

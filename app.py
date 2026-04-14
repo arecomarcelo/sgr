@@ -1325,7 +1325,8 @@ def _render_filters_and_metrics():
     if "df_vendas" not in st.session_state or st.session_state["df_vendas"] is None:
         _load_initial_data()
 
-    # Filtros
+    # Filtros — widgets dentro do expander, botões fora (sempre visíveis)
+    filters = None
     with st.expander("🔍 Filtros de Data e Vendedor", expanded=True):
         filter_form = FilterForm()
 
@@ -1334,24 +1335,38 @@ def _render_filters_and_metrics():
             loading = LoadingHelper.show_loading("Carregando opções de filtros...")
             vendedores = vendas_service.get_vendedores_ativos()
             situacoes = vendas_service.get_situacoes_disponiveis()
+            origens = vendas_service.get_origens_disponiveis()
             LoadingHelper.hide_loading(loading)
 
-            filters = filter_form.render_filters(vendedores, situacoes)
-
-            # Botão para aplicar filtros
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("🔍 Aplicar Filtros", type="primary"):
-                    _apply_filters(filters)
-
-            with col2:
-                if st.button("🔄 Recarregar Dados do Mês"):
-                    _load_initial_data()
+            filters = filter_form.render_filters(vendedores, situacoes, origens)
 
         except Exception as e:
             LoadingHelper.hide_loading(loading)
             ValidationHelper.show_error(f"Erro ao carregar filtros: {str(e)}")
             return
+
+    # Botões fora do expander — sempre visíveis independente do tamanho dos filtros
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button(
+            "🔍 Aplicar Filtros",
+            type="primary",
+            use_container_width=True,
+            disabled=(filters is None),
+            help="Aplicar os filtros selecionados",
+        ):
+            if filters:
+                _apply_filters(filters)
+
+    with col2:
+        if st.button(
+            "🔄 Recarregar Dados do Mês",
+            use_container_width=True,
+            help="Recarregar os dados do mês atual",
+        ):
+            _load_initial_data()
+
+    st.markdown("---")
 
     # Renderizar métricas se houver dados
     if (
@@ -1493,6 +1508,7 @@ def _apply_filters(filters):
                 data_fim=filters["data_fim"],
                 vendedores=filters["vendedores"] if filters["vendedores"] else None,
                 situacoes=filters["situacoes"] if filters["situacoes"] else None,
+                origens=filters.get("origens") if filters.get("origens") else None,
             )
             LoadingHelper.hide_loading(loading)
 
@@ -1841,17 +1857,19 @@ def _render_data_grid():
 
     st.subheader("📋 Vendas Detalhadas")
 
-    # Preparar dados para exibição
-    df_display = df_vendas[
-        [
-            "ClienteNome",
-            "VendedorNome",
-            "ValorProdutos",
-            "ValorDesconto",
-            "ValorTotal",
-            "Data",
-        ]
-    ].copy()
+    # Preparar dados para exibição — incluir Origem se disponível no dataset
+    colunas_display = [
+        "ClienteNome",
+        "VendedorNome",
+        "ValorProdutos",
+        "ValorDesconto",
+        "ValorTotal",
+        "Data",
+    ]
+    if "Origem" in df_vendas.columns:
+        colunas_display.append("Origem")
+
+    df_display = df_vendas[colunas_display].copy()
 
     # Função para limpar e converter valores monetários
     def clean_monetary_value(val):
@@ -1912,15 +1930,16 @@ def _render_data_grid():
     if "Data" in df_display.columns:
         df_display["Data"] = df_display["Data"].apply(format_date)
 
-    # Renomear colunas
-    df_display.columns = [
-        "Cliente",
-        "Vendedor",
-        "Valor Produtos",
-        "Desconto",
-        "Valor Total",
-        "Data",
-    ]
+    # Renomear colunas (Origem não precisa de renomeação)
+    rename_map = {
+        "ClienteNome": "Cliente",
+        "VendedorNome": "Vendedor",
+        "ValorProdutos": "Valor Produtos",
+        "ValorDesconto": "Desconto",
+        "ValorTotal": "Valor Total",
+        "Data": "Data",
+    }
+    df_display.rename(columns=rename_map, inplace=True)
 
     # Renderizar grid avançada com AgGrid e capturar dados filtrados
     df_filtered = _render_advanced_sales_grid(df_display, df_vendas)
@@ -1977,15 +1996,28 @@ def _render_advanced_sales_grid(df_display, df_original):
     # Interface para seleção de colunas visíveis
     st.markdown("#### 👁️ Colunas Visíveis")
 
-    # Inicializar estado das colunas visíveis se não existir
+    # Inicializar ou atualizar estado das colunas visíveis
+    # Garante que novas colunas (ex: Origem) sejam sempre incluídas no default
+    colunas_atuais = list(df_display.columns)
     if "vendas_visible_columns" not in st.session_state:
-        st.session_state["vendas_visible_columns"] = list(df_display.columns)
+        st.session_state["vendas_visible_columns"] = colunas_atuais
+    else:
+        # Adicionar colunas novas que ainda não estavam no estado salvo
+        colunas_salvas = st.session_state["vendas_visible_columns"]
+        novas_colunas = [c for c in colunas_atuais if c not in colunas_salvas]
+        if novas_colunas:
+            st.session_state["vendas_visible_columns"] = colunas_salvas + novas_colunas
+
+    # Garantir que apenas colunas existentes no df atual sejam usadas como default
+    default_valido = [
+        c for c in st.session_state["vendas_visible_columns"] if c in colunas_atuais
+    ]
 
     # Multiselect para escolher colunas visíveis
     selected_columns = st.multiselect(
         "Selecione as colunas para exibir e exportar:",
-        options=list(df_display.columns),
-        default=st.session_state["vendas_visible_columns"],
+        options=colunas_atuais,
+        default=default_valido,
         key="vendas_columns_selector",
     )
 
@@ -2033,6 +2065,16 @@ def _render_advanced_sales_grid(df_display, df_original):
                     headerName=col,
                     type=["numericColumn", "numberColumnFilter"],
                     valueFormatter="'R$ ' + x.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})",
+                )
+            elif col == "Origem":
+                gb.configure_column(
+                    col,
+                    headerName="Origem",
+                    width=150,
+                    filter=True,
+                    floatingFilter=True,
+                    sortable=True,
+                    hide=False,
                 )
             else:
                 gb.configure_column(col, headerName=col)

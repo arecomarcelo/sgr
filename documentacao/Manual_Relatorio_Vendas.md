@@ -6,7 +6,7 @@ O **Relatório de Vendas SGR** é uma ferramenta completa e interativa para aná
 
 ### 💡 Principais Recursos
 
-✅ **Filtros Inteligentes** - Sistema avançado de filtros personalizáveis
+✅ **Filtros Inteligentes** - Sistema avançado de filtros personalizáveis (período, vendedor, situação e **origem**)
 ✅ **Rankings Dinâmicos** - Vendedores e Produtos mais performáticos
 ✅ **Métricas em Tempo Real** - Acompanhamento instantâneo de resultados
 ✅ **Análise de Mix de Produtos** - Composição Equipamentos vs Acessórios
@@ -118,14 +118,45 @@ Esta é a seção mais importante do sistema, onde você define **EXATAMENTE** q
 > - **Em andamento**: Acompanhamento de vendas em processo
 > - **Cancelada**: Análise de perda de vendas
 
+#### 🏷️ Filtro de Origem (Opcional)
+
+- **Tipo**: Seleção múltipla
+- **Função**: Segmentar vendas pelo **canal de origem** (ex: site, loja física, marketplaces, indicação, etc.)
+- **Opções Disponíveis**: Lista dinâmica carregada do banco de dados (somente origens com registros)
+- **Comportamento Padrão**:
+  - ✅ **Vazio** = Todas as origens (sem filtro aplicado)
+  - ✅ **Selecionado** = Apenas vendas provenientes das origens escolhidas
+- **Interface**: Dropdown com busca integrada (suporta múltipla seleção)
+- **Exibição na Grid**: Coluna "Origem" sempre visível na tabela de Dados Detalhados
+
+**Exemplo de Uso**:
+
+| Objetivo | Configuração |
+|----------|-------------|
+| Ver vendas do site | Selecione "Site" ou "E-commerce" |
+| Comparar canais | Selecione dois ou mais canais |
+| Analisar indicações | Selecione "Indicação" |
+| Visão completa | Deixe vazio |
+
+> 💡 **Dica**: Use este filtro em conjunto com "Vendedor" para descobrir qual canal cada vendedor atende melhor!
+
+> ℹ️ **Nota**: Se a lista aparecer vazia ("No options to select"), significa que não há registros de Origem preenchidos no banco de dados para o período. O campo "Origem" ainda será exibido como coluna na tabela.
+
 ---
 
 #### 🎯 Botões de Ação
+
+> 📌 **Localização dos Botões**: Os botões ficam **abaixo do painel de filtros** (fora do expander), garantindo que estejam sempre visíveis na tela — mesmo quando muitos filtros estão selecionados.
 
 ##### 🔍 **Aplicar Filtros** (Botão Principal)
 
 - **Função**: Executa consulta personalizada com os filtros definidos
 - **Cor**: Azul (botão primário)
+- **Filtros Considerados**:
+  - 📅 Período (obrigatório)
+  - 👤 Vendedores (opcional)
+  - 📊 Situações (opcional)
+  - 🏷️ Origens (opcional) ← **Novo**
 - **Validações Automáticas**:
   - ✅ Verifica se datas foram preenchidas
   - ✅ Valida se data inicial ≤ data final
@@ -135,20 +166,21 @@ Esta é a seção mais importante do sistema, onde você define **EXATAMENTE** q
 **Fluxo de Execução**:
 1. Sistema valida os filtros
 2. Exibe mensagem de "Carregando dados..."
-3. Busca dados no banco de dados
+3. Busca dados no banco de dados (com filtro de Origem se selecionado)
 4. Calcula métricas automaticamente
-5. Exibe resultados na tela
+5. Exibe resultados na tela com coluna Origem
 
 > ⏱️ **Tempo de processamento**: 2-10 segundos (depende do período)
 
-##### 📅 **Dados do Mês Atual** (Botão Secundário)
+##### 🔄 **Recarregar Dados do Mês** (Botão Secundário)
 
 - **Função**: Carregamento rápido do período corrente
 - **Comportamento**:
   - ✅ Ignora todos os filtros personalizados
-  - ✅ Carrega automaticamente de 01/10 até hoje
+  - ✅ Carrega automaticamente de 01/mês até hoje
   - ✅ Inclui todos os vendedores
   - ✅ Inclui todas as situações
+  - ✅ Inclui todas as origens
 - **Quando usar**:
   - Análise rápida do mês corrente
   - Acompanhamento diário de vendas
@@ -361,6 +393,9 @@ Esta seção exibe **TODAS** as vendas do período filtrado em formato de tabela
 | 💸 **Desconto** | Valor do desconto aplicado | R$ 0.000,00 | R$ 125,00 |
 | 💰 **Valor Total** | Valor líquido da venda | R$ 0.000,00 | R$ 1.125,00 |
 | 📅 **Data** | Data da transação | DD/MM/AAAA | 15/10/2025 |
+| 🏷️ **Origem** | Canal de origem da venda | Texto | Site, Loja, Indicação |
+
+> ℹ️ **Coluna Origem**: Sempre exibida na tabela. Pode estar vazia se o campo não estiver preenchido no sistema de origem. Possui **filtro e ordenação** habilitados.
 
 ---
 
@@ -576,6 +611,24 @@ O sistema agrupa as vendas por período (dia, semana ou mês) mostrando:
 ```
 **Objetivo**: Visão completa do pipeline financeiro
 
+#### 🏷️ **Para Análise por Canal de Origem**
+```
+📅 Período: Últimos 3 meses
+👤 Vendedor: [Todos]
+📊 Situação: Finalizada
+🏷️ Origem: [Selecione o canal desejado]
+```
+**Objetivo**: Avaliar performance por canal de venda (ex: qual canal gera mais receita)
+
+#### 🔀 **Para Comparar Canais**
+```
+📅 Período: Mês atual
+👤 Vendedor: [Todos]
+📊 Situação: [Todas]
+🏷️ Origem: [Selecione dois canais para comparar]
+```
+**Objetivo**: Comparar performance entre diferentes origens de venda
+
 ---
 
 ### 📈 Interpretação de Métricas
@@ -616,12 +669,30 @@ O sistema agrupa as vendas por período (dia, semana ou mês) mostrando:
 - Filtros muito restritivos (vendedor específico sem vendas)
 - Período sem movimento comercial
 - Situação selecionada sem registros
+- Origem selecionada sem registros no período
 
 **Soluções**:
-1. Remova filtros de vendedor e situação
+1. Remova filtros de vendedor, situação e origem
 2. Amplie o período de datas
-3. Use o botão "📅 Dados do Mês Atual" para teste
+3. Use o botão "🔄 Recarregar Dados do Mês" para teste
 4. Verifique se o período selecionado está correto
+
+---
+
+#### **"🏷️ Filtro de Origem aparece vazio (No options to select)"**
+
+**Possíveis Causas**:
+- Campo "Origem" não preenchido nos registros do sistema de gestão
+- Integração com o sistema de origem ainda não sincronizou esse campo
+
+**Comportamento Esperado**:
+- O filtro fica disponível mas sem opções para selecionar
+- A coluna "Origem" é exibida normalmente na tabela (poderá estar vazia nos registros)
+
+**Soluções**:
+1. Verifique no sistema de gestão se o campo Origem está sendo preenchido
+2. Aguarde a próxima sincronização de dados
+3. Entre em contato com TI se o campo deveria ter dados
 
 ---
 
@@ -704,6 +775,7 @@ O sistema agrupa as vendas por período (dia, semana ou mês) mostrando:
 | **Parcelado** | Valores a receber (parcelas futuras) | R$ 5.000 a receber |
 | **Vendedor Ativo** | Vendedor com permissão no sistema | Com acesso liberado |
 | **Situação** | Status atual da venda | Finalizada, Pendente, etc. |
+| **Origem** | Canal de onde veio a venda | Site, Loja Física, Indicação |
 | **KPI** | Indicador-chave de performance | Métricas principais |
 | **Pipeline** | Funil de vendas em andamento | Vendas em processo |
 | **Upselling** | Venda de produto superior/adicional | Combo ou upgrade |

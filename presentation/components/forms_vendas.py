@@ -16,7 +16,10 @@ class FilterForm:
         self.key_prefix = "vendas_filter_"
 
     def render_filters(
-        self, vendedores_disponiveis: List[str], situacoes_disponiveis: List[str]
+        self,
+        vendedores_disponiveis: List[str],
+        situacoes_disponiveis: List[str],
+        origens_disponiveis: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Renderiza formulário de filtros para vendas
@@ -24,6 +27,7 @@ class FilterForm:
         Args:
             vendedores_disponiveis: Lista de vendedores disponíveis
             situacoes_disponiveis: Lista de situações disponíveis
+            origens_disponiveis: Lista de origens disponíveis (opcional)
 
         Returns:
             Dict com valores dos filtros
@@ -87,6 +91,18 @@ class FilterForm:
                 default=[],
                 key=f"{self.key_prefix}situacoes",
                 help="Selecione uma ou mais situações (vazio = todas)",
+            )
+
+        # Filtro de Origem
+        col5, col6 = st.columns(2)
+
+        with col5:
+            filters["origens"] = st.multiselect(
+                "🏷️ Origem",
+                options=origens_disponiveis or [],
+                default=[],
+                key=f"{self.key_prefix}origens",
+                help="Selecione uma ou mais origens (vazio = todas)",
             )
 
         # Validar datas

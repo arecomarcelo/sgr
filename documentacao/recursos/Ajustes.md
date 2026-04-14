@@ -373,6 +373,20 @@
     1. Criado o Campo **Referencia**
     2. Exibido o **Novo Campo** na **Grid**
 
+## **14/04/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **08:50 - Commit 143**
+
+- Módulo **Vendas**:
+    1. Criado o Campo **Origem**, campo **Importado do Kommo**
+    2. Implementado **Filtro Origem**
+    3. Atualizado **Manual**
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***

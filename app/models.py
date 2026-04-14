@@ -386,6 +386,7 @@ class Venda(models.Model):
     ValorProdutos = models.CharField(max_length=100)
     ValorDesconto = models.CharField(max_length=100)
     ValorTotal = models.CharField(max_length=100)
+    Origem = models.CharField(max_length=100, null=True, blank=True)
 
 
 class VendaPagamento(models.Model):
