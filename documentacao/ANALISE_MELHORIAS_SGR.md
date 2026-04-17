@@ -232,7 +232,7 @@ class DataService:
         self.DB_CONFIG = {
             'dbname': 'sga',
             'user': 'postgres',
-            'password': 'Zyxelpar100448',  # Hardcoded!
+            'password': os.environ.get("DB_PASSWORD"),  # Usar variável de ambiente
             'host': '195.200.1.244',
             'port': '5432'
         }

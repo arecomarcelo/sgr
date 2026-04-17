@@ -1,5 +1,31 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 17/04/2026
+
+### ⏰ 14:56 — Saneamento de Credenciais Hardcoded
+
+#### 🎯 O que foi pedido:
+Varredura geral no projeto para localizar usuário e senha gravados diretamente nos arquivos (excluindo `.env`), e remoção das credenciais hardcoded substituindo por variáveis de ambiente.
+
+#### 🛠️ Solução Implementada:
+- 🔍 Localização de todos os arquivos com a senha `Zyxelpar100448` e usuário `postgres` hardcoded
+- ✅ Substituição por `os.environ.get("DB_*")` com `load_dotenv()` nos arquivos Python
+- 🔐 `SECRET_KEY` do Django também migrada para variável de ambiente
+- 📄 `CLAUDE.md` atualizado para remover credenciais do exemplo de código
+- 📄 `documentacao/ANALISE_MELHORIAS_SGR.md` sanitizado
+- O arquivo `.env` (já ignorado pelo git) permanece como fonte das credenciais
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Alteração |
+|---------|-----------|
+| `service.py` | Adicionado `load_dotenv()`, DB_CONFIG via `os.environ.get()` |
+| `app/settings.py` | Adicionado `load_dotenv()`, DATABASES e SECRET_KEY via `os.environ.get()` |
+| `config/settings.py` | Adicionado `load_dotenv()`, DatabaseConfig e AppConfig via `os.environ.get()` com `field(default_factory=...)` |
+| `CLAUDE.md` | Exemplo de código sem credenciais reais |
+| `documentacao/ANALISE_MELHORIAS_SGR.md` | Senha substituída por `os.environ.get("DB_PASSWORD")` |
+
+---
+
 ## 📅 14/04/2026
 
 ### ⏰ 13:00 — Manual de Vendas: Atualização com implementação do filtro e coluna Origem

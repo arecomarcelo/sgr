@@ -387,6 +387,17 @@
     2. Implementado **Filtro Origem**
     3. Atualizado **Manual**
 
+## **17/04/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **14:58 - Commit 144**
+
+- Remoção de **usuario** e **senha** Hardcode
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***

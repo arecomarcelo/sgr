@@ -1,6 +1,11 @@
+import os
+
 from django.contrib.auth.hashers import check_password
 
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from repository import (
     BoletoRepository,
@@ -15,11 +20,11 @@ class DataService:
     def __init__(self):
         # Configurações do banco de dados
         self.DB_CONFIG = {
-            "dbname": "sga",
-            "user": "postgres",
-            "password": "Zyxelpar100448",
-            "host": "195.200.1.244",
-            "port": "5432",
+            "dbname": os.environ.get("DB_NAME", "sga"),
+            "user": os.environ.get("DB_USER", "postgres"),
+            "password": os.environ.get("DB_PASSWORD", ""),
+            "host": os.environ.get("DB_HOST", "195.200.1.244"),
+            "port": os.environ.get("DB_PORT", "5432"),
         }
         # Inicializar o repositório com as configurações do banco de dados
         self.repository = DatabaseRepository(self.DB_CONFIG)

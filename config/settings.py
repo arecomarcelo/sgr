@@ -3,19 +3,26 @@ Configurações centralizadas da aplicação SGR
 Implementa padrão Singleton para configurações globais
 """
 
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
 from typing import Optional
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @dataclass
 class DatabaseConfig:
     """Configurações do banco de dados PostgreSQL"""
 
-    host: str = "195.200.1.244"
-    port: int = 5432
-    database: str = "sga"
-    username: str = "postgres"
-    password: str = "Zyxelpar100448"
+    host: str = field(
+        default_factory=lambda: os.environ.get("DB_HOST", "195.200.1.244")
+    )
+    port: int = field(default_factory=lambda: int(os.environ.get("DB_PORT", "5432")))
+    database: str = field(default_factory=lambda: os.environ.get("DB_NAME", "sga"))
+    username: str = field(default_factory=lambda: os.environ.get("DB_USER", "postgres"))
+    password: str = field(default_factory=lambda: os.environ.get("DB_PASSWORD", ""))
 
     def get_connection_dict(self) -> dict:
         """Retorna dicionário de configuração para conexão"""
@@ -40,8 +47,11 @@ class AppConfig:
     title: str = "SGR - Sistema de Gestão de Recursos"
     cache_ttl: int = 300
     log_level: str = "INFO"
-    secret_key: str = (
-        "django-insecure-hly@8g(n3j9f=n+)eb7k6=bidr-!(vej3u@vnd^tk$h^-lk+ot"
+    secret_key: str = field(
+        default_factory=lambda: os.environ.get(
+            "SECRET_KEY",
+            "django-insecure-hly@8g(n3j9f=n+)eb7k6=bidr-!(vej3u@vnd^tk$h^-lk+ot",
+        )
     )
     session_timeout: int = 3600
 

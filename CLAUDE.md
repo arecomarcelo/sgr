@@ -26,16 +26,17 @@ SGR (Sistema de Gestão de Recursos) é uma aplicação de gestão empresarial c
 - Autenticação usa sistema auth do Django com hash de senhas
 
 ### Configuração do Banco de Dados
-A aplicação conecta a um banco PostgreSQL:
+A aplicação conecta a um banco PostgreSQL via variáveis de ambiente (`.env`):
 ```python
 DB_CONFIG = {
-    'dbname': 'sga',
-    'user': 'postgres', 
-    'password': 'Zyxelpar100448',
-    'host': '195.200.1.244',
-    'port': '5432'
+    'dbname': os.environ.get("DB_NAME"),
+    'user': os.environ.get("DB_USER"),
+    'password': os.environ.get("DB_PASSWORD"),
+    'host': os.environ.get("DB_HOST"),
+    'port': os.environ.get("DB_PORT"),
 }
 ```
+As credenciais ficam no arquivo `.env` (não versionado). Use `.env.example` como referência.
 
 ## Comandos Comuns de Desenvolvimento
 
