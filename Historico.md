@@ -2,6 +2,24 @@
 
 ## 📅 17/04/2026
 
+### ⏰ 15:10 — Correção: Credenciais no Streamlit Cloud (st.secrets)
+
+#### 🎯 O que foi pedido:
+Corrigir erro de conexão no Streamlit Cloud após saneamento das credenciais — no Cloud não existe `.env`, as credenciais devem vir de `st.secrets`.
+
+#### 🛠️ Solução Implementada:
+- 🔐 Criado `.streamlit/secrets.toml` (já no `.gitignore`) com bloco `[database]`
+- ✅ Criado helper `_get_db_secret()` em `service.py`: tenta `st.secrets["database"]` primeiro, depois `os.environ` (fallback para execução local)
+- 📋 No Streamlit Cloud, configurar os secrets em **Settings → Secrets** com o conteúdo de `.streamlit/secrets.toml`
+
+#### 📁 Arquivos Alterados/Criados:
+| Arquivo | Alteração |
+|---------|-----------|
+| `service.py` | Helper `_get_db_secret()` + uso de `st.secrets` |
+| `.streamlit/secrets.toml` | Criado (não versionado) |
+
+---
+
 ### ⏰ 14:56 — Saneamento de Credenciais Hardcoded
 
 #### 🎯 O que foi pedido:

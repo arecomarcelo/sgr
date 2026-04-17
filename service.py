@@ -3,9 +3,19 @@ import os
 from django.contrib.auth.hashers import check_password
 
 import pandas as pd
+import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def _get_db_secret(key: str, default: str = "") -> str:
+    """Lê credencial de st.secrets (Streamlit Cloud) ou os.environ (local/.env)."""
+    try:
+        return st.secrets["database"].get(key, os.environ.get(key, default))
+    except Exception:
+        return os.environ.get(key, default)
+
 
 from repository import (
     BoletoRepository,
@@ -20,11 +30,11 @@ class DataService:
     def __init__(self):
         # Configurações do banco de dados
         self.DB_CONFIG = {
-            "dbname": os.environ.get("DB_NAME", "sga"),
-            "user": os.environ.get("DB_USER", "postgres"),
-            "password": os.environ.get("DB_PASSWORD", ""),
-            "host": os.environ.get("DB_HOST", "195.200.1.244"),
-            "port": os.environ.get("DB_PORT", "5432"),
+            "dbname": _get_db_secret("DB_NAME", "sga"),
+            "user": _get_db_secret("DB_USER", "postgres"),
+            "password": _get_db_secret("DB_PASSWORD"),
+            "host": _get_db_secret("DB_HOST", "195.200.1.244"),
+            "port": _get_db_secret("DB_PORT", "5432"),
         }
         # Inicializar o repositório com as configurações do banco de dados
         self.repository = DatabaseRepository(self.DB_CONFIG)
