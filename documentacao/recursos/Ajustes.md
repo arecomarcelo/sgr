@@ -402,6 +402,18 @@
 
 - Correção de **usuario** e **senha** Hardcode
 
+
+## **20/04/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **09:35 - Commit 146**
+
+- Correção de **usuario** e **senha** Hardcode
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***

@@ -12,9 +12,10 @@ load_dotenv()
 def _get_db_secret(key: str, default: str = "") -> str:
     """Lê credencial de st.secrets (Streamlit Cloud) ou os.environ (local/.env)."""
     try:
-        return st.secrets["database"].get(key, os.environ.get(key, default))
+        value = st.secrets["database"].get(key, os.environ.get(key, default))
+        return str(value) if value is not None else default
     except Exception:
-        return os.environ.get(key, default)
+        return os.environ.get(key, default) or default
 
 
 from repository import (

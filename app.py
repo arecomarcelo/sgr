@@ -25,6 +25,15 @@ if time.time() - st.session_state.get("last_activity", 0) > 240:  # 4 minutos
     st.session_state["last_activity"] = time.time()
     st.rerun()
 
+# Injetar credenciais do Streamlit Secrets no os.environ para o Django
+try:
+    if "database" in st.secrets:
+        for _key in ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]:
+            if _key in st.secrets["database"]:
+                os.environ[_key] = str(st.secrets["database"][_key])
+except Exception:
+    pass  # Em ambiente local, usa variáveis já definidas no ambiente
+
 # Configurar Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 django.setup()

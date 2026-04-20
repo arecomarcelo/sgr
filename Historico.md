@@ -1,6 +1,50 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 20/04/2026
+
+### ⏰ 10:30 — Correção: Erro "no password supplied" nos Relatórios
+
+#### 🎯 O que foi pedido:
+Investigar e corrigir erro de conexão com banco de dados nos Relatórios de Vendas e demais módulos: `fe_sendauth: no password supplied`.
+
+#### 🔍 Causa Raiz:
+- O `repositories_vendas.py` usa `from django.db import connection` (Django ORM)
+- O Django lê as credenciais via `os.environ.get("DB_PASSWORD", "")` em `app/settings.py`
+- As credenciais estão **apenas no Streamlit Secrets** (`st.secrets["database"]`)
+- O Django era configurado via `django.setup()` **antes** das credenciais serem injetadas no `os.environ`
+- Resultado: `DB_PASSWORD = ""` → PostgreSQL rejeitava a conexão
+
+#### 🛠️ Solução Implementada:
+- ✅ Em `app.py`, **antes** de `django.setup()`, adicionado bloco que injeta as credenciais do `st.secrets["database"]` no `os.environ`
+- ✅ `app/settings.py` e `config/settings.py`: corrigido `load_dotenv()` para usar caminho explícito (`BASE_DIR / ".env"`) sem `override=True` (fallback para desenvolvimento local)
+- 🔐 Fluxo correto: `st.secrets` → `os.environ` → `django.setup()` → Django conecta com senha
+
+#### 📁 Arquivos Alterados:
+| Arquivo | Alteração |
+|---------|-----------|
+| `app.py` | Injeção de `st.secrets["database"]` no `os.environ` antes do `django.setup()` |
+| `app/settings.py` | `load_dotenv()` com caminho explícito (sem override) |
+| `config/settings.py` | `load_dotenv()` com caminho explícito (sem override) |
+
+---
+
 ## 📅 17/04/2026
+
+### ⏰ 15:30 — Geração de Guia: Remoção de Credenciais Hardcoded
+
+#### 🎯 O que foi pedido:
+Gerar arquivo de documentação com todos os ajustes realizados para replicar em outra aplicação na mesma situação.
+
+#### 🛠️ Solução Implementada:
+- 📄 Criado guia completo em texto puro com 8 passos detalhados
+- Cobre: `.env`, `.env.example`, `.streamlit/secrets.toml`, `service.py`, `app/settings.py`, `config/settings.py`, documentação e Streamlit Cloud
+
+#### 📁 Arquivo Criado:
+| Arquivo | Descrição |
+|---------|-----------|
+| `documentacao/GUIA_REMOCAO_CREDENCIAIS_HARDCODED.txt` | Guia passo a passo reutilizável |
+
+---
 
 ### ⏰ 15:10 — Correção: Credenciais no Streamlit Cloud (st.secrets)
 
