@@ -1,5 +1,62 @@
 # 📋 Histórico de Alterações - SGR
 
+## 📅 11/05/2026
+
+### ⏰ 10:06 — Verificação Geral: Ajuste de Tipos de Campos nos Modelos
+
+#### 🎯 O que foi pedido:
+Verificação geral da aplicação após ajustes nos tipos de campos dos modelos no banco de dados, garantindo que não ocorram quebras.
+
+#### 🔍 Diagnóstico:
+Comparação entre os tipos dos campos nos modelos Django (`app/models.py`) e os tipos reais no banco PostgreSQL revelou 20+ discrepâncias. Além disso, o código de serviço usava conversões `astype(str) → str.replace(",", ".") → astype(float)` que quebram quando o banco retorna `None` em campos numéricos (vira a string `'None'`, que não pode ser convertida para float).
+
+#### 🛠️ Solução Implementada:
+
+**`app/models.py` — Tipos corrigidos:**
+| Modelo | Campo | Antes | Depois |
+|---|---|---|---|
+| `Clientes` | `Ativo` | `CharField(1)` | `BooleanField` |
+| `Extratos` | `valor` | `CharField(255)` | `DecimalField` |
+| `Produtos` | `PossuiVariacao/Composicao/MovimentaEstoque/Ativo` | `CharField` | `BooleanField` |
+| `Produtos` | `Peso/Largura/Altura/Comprimento` | `CharField(10)` | `DecimalField` |
+| `Produtos` | `ValorCusto/ValorVenda/LucroUtilizado` | `CharField(10)` | `DecimalField` |
+| `Produtos` | `Estoque` | `CharField(10)` | `IntegerField` |
+| `Produtos` | `EstoqueGalpao/Separado/Movimentado` | `CharField(10, default="0")` | `IntegerField(default=0)` |
+| `Produtos` | `ID_Grupo` | `CharField` (not null) | `CharField(null=True)` |
+| `Produtos` | `Foto` | `ImageField` (não existe no DB) | **Removido** |
+| `Produtos` | `URL`, `Exibir` | ausentes | `CharField(500)` e `BooleanField` adicionados |
+| `Venda` | `ValorCusto/Produtos/Desconto/Total` | `CharField(100)` | `DecimalField` |
+| `VendaPagamento` | `DataVencimento` | `CharField(100)` | `DateField` |
+| `VendaPagamento` | `Valor` | `CharField(100)` | `DecimalField` |
+| `VendaPagamento` | `Observacao` | `CharField(100)` | `TextField` |
+| `VendaProduto` | `Quantidade` | `CharField(100)` | `IntegerField` |
+| `VendaProduto` | `ValorCusto/Venda/Desconto/Total` | `CharField(100)` | `DecimalField` |
+| `VendaProduto` | `CodigoExpedicao` | ausente | `CharField(100)` adicionado |
+
+**`domain/services/vendas_service.py` — Conversões numéricas:**
+- `_processar_dados_vendas()`: substituído `astype(str) → str.replace → astype(float)` por `pd.to_numeric(..., errors="coerce").fillna(0.0)`
+- `get_metricas_vendas()`: mesma correção para campo `Valor` dos pagamentos
+
+**`domain/services/recebimentos_service.py` — Conversões numéricas:**
+- Mesmo padrão corrigido em dois pontos do serviço de recebimentos
+
+**`infrastructure/database/repositories.py` — ORM modernizado:**
+- `get_produtos_baixo_estoque()`: substituído `extra(where=['CAST(...) AS INTEGER'])` por filtro ORM nativo `filter(EstoqueGalpao__lte=limite, EstoqueGalpao__gte=0)`
+
+#### ✅ Validação:
+- Todos os 7 modelos validados: tipos conferem com o banco ✓
+- `VendasService.get_vendas_mes_atual()`: 42 registros, `ValorTotal` = `float64` ✓
+- `VendasService.get_metricas_vendas()`: `total_valor = R$ 4.269.815,52` ✓
+- `EstoqueRepository.get_produtos_baixo_estoque()`: 1.350 produtos ✓
+
+#### 📁 Arquivos Alterados:
+- `app/models.py`
+- `domain/services/vendas_service.py`
+- `domain/services/recebimentos_service.py`
+- `infrastructure/database/repositories.py`
+
+---
+
 ## 📅 20/04/2026
 
 ### ⏰ 10:30 — Correção: Erro "no password supplied" nos Relatórios

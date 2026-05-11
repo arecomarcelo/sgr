@@ -414,6 +414,17 @@
 
 - Correção de **usuario** e **senha** Hardcode
 
+## **10/05/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **10:09 - Commit 147**
+
+- Ajustes **Ajuste Modelos Tipo de Dados**
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***

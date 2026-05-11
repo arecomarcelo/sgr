@@ -70,7 +70,7 @@ class Clientes(models.Model):
     )
     Sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, default="M")
     Email = models.CharField(max_length=100, blank=True, null=True)
-    Ativo = models.CharField(max_length=1, blank=True, null=True)
+    Ativo = models.BooleanField(blank=True, null=True)
     NomeVendedor = models.CharField(max_length=100, blank=True, null=True)
     DataCadastro = models.DateField(verbose_name="Data Cadastro", blank=True, null=True)
 
@@ -151,7 +151,7 @@ class Extratos(models.Model):
     documento = models.CharField(max_length=255)
     historico_codigo = models.CharField(max_length=255)
     historico_descricao = models.CharField(max_length=255)
-    valor = models.CharField(max_length=255)
+    valor = models.DecimalField(max_digits=15, decimal_places=2)
     debito_credito = models.CharField(max_length=1, null=True, blank=True)
     descricao = models.CharField(max_length=255)
     centrocusto = models.ForeignKey(
@@ -192,33 +192,34 @@ class Produtos(models.Model):
     Descricao = models.CharField(max_length=200, blank=False, null=False)
     CodigoInterno = models.CharField(max_length=100, blank=True, null=True)
     CodigoBarra = models.CharField(max_length=100, blank=True, null=True)
-    PossuiVariacao = models.CharField(max_length=10, blank=True, null=True)
-    PossuiComposicao = models.CharField(max_length=10, blank=True, null=True)
-    MovimentaEstoque = models.CharField(max_length=10, blank=True, null=True)
-    Peso = models.CharField(max_length=10, blank=True, null=True)
-    Largura = models.CharField(max_length=10, blank=True, null=True)
-    Altura = models.CharField(max_length=10, blank=True, null=True)
-    Comprimento = models.CharField(max_length=10, blank=True, null=True)
-    Ativo = models.CharField(max_length=10, blank=True, null=True)
-    ID_Grupo = models.CharField(max_length=10)
+    PossuiVariacao = models.BooleanField(blank=True, null=True)
+    PossuiComposicao = models.BooleanField(blank=True, null=True)
+    MovimentaEstoque = models.BooleanField(blank=True, null=True)
+    Peso = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    Largura = models.DecimalField(
+        max_digits=10, decimal_places=4, blank=True, null=True
+    )
+    Altura = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    Comprimento = models.DecimalField(
+        max_digits=10, decimal_places=4, blank=True, null=True
+    )
+    Ativo = models.BooleanField(default=True)
+    ID_Grupo = models.CharField(max_length=10, blank=True, null=True)
     NomeGrupo = models.CharField(max_length=100, blank=True, null=True)
-    Estoque = models.CharField(max_length=10, blank=True, null=True)
-    ValorCusto = models.CharField(max_length=10, blank=True, null=True)
-    ValorVenda = models.CharField(max_length=10, blank=True, null=True)
-    LucroUtilizado = models.CharField(max_length=10, blank=True, null=True)
+    Estoque = models.IntegerField(blank=True, null=True)
+    ValorCusto = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+    ValorVenda = models.DecimalField(max_digits=15, decimal_places=4, default=0)
+    LucroUtilizado = models.DecimalField(max_digits=15, decimal_places=4, default=0)
     CodigoExpedicao = models.CharField(max_length=100, blank=True, null=True)
-    EstoqueGalpao = models.CharField(max_length=10, blank=True, null=True, default="0")
-    EstoqueSeparado = models.CharField(
-        max_length=10, blank=True, null=True, default="0"
-    )
-    EstoqueMovimentado = models.CharField(
-        max_length=10, blank=True, null=True, default="0"
-    )
+    EstoqueGalpao = models.IntegerField(default=0)
+    EstoqueSeparado = models.IntegerField(default=0)
+    EstoqueMovimentado = models.IntegerField(default=0)
     Localizacao = models.CharField(max_length=20, blank=True, null=True)
-    Foto = models.ImageField(upload_to="estoque/", blank=True, null=True)
     QrCode = models.BooleanField(
         verbose_name="QR Code Gerado", default=False, null=True, blank=True
     )
+    URL = models.CharField(max_length=500, blank=True, null=True)
+    Exibir = models.BooleanField(blank=True, null=True)
 
     @property
     def EstoqueDisponivel(self):
@@ -382,10 +383,18 @@ class Venda(models.Model):
     SituacaoNome = models.CharField(max_length=100)
     NomeCanalVenda = models.CharField(max_length=100)
     CondicaoPagamento = models.CharField(max_length=100)
-    ValorCusto = models.CharField(max_length=100)
-    ValorProdutos = models.CharField(max_length=100)
-    ValorDesconto = models.CharField(max_length=100)
-    ValorTotal = models.CharField(max_length=100)
+    ValorCusto = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    ValorProdutos = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    ValorDesconto = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    ValorTotal = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
     Origem = models.CharField(max_length=100, null=True, blank=True)
 
 
@@ -400,10 +409,10 @@ class VendaPagamento(models.Model):
         verbose_name_plural = "Venda Pagamentos"
 
     Venda_ID = models.CharField(max_length=100)
-    DataVencimento = models.CharField(max_length=100)
-    Valor = models.CharField(max_length=100)
+    DataVencimento = models.DateField(null=True, blank=True)
+    Valor = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     NomeFormaPagamento = models.CharField(max_length=100)
-    Observacao = models.CharField(max_length=100, null=True, blank=True)
+    Observacao = models.TextField(null=True, blank=True)
 
 
 class VendaProduto(models.Model):
@@ -417,10 +426,19 @@ class VendaProduto(models.Model):
         verbose_name_plural = "Venda Produtos"
 
     Venda_ID = models.CharField(max_length=100)
-    Nome = models.CharField(max_length=255)
-    Detalhes = models.CharField(max_length=255, null=True, blank=True)
-    Quantidade = models.CharField(max_length=100)
-    ValorCusto = models.CharField(max_length=100)
-    ValorVenda = models.CharField(max_length=100)
-    ValorDesconto = models.CharField(max_length=100)
-    ValorTotal = models.CharField(max_length=100)
+    Nome = models.TextField()
+    Detalhes = models.TextField(null=True, blank=True)
+    Quantidade = models.IntegerField(null=True, blank=True)
+    ValorCusto = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    ValorVenda = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    ValorDesconto = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    ValorTotal = models.DecimalField(
+        max_digits=15, decimal_places=2, null=True, blank=True
+    )
+    CodigoExpedicao = models.CharField(max_length=100, blank=True, null=True)

@@ -183,14 +183,13 @@ class VendasService:
                 # Processar dados de pagamentos
                 df_pagamentos = df_pagamentos.copy()
 
-                # Converter colunas de valor para float
+                # Converter colunas de valor para float (suporta Decimal, string ou None)
                 if "Valor" in df_pagamentos.columns:
-                    df_pagamentos["Valor"] = df_pagamentos["Valor"].astype(str)
-                    df_pagamentos["Valor"] = (
-                        df_pagamentos["Valor"].str.replace(",", ".").astype(float)
-                    )
+                    df_pagamentos["Valor"] = pd.to_numeric(
+                        df_pagamentos["Valor"], errors="coerce"
+                    ).fillna(0.0)
 
-                # Converter DataVencimento para datetime se for string
+                # Converter DataVencimento para datetime
                 if "DataVencimento" in df_pagamentos.columns:
                     df_pagamentos["DataVencimento"] = pd.to_datetime(
                         df_pagamentos["DataVencimento"], errors="coerce"
@@ -397,23 +396,14 @@ class VendasService:
         # Fazer cópia para evitar modificar original
         df = df.copy()
 
-        # Converter colunas de valores
+        # Converter colunas de valores (suporta Decimal, string ou None do banco)
         valor_columns = ["ValorTotal", "ValorDesconto", "ValorProdutos", "ValorCusto"]
         for col in valor_columns:
             if col in df.columns:
-                # Garantir que seja string antes de processar
-                df[col] = df[col].astype(str)
-                # Tratar valores vazios - apenas para ValorTotal que é obrigatório
                 if col == "ValorTotal":
-                    # Remover linhas com ValorTotal vazio (obrigatório)
-                    df = df[df[col].str.strip() != ""]
-                else:
-                    # Para outros campos, substituir vazios por "0"
-                    df[col] = df[col].apply(
-                        lambda x: "0" if not x or str(x).strip() == "" else str(x)
-                    )
-                # Converter vírgula para ponto e para float
-                df[col] = df[col].str.replace(",", ".").astype(float)
+                    # Remover linhas sem ValorTotal (obrigatório)
+                    df = df[df[col].notna()]
+                df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
 
         # Converter colunas de data
         date_columns = ["Data"]

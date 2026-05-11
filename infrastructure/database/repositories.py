@@ -518,16 +518,10 @@ class EstoqueRepository(BaseRepository):
     def get_produtos_baixo_estoque(self, limite: int = 10) -> pd.DataFrame:
         """Busca produtos com estoque baixo usando Django ORM"""
         try:
-            # Converter campos string para int para comparação
-            from django.db.models import Case, IntegerField, When
-            from django.db.models.functions import Cast
-
             queryset = (
-                Produtos.objects.extra(
-                    where=[
-                        'CAST("EstoqueGalpao" AS INTEGER) <= %s AND CAST("EstoqueGalpao" AS INTEGER) >= 0'
-                    ],
-                    params=[limite],
+                Produtos.objects.filter(
+                    EstoqueGalpao__lte=limite,
+                    EstoqueGalpao__gte=0,
                 )
                 .values("CodigoInterno", "Descricao", "EstoqueGalpao", "ValorVenda")
                 .order_by("EstoqueGalpao", "Descricao")

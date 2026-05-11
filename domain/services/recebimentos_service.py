@@ -123,15 +123,11 @@ class RecebimentosService:
             # Calcular métricas
             total_quantidade = len(df_recebimentos)
 
-            # Converter valor para numérico se necessário
+            # Converter valor para numérico (suporta Decimal, string ou None do banco)
             df_recebimentos = df_recebimentos.copy()
-            if df_recebimentos["Valor"].dtype == "object":
-                df_recebimentos["Valor"] = (
-                    df_recebimentos["Valor"]
-                    .astype(str)
-                    .str.replace(",", ".")
-                    .astype(float)
-                )
+            df_recebimentos["Valor"] = pd.to_numeric(
+                df_recebimentos["Valor"], errors="coerce"
+            ).fillna(0.0)
 
             total_valor = df_recebimentos["Valor"].sum()
 
@@ -165,8 +161,8 @@ class RecebimentosService:
             # Formatar data para exibição
             df["Vencimento"] = df["Vencimento"].dt.strftime("%d/%m/%Y")
 
-        # Garantir que Valor seja numérico
-        if "Valor" in df.columns and df["Valor"].dtype == "object":
-            df["Valor"] = df["Valor"].astype(str).str.replace(",", ".").astype(float)
+        # Garantir que Valor seja numérico (suporta Decimal, string ou None do banco)
+        if "Valor" in df.columns:
+            df["Valor"] = pd.to_numeric(df["Valor"], errors="coerce").fillna(0.0)
 
         return df
