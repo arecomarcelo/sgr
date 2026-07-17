@@ -3704,3 +3704,32 @@ Adicionar 2 novos vendedores ao painel que exibe vendedores:
 3. `fotos/12.jpg` - Foto renomeada (adicionada extensão .jpg)
 
 ---
+
+## 📅 17/07/2026
+
+### ⏰ 13:24 - Criação da Permission Granular `view_pedido` para Vendas > Pedidos
+
+#### 🎯 O que foi pedido:
+Criar uma permission específica (`view_pedido`) para que um usuário possa visualizar somente a tela Vendas > Pedidos, sem depender da permission `change_venda` (que hoje também controla edição em outros pontos).
+
+#### 🔍 Diagnóstico:
+Não existe model `Pedido` próprio — a tela "Relatório de Pedidos" (`apps/vendas/pedidos.py`) lê a mesma tabela `Vendas` via SQL raw, e o menu (`apps/auth/modules.py`) liberava o submenu "Pedidos" usando `change_venda` (permission pensada para edição, reaproveitada indevidamente para uma tela só de visualização/exportação).
+
+O app Django `app` (INSTALLED_APPS) nunca teve pasta de migrations e não possuía `ContentType` próprio (`app_label='app'`) para o model `Venda` — os `codename`s como `change_venda`/`view_venda` hoje usados na prática vêm de `ContentType`s de outros apps do mesmo banco compartilhado (`vendas.venda`, `entidades.venda`), já que a checagem em `repository.py` compara apenas o `codename`, ignorando o `content_type`.
+
+#### 🛠️ Solução Implementada:
+1. **Novo `ContentType` e `Permission` criados diretamente no banco** (sem gerar migração, conforme diretriz de não alterar/migrar modelos já existentes): `ContentType(app_label='app', model='venda')` + `Permission(codename='view_pedido', name='Pode visualizar Pedidos')`, via `manage.py shell` (script pontual, não versionado).
+2. **Menu atualizado** (`apps/auth/modules.py`):
+   - Submenu "Pedidos" passou a exigir `view_pedido` no lugar de `change_venda`.
+   - Permissão do grupo "Vendas" passou a aceitar `view_pedido` como alternativa (OR) para exibir o grupo no menu.
+
+⚠️ **Atenção**: usuários que hoje acessam Pedidos apenas via `change_venda` precisam receber a nova permission `view_pedido` explicitamente (não há tela própria no SGR para atribuição de permissões — atribuir via Django Admin ou diretamente nas tabelas `auth_user_user_permissions`/`auth_group_permissions`).
+
+#### 📁 Arquivos Alterados:
+1. `apps/auth/modules.py` - Submenu "Pedidos" e grupo "Vendas" passam a considerar `view_pedido`
+
+#### 🗄️ Alteração de Dados (sem migração):
+1. `django_content_type` - novo registro `app_label='app'`, `model='venda'`
+2. `auth_permission` - novo registro `codename='view_pedido'`, vinculado ao ContentType acima
+
+---

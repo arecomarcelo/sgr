@@ -172,7 +172,7 @@ def menu():
             },
         },
         "Vendas": {
-            "permission": ["view_venda", "change_venda"],
+            "permission": ["view_venda", "change_venda", "view_pedido"],
             "icon": "📊",
             "type": "group",
             "submenu": {
@@ -182,7 +182,7 @@ def menu():
                     "original_name": "Relatório de Vendas",
                 },
                 "Pedidos": {
-                    "permission": "change_venda",
+                    "permission": "view_pedido",
                     "icon": "📋",
                     "original_name": "Relatório de Pedidos",
                 },
