@@ -225,6 +225,19 @@ class PedidosController:
                 )
                 vendedor_val = None if vendedor_sel == "Todos" else vendedor_sel
 
+            # Linha 4 — Condição de Pagamento
+            condicao_map = {"À Vista": "a_vista", "Parcelado": "parcelado"}
+            col7, _ = st.columns(2)
+            with col7:
+                condicao_sel = st.selectbox(
+                    "💳 Condição de Pagamento",
+                    options=["Todas"] + list(condicao_map.keys()),
+                    index=0,
+                    help="Filtrar por condição de pagamento",
+                    key="pedidos_condicao_pagamento",
+                )
+                condicao_val = condicao_map.get(condicao_sel)
+
             # Botões de ação
             col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
             with col_btn1:
@@ -242,6 +255,7 @@ class PedidosController:
                         prazo_fim=prazo_fim,
                         situacao=situacao_val,
                         vendedor=vendedor_val,
+                        condicao_pagamento=condicao_val,
                         auto=False,
                     )
                     _should_rerun = True
@@ -261,6 +275,7 @@ class PedidosController:
                         prazo_fim=None,
                         situacao=None,
                         vendedor=None,
+                        condicao_pagamento=None,
                         auto=False,
                     )
                     _should_rerun = True
@@ -280,6 +295,7 @@ class PedidosController:
         prazo_fim,
         situacao,
         vendedor,
+        condicao_pagamento=None,
         auto: bool = False,
     ):
         """Carrega pedidos do banco de dados com os filtros informados.
@@ -325,6 +341,11 @@ class PedidosController:
             if vendedor:
                 query += ' AND "VendedorNome" = %s'
                 params.append(vendedor)
+
+            # Filtro de Condição de Pagamento
+            if condicao_pagamento:
+                query += ' AND "CondicaoPagamento" = %s'
+                params.append(condicao_pagamento)
 
             query += ' ORDER BY "Data" DESC, "Codigo" ASC'
 

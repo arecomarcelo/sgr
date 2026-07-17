@@ -425,6 +425,17 @@
 
 - Ajustes **Ajuste Modelos Tipo de Dados**
 
+## **17/07/2026**
+
+- #### ***Instalar requirements.txt***
+  
+- #### Verificado: ***Executar formata.py***
+  
+
+##### **13:41 - Commit 148**
+
+- **Relatório de Pedidos** implementado **Filtro Condição de Pagamento**
+
 ## **dd/mm/2026**
 
 - #### ***Instalar requirements.txt***
