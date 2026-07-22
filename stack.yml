@@ -27,6 +27,7 @@ services:
       - "--server.address=0.0.0.0"
       - "--server.headless=true"
       - "--browser.gatherUsageStats=false"
+      - "--server.enableWebsocketCompression=false"
     extra_hosts:
       - "host-postgres:host-gateway"
     ports:
