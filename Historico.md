@@ -3755,3 +3755,71 @@ A coluna `CondicaoPagamento` na tabela `Vendas` possui apenas 2 valores distinto
 1. `apps/vendas/pedidos.py` - Novo filtro de Condição de Pagamento
 
 ---
+
+## 📅 22/07/2026
+
+### ⏰ 15:20 - Retry de Conexão e Mensagem Amigável para Timeout do Banco
+
+#### 🎯 O que foi pedido:
+Investigar e corrigir os erros de "Connection timed out" na tela de login em produção (Streamlit Community Cloud), registrados em `documentacao/erro/logs-arecomarcelo-sgr-main-app.py-2026-07-22T18_05_52.412Z.txt`.
+
+#### 🔍 Diagnóstico:
+`OperationalError: connection to server at "195.200.1.244", port 5432 failed: Connection timed out` — a tela de login estourava exceção crua direto pro usuário, sem retry nem tratamento.
+
+#### 🛠️ Solução Implementada:
+1. **`repository.py`**: nova função `_conectar_com_retry()` (timeout de conexão de 5s, 3 tentativas, 2s de espera entre elas), usada por `UserRepository`, `ExtratoRepository`, `BoletoRepository`, `ClienteRepository` e no `create_engine` do `DatabaseRepository`.
+2. **`apps/auth/views.py`**: `validate_user()` envolvido em `try/except` — loga o erro e exibe "⚠ Não foi possível conectar ao banco de dados no momento. Tente novamente em instantes." em vez de estourar a exceção crua na tela.
+3. **Testado localmente** simulando o timeout real (DB_HOST apontado para IP inalcançável): confirmado no log as 3 tentativas, o erro tratado e a mensagem amigável — sem crash.
+
+#### 📁 Arquivos Alterados:
+1. `repository.py` - Retry de conexão com timeout curto
+2. `apps/auth/views.py` - Tratamento de erro na validação de login
+
+---
+
+### ⏰ 15:40 - Investigação da Causa Raiz do Timeout (Auditoria da VPS)
+
+#### 🎯 O que foi pedido:
+Entender se o timeout de conexão tinha solução definitiva, além do retry.
+
+#### 🔍 Diagnóstico (via SSH root, somente leitura, na VPS 195.200.1.244):
+- Descartado: `fail2ban` (não instalado), `ufw` (inativo), esgotamento de conexões (só 7 de 100 em uso).
+- Causa real: a porta 5432 está 100% exposta à internet pública (`pg_hba.conf` com `hostssl all all 0.0.0.0/0 md5`) e sob varredura ativa de bots (exemplo real capturado no log do Postgres: IP `130.195.218.214` testando ~30 usernames de serviços comuns em <20s).
+- Confirmado que o Streamlit Community Cloud **não** tem IP de saída fixo (documentação oficial: a lista de IPs "pode mudar a qualquer momento sem aviso") — logo, allowlist de firewall não seria solução definitiva.
+- Decisão tomada com o usuário: Dockerizar o SGR na mesma VPS onde já rodam `administracao`/`comex`/`estoque`/`financeiro`/`rh` (Docker Swarm + Traefik), eliminando o trecho de internet pública por completo. A reescrita completa eliminando o Streamlit fica registrada para uma sessão futura (memória `sgr-plano-eliminar-streamlit`).
+
+#### 📁 Arquivos Alterados:
+Nenhum (investigação/diagnóstico).
+
+---
+
+### ⏰ 16:10 - Dockerização do SGR (fix definitivo do timeout)
+
+#### 🎯 O que foi pedido:
+Implementar a dockerização do SGR decidida na investigação anterior, resolvendo o timeout de conexão de forma definitiva.
+
+#### 🛠️ Solução Implementada:
+1. **`Dockerfile`**: imagem `python:3.12-slim`, roda `streamlit run app.py` na porta 8110.
+2. **`entrypoint.sh`**: mínimo (sem migrate/collectstatic — SGR não gera migrações e não serve Django admin via HTTP neste deploy).
+3. **`stack.yml`** (Docker Swarm): serviço único `web`, réplica única (SGR guarda sessão em memória do processo), `extra_hosts: host-postgres:host-gateway` para alcançar o Postgres **nativo** do host (banco `sga`, não o `sga_db`/`sga_multiapp` que os outros apps usam — o SGR escreve ao vivo no banco original, não pode usar o mirror), labels Traefik para `sgr.oficialsport.com.br`.
+4. **`scripts/predeploy.sh`** e **`scripts/deploy_local.sh`**: adaptados do padrão de `administracao`, sem as etapas que não se aplicam ao SGR (migrações, % Desenvolvido/Score, Celery/Redis).
+5. **`.env.example`**: comentário explicando o `DB_HOST=host-postgres` usado no deploy Docker.
+6. **Validado localmente**: build da imagem (sucesso), container subindo e respondendo (`/` e `/_stcore/health` com HTTP 200), e o mesmo teste de timeout simulado do item anterior repetido dentro do container — retry + mensagem amigável funcionando identicamente.
+
+#### ⚠️ Pendências (ação manual do usuário, fora do que a sessão executa):
+- DNS: criar `sgr.oficialsport.com.br` → `195.200.1.244` (ainda não provisionado).
+- `.env` real em `/home/deploy/apps/sgr/.env` na VPS.
+- Recomendado (segurança, independente deste deploy): restringir `pg_hba.conf` (hoje `0.0.0.0/0`) à sub-rede do Docker.
+- `git clone` inicial do repositório em `/home/deploy/apps/sgr` na VPS.
+- `docker login ghcr.io` na máquina local, se ainda não feito.
+- Rodar `scripts/deploy_local.sh` para o primeiro deploy real.
+
+#### 📁 Arquivos Alterados/Criados:
+1. `Dockerfile` (novo)
+2. `entrypoint.sh` (novo)
+3. `stack.yml` (novo)
+4. `scripts/predeploy.sh` (novo)
+5. `scripts/deploy_local.sh` (novo)
+6. `.env.example` - Comentário sobre `DB_HOST` em produção Docker
+
+---
