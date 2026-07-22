@@ -3823,3 +3823,79 @@ Implementar a dockerização do SGR decidida na investigação anterior, resolve
 6. `.env.example` - Comentário sobre `DB_HOST` em produção Docker
 
 ---
+
+### ⏰ 16:20 - Deploy Real do SGR Dockerizado na VPS
+
+#### 🎯 O que foi pedido:
+Concluir o deploy real (commit, push, build/push da imagem, `.env` na VPS, `docker stack deploy`) e depois expor publicamente via domínio próprio.
+
+#### 🛠️ Solução Implementada:
+1. Commit + push das alterações; `git clone` do repositório em `/home/deploy/apps/sgr` na VPS (ação de baixo risco, executada diretamente — diferente de mudanças de segurança/DNS).
+2. Build + push da imagem para `ghcr.io/arecomarcelo/sgr:latest`; `.env` real criado pelo usuário na VPS.
+3. `docker stack deploy -c stack.yml sgr --with-registry-auth` — serviço `sgr_web` no ar, 1/1 réplicas.
+4. **Validação end-to-end da conexão real ao Postgres nativo** (dentro do container, via `host-postgres`): conectou em 0.01s com as credenciais reais — confirma que o fix do timeout funciona de verdade em produção.
+5. Domínio definitivo escolhido pelo usuário: `relatorios.oficialsport.com.br` (não `sgr.oficialsport.com.br` do plano inicial) — `stack.yml` e `deploy_local.sh` atualizados e redeployados.
+
+#### 🐛 Bug real do Docker Swarm encontrado e corrigido:
+Após trocar a porta publicada do serviço duas vezes em sequência rápida (8110→8112, ver próxima seção), a malha de ingress do Swarm não recriou o mapeamento de porta (`ss -tlnp` não mostrava o listener, `docker port` vazio, apesar do `docker service ls` reportar a porta corretamente). `docker service update --force sgr_web` resolveu, forçando o Swarm a reconciliar o roteamento de ingress.
+
+#### 📁 Arquivos Alterados:
+1. `stack.yml` - Domínio ajustado para `relatorios.oficialsport.com.br`
+2. `scripts/deploy_local.sh` - `APP_URL` ajustada
+
+---
+
+### ⏰ 16:40 - Provisionamento do Vhost OpenLiteSpeed + Bug de WebSocket
+
+#### 🎯 O que foi pedido:
+Expor o SGR publicamente via `relatorios.oficialsport.com.br` — descoberto que, neste ambiente, quem termina TLS/roteia por domínio publicamente é o **OpenLiteSpeed nativo** (não o Traefik, que estava rodando mas não é usado pelos apps atuais). Usada a skill `02-provisionar-vhost-litespeed`.
+
+#### 🔍 Diagnóstico e correções ao longo do processo:
+1. **Porta 8110 em conflito**: reservada na tabela da skill para um app futuro ("Cobrança") ainda não construído — SGR movido para **8112** (Dockerfile/stack.yml atualizados; tabela da skill em `~/.claude/commands/02-provisionar-vhost-litespeed.md` atualizada com a nova entrada).
+2. **Vhost criado manualmente** (via SSH, já que o bloqueio do classificador de auto mode impediu edição direta do `httpd_config.conf` compartilhado numa primeira tentativa — refeito com sucesso após o usuário confirmar e sair do auto mode): bloco `virtualhost sgr` + `map sgr relatorios.oficialsport.com.br` nos listeners `Default`/`Defaultssl`, sempre com backup do `httpd_config.conf` antes e validação do SGA (`sistemas.oficialsport.com.br`) depois de cada restart.
+3. **Certificado Let's Encrypt emitido** via certbot (webroot), válido, sem `-k` necessário no curl.
+4. **Bug real de WebSocket descoberto**: a tela de login carregava mas ficava presa no skeleton de loading — console mostrava `WebSocket onerror` repetido. Investigação em 3 camadas:
+   - **HTTP/2**: o navegador negociava HTTP/2 por padrão; OpenLiteSpeed não faz upgrade de WebSocket clássico sobre HTTP/2 (retornava `400 Can "Upgrade" only to "WebSocket"`). Corrigido com `enableSpdy 0` (a diretiva real por trás do campo "ALPN" da GUI, achada no código-fonte do WebAdmin `DTblDefBase.php`) no bloco `vhssl` do vhost do SGR — isolado, não afeta os outros vhosts.
+   - **Compressão do WebSocket**: tentativa de desabilitar via `--server.enableWebsocketCompression=false` no Streamlit — não foi a causa raiz, mas mantido (inofensivo).
+   - **Causa raiz real**: a resposta do proxy ao handshake de upgrade retornava `Connection: Keep-Alive` em vez de `Connection: Upgrade` (exigido pelo protocolo) — o navegador rejeita a conexão mesmo com status HTTP 101. Resolvido usando um bloco `websocket <uri> { address ... }` **dedicado** (mecanismo nativo do OpenLiteSpeed, distinto do `context` genérico), especificamente para `/_stcore/stream` — sintaxe raro documentada, encontrada via um issue real do repositório oficial do OpenLiteSpeed com sintoma parecido (Chatwoot).
+5. **Validado no navegador**: página carrega por completo (título muda para "SGR", tela de login idêntica ao ambiente local), tentativa de login real retorna "Usuário ou senha incorretos" — confirma WebSocket + conexão real ao Postgres funcionando de ponta a ponta em produção.
+6. SGA e todos os apps irmãos (`administracao`, `financeiro`, `estoque`, `comex`, `rh`) validados intactos após cada restart do LiteSpeed.
+
+#### 📁 Arquivos Alterados (VPS, fora do repositório git):
+1. `/usr/local/lsws/conf/httpd_config.conf` - novo `virtualhost sgr` + mapeamentos nos 2 listeners (com backups antes de cada edição)
+2. `/usr/local/lsws/conf/vhosts/sgr/vhost.conf` (novo) - proxy, WebSocket dedicado, SSL, ALPN restrito
+3. Certificado Let's Encrypt emitido para `relatorios.oficialsport.com.br`
+
+#### 📁 Arquivos Alterados (repositório):
+1. `Dockerfile` - Porta 8112
+2. `stack.yml` - Porta 8112, `--server.enableWebsocketCompression=false`
+3. `~/.claude/commands/02-provisionar-vhost-litespeed.md` (skill global) - Tabela de alocação de portas atualizada
+
+---
+
+### ⏰ 17:15 - Limpeza Pós-Deploy: Avisos de Secrets e Encoding dos Logs
+
+#### 🎯 O que foi pedido:
+Usuário reportou o aviso "No secrets found..." aparecendo várias vezes na tela de login em produção (visível nos screenshots de validação).
+
+#### 🔍 Diagnóstico:
+Duas fontes independentes tocavam em `st.secrets` (mecanismo do Streamlit Community Cloud, nunca presente no deploy Docker):
+1. `app.py` (linha ~30) - bloco que injeta credenciais de `st.secrets` no `os.environ`.
+2. `service.py::_get_db_secret()` - chamada **uma vez por chave de config** (`DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`) — essa é a real origem dos múltiplos avisos (um por chamada), não identificada na primeira correção (que só cobriu o `app.py`).
+
+Mesmo dentro de `try/except`, o Streamlit renderiza o aviso visual como efeito colateral de tocar em `st.secrets` sem `secrets.toml` — a exceção capturada não evita o aviso já desenhado na tela.
+
+Também corrigido, no mesmo lote: `UnicodeEncodeError` ao logar caracteres como "✓" (`core/container_vendas.py`), causado pela ausência de locale UTF-8 no container.
+
+#### 🛠️ Solução Implementada:
+1. Nova env var `SGR_DOCKER_DEPLOY=1` no `Dockerfile`.
+2. `app.py` e `service.py::_get_db_secret()` pulam completamente o acesso a `st.secrets` quando essa flag está presente, indo direto para `os.environ` — sem afetar o comportamento no Streamlit Community Cloud (que nunca define essa flag).
+3. `PYTHONIOENCODING=utf-8` adicionado ao `Dockerfile`.
+4. Rebuild + push da imagem, commit, push, redeploy — validado visualmente (tela de login limpa, sem nenhum aviso) e via logs (`docker service logs sgr_web` sem `UnicodeEncodeError`).
+
+#### 📁 Arquivos Alterados:
+1. `app.py` - Guarda `SGR_DOCKER_DEPLOY` no bloco de `st.secrets`
+2. `service.py` - Mesma guarda em `_get_db_secret()`
+3. `Dockerfile` - `SGR_DOCKER_DEPLOY=1`, `PYTHONIOENCODING=utf-8`
+
+---
