@@ -3899,3 +3899,27 @@ Também corrigido, no mesmo lote: `UnicodeEncodeError` ao logar caracteres como 
 3. `Dockerfile` - `SGR_DOCKER_DEPLOY=1`, `PYTHONIOENCODING=utf-8`
 
 ---
+
+### ⏰ 18:37 - Análise Rigorosa e Planejamento da Extração "relatorios" (sem tocar no SGR)
+
+#### 🎯 O que foi pedido:
+Migração completa do SGR para Django puro, sem Streamlit. Antes de qualquer código: análise rigorosa da app atual (funcionalidade, layout, padrão visual, fidelidade) e, depois, planejamento formal — não implementação direta.
+
+#### 🔍 Diagnóstico (3 agentes de exploração, código real lido):
+- Nenhuma regra de negócio se perde na migração — tudo é SQL/ORM/pandas replicável.
+- Maior gap: quase toda tela usa AG Grid (filtro/ordenação/resize client-side); SAC tem cascata reativa real (grid de OS → grid de Produtos, sem botão); Comex **não tem** nenhuma funcionalidade de Invoice (confirmado por grep completo — é só relatório de produtos vendidos).
+- Correção de premissa: o padrão visual das apps irmãs **não é mais** "Bootstrap 5.3 + Dracula at Night" — foi superado em 20/07/2026 pelo Novo Padrão Visual Oficial (`.os-*`, dark-only, vermelho/ciano, Work Sans, sem Bootstrap).
+
+#### 🛠️ Decisão e Planejamento:
+Depois de discutir escopo (Estoque, Vendas, Recebimentos, Comex, SAC) e uma tentativa minha de ir direto para plan-mode de execução de código (**corrigida pelo usuário**: "Não inicie implementação. Vamos realizar um Planejamento primeiro"), foi decidido seguir o processo formal de extração já usado para as demais apps do ambiente Oficial:
+
+- **Nova app independente** (não um módulo dentro do `sgr`): `relatorios`, em `/home/areco/Projetos/Oficial/relatorios`, repositório git novo.
+- Sequência desta leva: `00-gerar-planejamento` (concluída) → `01-iniciar-projeto` → `09-aplicar-padrao-visual-oficial`, cobrindo só 6 telas somente-leitura.
+- Planejamento formal gerado (`01 - prd.md`, `02 - blue-print.md`, `03 - backlog.md`, `04 - sprints.md`, com Matriz de Paridade completa) e depois ajustado com 5 correções do usuário: subdomínio `relatorios.oficialsport.com.br` será reaproveitado na virada (não é colisão a evitar); nomenclatura interna `Estoque`/`Comex` mantida como está; sigla "SGR" ressignificada como "Sistema de Gerenciamento de Relatórios" na nova app; banco de dados Fase 1 usa o `sga` nativo (não `sga_multiapp`); permissões Fase 1 também do `sga` nativo, com ajuste registrado para quando migrar pra `sga_multiapp`.
+- Memória própria criada para o novo projeto (`~/.claude/projects/-home-areco-Projetos-Oficial-relatorios/memory/`), para continuidade quando uma sessão for aberta a partir da nova pasta.
+
+#### 📁 Arquivos Alterados:
+Nenhum no repositório `sgr` (só leitura/análise). Todo o planejamento foi criado em
+`/home/areco/Projetos/Oficial/relatorios/planejamento/` (fora deste repositório).
+
+---
