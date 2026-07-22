@@ -19,11 +19,11 @@ RUN chmod +x /app/entrypoint.sh && \
     useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-EXPOSE 8110
+EXPOSE 8112
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["streamlit", "run", "app.py", \
-     "--server.port=8110", \
+     "--server.port=8112", \
      "--server.address=0.0.0.0", \
      "--server.headless=true", \
      "--browser.gatherUsageStats=false"]

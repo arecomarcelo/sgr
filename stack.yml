@@ -23,18 +23,18 @@ services:
       - "streamlit"
       - "run"
       - "app.py"
-      - "--server.port=8110"
+      - "--server.port=8112"
       - "--server.address=0.0.0.0"
       - "--server.headless=true"
       - "--browser.gatherUsageStats=false"
     extra_hosts:
       - "host-postgres:host-gateway"
     ports:
-      - "127.0.0.1:8110:8110"
+      - "127.0.0.1:8112:8112"
     networks:
       - traefik_public
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8110/_stcore/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8112/_stcore/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -45,7 +45,7 @@ services:
       # mesmo motivo documentado no stack.yml da administracao: Traefik só na
       # porta 8443 (não a 443 real) faz o desafio TLS-ALPN-01 nunca completar.
       - traefik.http.routers.sgr.tls=true
-      - traefik.http.services.sgr.loadbalancer.server.port=8110
+      - traefik.http.services.sgr.loadbalancer.server.port=8112
     deploy:
       replicas: 1
       update_config:
