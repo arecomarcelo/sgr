@@ -20,7 +20,7 @@
 #     arecomarcelo/sgr.git /home/deploy/apps/sgr)
 #   - .env real em /home/deploy/apps/sgr/.env (DB_HOST=host-postgres,
 #     DB_NAME=sga, DB_USER/DB_PASSWORD reais, SECRET_KEY)
-#   - DNS sgr.oficialsport.com.br → 195.200.1.244 (Traefik só roteia depois
+#   - DNS relatorios.oficialsport.com.br → 195.200.1.244 (Traefik só roteia depois
 #     disso propagar; até lá dá pra validar via porta publicada/curl --resolve)
 ################################################################################
 
@@ -35,7 +35,7 @@ BOLD='\033[1m'
 VPS_HOST="195.200.1.244"
 VPS_USER="root"
 VPS_APP_DIR="/home/deploy/apps/sgr"
-APP_URL="https://sgr.oficialsport.com.br"
+APP_URL="https://relatorios.oficialsport.com.br"
 
 clear
 echo -e "${BOLD}${CYAN}"

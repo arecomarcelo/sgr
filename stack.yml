@@ -40,7 +40,7 @@ services:
       retries: 3
     labels:
       - traefik.enable=true
-      - traefik.http.routers.sgr.rule=Host(`sgr.oficialsport.com.br`)
+      - traefik.http.routers.sgr.rule=Host(`relatorios.oficialsport.com.br`)
       # tls=true (cert interno do Traefik), não tls.certresolver=letsencrypt —
       # mesmo motivo documentado no stack.yml da administracao: Traefik só na
       # porta 8443 (não a 443 real) faz o desafio TLS-ALPN-01 nunca completar.
