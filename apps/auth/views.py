@@ -129,11 +129,11 @@ def login_screen(user_service):
         if username and password:
             # Captura as permissões ao validar o usuário
             try:
-                is_valid, permissions = user_service.validate_user(
-                    username, password
-                )
+                is_valid, permissions = user_service.validate_user(username, password)
             except Exception as e:
-                logger.error(f"Falha ao validar usuário '{username}': {e}", exc_info=True)
+                logger.error(
+                    f"Falha ao validar usuário '{username}': {e}", exc_info=True
+                )
                 st.error(
                     "⚠ Não foi possível conectar ao banco de dados no momento. "
                     "Tente novamente em instantes."

@@ -26,10 +26,12 @@ if time.time() - st.session_state.get("last_activity", 0) > 240:  # 4 minutos
     st.rerun()
 
 # Injetar credenciais do Streamlit Secrets no os.environ para o Django
-# (só relevante no Streamlit Community Cloud — no deploy Docker as credenciais
-# já vêm do .env/env_file, e tocar em st.secrets sem secrets.toml gera avisos
-# visuais na tela mesmo com o try/except)
-if not os.environ.get("SGR_DOCKER_DEPLOY"):
+# (só relevante no Streamlit Community Cloud — no deploy Docker/local as
+# credenciais já vêm do .env/env_file. load_if_toml_exists() checa a existência
+# do secrets.toml sem imprimir o aviso "No secrets found": o Streamlit chama
+# st.error() internamente antes de levantar a exceção que o try/except pegaria,
+# então só o guard evita o aviso visual — o try/except sozinho não bastava)
+if not os.environ.get("SGR_DOCKER_DEPLOY") and st.secrets.load_if_toml_exists():
     try:
         if "database" in st.secrets:
             for _key in ["DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"]:

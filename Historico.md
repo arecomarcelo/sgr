@@ -3923,3 +3923,77 @@ Nenhum no repositório `sgr` (só leitura/análise). Todo o planejamento foi cri
 `/home/areco/Projetos/Oficial/relatorios/planejamento/` (fora deste repositório).
 
 ---
+
+## 📅 23/07/2026
+
+### ⏰ 16:15 - Correção de Divergência Git e Destravamento do `venv/`
+
+#### 🎯 O que foi pedido:
+Continuidade da pendência registrada na sessão anterior: repositório com `main` divergido de `origin/main` (commit local espúrio de binários da `venv/` vs. commit remoto "Added Dev Container Folder"), causada por `venv/` estar rastreada no git apesar de já constar no `.gitignore`.
+
+#### 🔍 Diagnóstico e Solução:
+1. `git reset --soft` desfez o commit espúrio local; `venv/` restaurada ao estado do `HEAD` e o `pull --ff-only` trouxe o commit remoto de forma limpa, sem merge.
+2. Correção definitiva: `git rm -r --cached venv/` — removeu a pasta do rastreamento do git (mantendo os arquivos localmente), eliminando a causa raiz da divergência recorrente.
+3. ⚠️ Efeito colateral do `git checkout HEAD -- venv/` usado no passo 1: restaurou um symlink circular antigo (`venv/bin/python3.12 -> python3 -> python3.12 -> ...`), quebrando a venv local. Corrigido recriando a venv do zero (`python3.12 -m venv venv` + `pip install -r requirements.txt`).
+
+#### 📁 Arquivos Alterados:
+1. `venv/` (24 arquivos) - removidos do índice do git via `git rm --cached` (mantidos em disco)
+
+---
+
+### ⏰ 16:18 - Alias `relatorios` para a Aplicação (Predeploy/Deploy/Rodar)
+
+#### 🎯 O que foi pedido:
+Criar os alias de atalho (predeploy/deploy/rodar) para esta app seguindo o padrão das demais apps do ambiente Oficial, usando o nome `relatorios` (identidade real em produção, `relatorios.oficialsport.com.br`) em vez de `sgr` (nome da pasta/repositório legado).
+
+#### 🛠️ Solução Implementada:
+1. Criado `scripts/rodar-aplicacao.sh` (não existia ainda), no mesmo padrão do projeto irmão `sgd` — sobe o Streamlit local na porta 8001, valida `venv/` e `.env` antes.
+2. Adicionados os alias `predeploy-relatorios`, `deploy-relatorios` e `rodar-relatorios` em `~/.zshrc` e `~/.bashrc`, apontando para os scripts deste repositório.
+
+#### 📁 Arquivos Alterados/Criados:
+1. `scripts/rodar-aplicacao.sh` (novo)
+2. `~/.zshrc` (fora do repositório) - 3 novos alias
+3. `~/.bashrc` (fora do repositório) - 3 novos alias
+
+---
+
+### ⏰ 16:26 - Correção do Aviso "No secrets found" em Execução Local
+
+#### 🎯 O que foi pedido:
+Investigar e corrigir o aviso `No secrets found. Valid paths for a secrets.toml file...` ao executar a aplicação localmente.
+
+#### 🔍 Diagnóstico:
+A correção anterior (17/07) só suprimia o acesso a `st.secrets` no deploy Docker (via flag `SGR_DOCKER_DEPLOY`), mas não no ambiente local — onde o mesmo problema se repete. Investigando o código-fonte do Streamlit instalado (`runtime/secrets.py`), confirmado que **qualquer** toque em `st.secrets` (mesmo dentro de `try/except`) chama `st.error(...)` internamente **antes** de levantar a exceção — por isso o `try/except` já existente nunca havia suprimido o aviso visual, só a exceção Python.
+
+#### 🛠️ Solução Implementada:
+Uso do método público `st.secrets.load_if_toml_exists()` — criado pelo próprio Streamlit para checar a existência do `secrets.toml` **sem** imprimir nada — como guarda antes de qualquer acesso a `st.secrets`, tanto em `app.py` quanto em `service.py::_get_db_secret()`. Testado localmente (`streamlit run app.py`): nenhum aviso na tela ou no console.
+
+#### 📁 Arquivos Alterados:
+1. `app.py` - guarda `st.secrets.load_if_toml_exists()` antes do bloco de injeção de credenciais
+2. `service.py` - mesma guarda em `_get_db_secret()`
+
+---
+
+### ⏰ 16:35 - Fechamento da Porta 5432 na VPS de Produção
+
+#### 🎯 O que foi pedido:
+Corrigir a pendência de segurança (já mapeada em sessão anterior) da porta 5432 do Postgres 100% exposta à internet pública, sem quebrar nenhum app dockerizado nem o `sga` legado.
+
+#### 🔍 Investigação (antes de qualquer alteração):
+- `administracao`/`financeiro`/`comex`/`estoque`/`rh` conectam via `DB_HOST=sga_db` (container isolado) — nunca tocam a porta 5432 do host.
+- `sgr`/`sgd` conectam via `extra_hosts: host-postgres:host-gateway` — tráfego interno (rede `docker_gwbridge`, IPs `172.27.0.0/16`), nunca atravessa a interface pública.
+- `multi-ai` conecta via `AI_DB_HOST=195.200.1.244` (IP público da própria VPS) — testado ao vivo e confirmado, via log do Postgres (`log_connections` ligado para o teste), que a conexão chega como `172.27.0.x` (hairpin/NAT do Docker), não como IP público de fato.
+- ⚠️ **Achado crítico não documentado antes**: o `sga` legado nativo (`/var/www/sga`, fora do Docker) conecta com `DATABASE_HOST=195.200.1.244` — o próprio IP público do host. Isso causou uma falha real (~1 min, "no pg_hba.conf entry") logo após a primeira rodada de ajuste no `pg_hba.conf`, corrigida imediatamente ao identificar a causa e adicionar a entrada faltante.
+
+#### 🛠️ Solução Implementada (na VPS 195.200.1.244, com backup prévio em `/root/backup-firewall-5432-20260723/`):
+1. **`iptables`** (persistido via `netfilter-persistent save`): regras escopadas só na interface pública `eth0` — `ACCEPT` para os IPs conhecidos (Note_Casa, serviço "ai" externo) + `DROP` para o resto na porta 5432. Tráfego interno Docker não é afetado (nunca passa por `eth0`).
+2. **`pg_hba.conf`**: linhas `0.0.0.0/0` substituídas por CIDRs explícitos (faixas internas Docker `172.17.0.0/16`/`172.27.0.0/16` + IPs específicos conhecidos, incluindo o `195.200.1.244` do `sga` legado descoberto durante a correção).
+3. **`log_connections = on`** ligado no Postgres para auditoria futura.
+4. Validado: nenhuma nova falha de conexão após os ajustes; conexões de `sga`/`ai`/`sgr`/`sgd`/legado autenticando normalmente.
+
+#### 📁 Arquivos Alterados (só na VPS, fora deste repositório):
+1. `/etc/iptables/rules.v4` (via `netfilter-persistent save`)
+2. `/etc/postgresql/14/main/pg_hba.conf`
+3. `/etc/postgresql/14/main/postgresql.conf` (`log_connections = on`)
+
+---
